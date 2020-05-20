@@ -39,7 +39,7 @@ if __name__ == "__main__":
     print("TYPE\t" + "\t".join(all_attributes))
     for object_list, _type in [(public_keys, "Открытый ключ"), (private_keys, "Закрытый ключ"), (certificates, "Сертификат")]:
         for obj in object_list:
-            yad_string = f"{_type}"
+            yad_string = _type
             for attr in all_attributes:
-                yad_string += f'\t{obj.get(attr,"")}'
+                yad_string += "\t" + obj.get(attr,"")
             print(yad_string)
