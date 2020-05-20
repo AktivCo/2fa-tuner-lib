@@ -701,7 +701,7 @@ function follow_token()
 	while  [[ "$token_present" -eq 1 ]]
 	do
 		echo > pcsc_scan_res
-		pcsc_scan -r > pcsc_scan_res &
+		pcsc_scan > pcsc_scan_res &
 		pcsc_pid=$!
 		sleep 1
 		pkill $pcsc_pid
