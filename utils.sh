@@ -5,8 +5,6 @@ TWO_FA_LIB_DIR=`cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd`
 
 NUMBER_REGEXP='^[0123456789abcdefABCDEF]+$'
 CUR_DIR=`pwd`
-DIALOG="dialog --keep-tite --stdout"
-SIMPLE_YAD="yad --center "
 RTADMIN=rtAdmin
 
 function init() 
@@ -273,6 +271,12 @@ function setup_domain_authentication ()
 	sudo systemctl restart sssd
 	
 	return 0
+}
+
+function zenity_enable ()
+{
+	zenity --help > /dev/null
+	return $?
 }
 
 function choose_cert ()
@@ -987,8 +991,15 @@ function show_wait ()
 	dialog_manager_enabeled
 	if [[ $? -ne 0 ]]
 	then
-		zenity --info --text="$text" --title="$title" &
-		dialog_pid=$!
+		zenity_enable
+		if [[ $? -eq 0 ]]
+		then
+			zenity --info --text="$text" --title="$title" &
+			dialog_pid=$!
+		else
+			xmessage -center "Please wait" &
+			dialog_pid=$!
+		fi
 	else
 		show_wait_dialog "$title" "$text" &
 		dialog_pid=$!
