@@ -4,7 +4,7 @@ function check_pkgs ()
 {
         pkgs=$@
 	out=`apt-get --just-print install $pkgs`
-        if [[ -z "echo -e "$out" ` | grep "NEW\|НОВЫЕ"`" ]]
+        if [[ -z "`echo -e "$out" | grep "NEW\|НОВЫЕ"`" ]]
         then
                 return 0
         fi
