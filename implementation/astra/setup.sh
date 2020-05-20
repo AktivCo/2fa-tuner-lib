@@ -3,7 +3,8 @@
 function check_pkgs ()
 {
         pkgs=$@
-        if [[ -z "`apt-get --just-print install $pkgs | grep "NEW"`" ]]
+	out=`apt-get --just-print install $pkgs`
+        if [[ -z "echo -e "$out" ` | grep "NEW\|НОВЫЕ"`" ]]
         then
                 return 0
         fi
@@ -13,7 +14,7 @@ function check_pkgs ()
 
 function _install_common_packages ()
 {
-	local pkgs="libengine-pkcs11-openssl1.1 opensc libccid pcscd libp11-2 dialog"
+	local pkgs="libengine-pkcs11-openssl1.1 opensc libccid pcscd libp11-2 pcsc-tools python3-tk dialog"
         check_update="$1"
 
         if ! [[ -z "$check_updates" ]]
