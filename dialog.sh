@@ -93,7 +93,12 @@ function show_form ()
 	for ((i=1;i<=END;i++)); do     echo 1; done > ones
 	for ((i=1;i<=END;i++)); do     echo 2; done > twoes
 	for ((i=1;i<=END;i++)); do     echo 30; done > lens
-	paste asks nums ones defaults nums lens lens lens | tr '\n\t' '\0\0' | xargs -0 $DIALOG --title "$title" --form "$msg" 0 0 0
+	form=`paste asks nums ones defaults nums lens lens lens | tr '\n\t' '\0\0' | xargs -0 $DIALOG --title "$title" --form "$msg" 0 0 0`
+
+	if [[ -z "$form" ]]
+	then
+		return 255
+	fi
 
         ret=$?
 	echo -e "$form"
