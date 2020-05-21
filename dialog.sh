@@ -21,7 +21,11 @@ function show_list ()
         for ((i=1;i<=END;i++)); do     echo $i; done > nums
 
 	local id=`paste -d "\n" nums list | tr "\n" "\0" | xargs -0 $DIALOG --title "$title" --no-collapse --menu "$columns" 0 0 0`;
-	
+	if [[ -z "$id" ]]
+	then
+		return 255
+	fi
+
 	local elem=`echo -e "$list" | sed "${id}q;d"`;
 	echo -e "$elem"
 	return $res
