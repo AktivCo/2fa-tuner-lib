@@ -1,6 +1,6 @@
 #!/bin/bash
 
-function _install_packages ()
+function _install_common_packages ()
 {
 	sudo apt-get -qq update
 	if ! [[ -f $LIBRTPKCS11ECP ]]
@@ -10,11 +10,22 @@ function _install_packages ()
 		sudo cp librtpkcs11ecp.so $LIBRTPKCS11ECP;
 	fi
 
-	sudo apt-get -qq install libengine-pkcs11-openssl1.1 opensc libccid pcscd libpam-p11 libpam-pkcs11 libp11-2 dialog;
-	if [[ $? -ne 0 ]]; then echoerr "Не могу установить один из пакетов: libengine-pkcs11-openssl1.1 opensc libccid pcscd libpam-p11 libpam-pkcs11 libp11-2 dialog из репозитория"; fi
+	sudo apt-get -qq install libengine-pkcs11-openssl1.1 opensc libccid pcscd libp11-2 dialog;
+	if [[ $? -ne 0 ]]; then echoerr "Не могу установить один из пакетов: libengine-pkcs11-openssl1.1 opensc libccid pcscd libp11-2 dialog из репозитория"; fi
 }
 
-function _setup_authentication ()
+function _install_packages_for_local_auth ()
+{
+        sudo apt-get -qq install libpam-p11 libpam-pkcs11;
+        if [[ $? -ne 0 ]]; then echoerr "Не могу установить один из пакетов: libpam-p11 libpam-pkcs11 из репозитория"; fi
+}
+
+function _install_packages_for_domain_auth ()
+{
+	echo
+}
+
+function _setup_local_authentication ()
 {
 	user=$2
 	home=`getent passwd $user | cut -d: -f6`

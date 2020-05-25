@@ -1,15 +1,28 @@
 #!/bin/bash
 
-function _install_packages ()
+function _install_common_packages ()
 {
         sudo apt-get -qq update
-	sudo apt-get -qq install openssl-engine_pkcs11 librtpkcs11ecp opensc ccid pcsc-lite libp11 dialog pam_pkcs11 pam_p11 nss-tools
+	sudo apt-get -qq install openssl-engine_pkcs11 librtpkcs11ecp opensc ccid pcsc-lite libp11 dialog
 	LIBRTPKCS11ECP=`whereis  librtpkcs11ecp | cut -d " " -f 2`
-	if [[ $? -ne 0 ]]; then echoerr "Не могу установить один из пакетов: openssl-engine_pkcs11 librtpkcs11ecp opensc ccid pcsc-lite libp11 dialog pam_pkcs11 pam_p11 nss-tools из репозитория"; fi
+	if [[ $? -ne 0 ]]; then echoerr "Не могу установить один из пакетов: openssl-engine_pkcs11 librtpkcs11ecp opensc ccid pcsc-lite libp11 dialog из репозитория"; fi
 	sudo systemctl restart pcscd
 }
 
-function _setup_authentication ()
+
+function _install_packages_for_local_auth ()
+{
+        sudo apt-get -qq install pam_pkcs11 pam_p11 nss-tools
+        if [[ $? -ne 0 ]]; then echoerr "Не могу установить один из пакетов: pam_pkcs11 pam_p11 nss-tools из репозитория"; fi
+        sudo systemctl restart pcscd
+}
+
+function _install_packages_for_domain_auth ()
+{
+        echo
+}
+
+function _setup_local_authentication ()
 {
 	user=$2
 	DB=$PAM_PKCS11_DIR/nssdb

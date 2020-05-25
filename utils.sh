@@ -76,14 +76,27 @@ function cleanup() { rm -rf `pwd`; cd "$CUR_DIR"; }
 
 echoerr() { echo -e "Ошибка: $@" 1>&2; cleanup; exit; }
 
-function install_packages ()
+function install_common_packages ()
 {
-	_install_packages
+	_install_common_packages
 }
 
-function setup_authentication ()
+function install_packages_for_local_auth ()
 {
-	_setup_authentication "$1" "$2"
+	install_common_packages
+        _install_packages_for_local_auth
+}
+
+function install_packages_for_domain_auth ()
+{
+	install_common_packages
+        _install_packages_for_domain_auth
+}
+
+
+function setup_local_authentication ()
+{
+	_setup_local_authentication "$1" "$2"
 }
 
 function setup_autolock ()

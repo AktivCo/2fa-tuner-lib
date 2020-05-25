@@ -1,8 +1,9 @@
 #!/bin/bash
 
-function _install_packages ()
+function _install_common_packages ()
 {
-	sudo urpmi --force ccid opensc p11-kit pam_pkcs11 pam_pkcs11-tools rpmdevtools dialog libp11-devel engine_pkcs11
+	sudo urpmi --force ccid opensc p11-kit rpmdevtools dialog libp11-devel engine_pkcs11
+	if [[ $? -ne 0 ]]; then echoerr "Не могу установить один из пакетов: ccid opensc p11-kit rpmdevtools dialog libp11-devel engine_pkcs11 из репозитория"; fi
 
 	if ! [[ -f $LIBRTPKCS11ECP ]]
         then
@@ -11,11 +12,23 @@ function _install_packages ()
                 sudo cp librtpkcs11ecp.so $LIBRTPKCS11ECP;
         fi
 
-	if [[ $? -ne 0 ]]; then echoerr "Не могу установить один из пакетов: ccid opensc p11-kit pam_pkcs11 rpmdevtools dialog libp11-devel engine_pkcs11 из репозитория"; fi
 	sudo systemctl restart pcscd
 }
 
-function _setup_authentication ()
+function _install_packages_for_local_auth ()
+{
+        sudo urpmi --force pam_pkcs11 pam_pkcs11-tools
+
+        if [[ $? -ne 0 ]]; then echoerr "Не могу установить один из пакетов: pam_pkcs11 pam_pkcs11-tools из репозитория"; fi
+        sudo systemctl restart pcscd
+}
+
+function _install_packages_for_domain_auth ()
+{
+        echo
+}
+
+function _setup_local_authentication ()
 {
 	user=$2
 	DB=$PAM_PKCS11_DIR/nssdb

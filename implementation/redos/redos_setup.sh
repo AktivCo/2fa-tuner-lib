@@ -1,6 +1,6 @@
 #!/bin/bash
 
-function _install_packages ()
+function _install_common_packages ()
 {
 	sudo yum -q -y update
 	if ! [[ -f $LIBRTPKCS11ECP ]]
@@ -10,20 +10,31 @@ function _install_packages ()
 		sudo cp librtpkcs11ecp.so $LIBRTPKCS11ECP;
 	fi
 
-	sudo yum -q -y install ccid opensc gdm-plugin-smartcard p11-kit pam_pkcs11 rpmdevtools dialog;
+	sudo yum -q -y install ccid opensc gdm-plugin-smartcard dialog;
 	if [[ $? -ne 0 ]]; then echoerr "Не могу установить один из пакетов: ccid opensc gdm-plugin-smartcard p11-kit pam_pkcs11 rpmdevtools dialog из репозитория"; fi
-	
-	sudo yum -q -y install libp11 engine_pkcs11;
+
+        sudo yum -q -y install libp11 engine_pkcs11;
         if [[ $? -ne 0 ]]
         then
-        	$DIALOG --msgbox "Скачайте последнюю версии пакетов libp11 engine_pkcs11 отсюда https://apps.fedoraproject.org/packages/libp11/builds/ и установите их с помощью команд sudo rpm -i /path/to/package. Или соберите сами их из исходников" 0 0
-		echoerr "Установите пакеты libp11 и engine_pkcs11 отсюда https://apps.fedoraproject.org/packages/libp11/builds/"
-	fi
+                $DIALOG --msgbox "Скачайте последнюю версии пакетов libp11 engine_pkcs11 отсюда https://apps.fedoraproject.org/packages/libp11/builds/ и установите их с помощью команд sudo rpm -i /path/to/package. Или соберите сами их из исходников" 0 0
+                echoerr "Установите пакеты libp11 и engine_pkcs11 отсюда https://apps.fedoraproject.org/packages/libp11/builds/"
+        fi
 
 	sudo systemctl restart pcscd
 }
 
-function _setup_authentication ()
+function install_packages_for_local_auth ()
+{
+        sudo yum -q -y install p11-kit pam_pkcs11 rpmdevtools dialog;
+        if [[ $? -ne 0 ]]; then echoerr "Не могу установить один из пакетов: ccid opensc gdm-plugin-smartcard p11-kit pam_pkcs11 rpmdevtools dialog из репозитория"; fi
+}
+
+function _install_packages_for_domain_auth ()
+{
+	sudo yum -q -y install libsss_sudo;
+}
+
+function _setup_local_authentication ()
 {
 	user=$2
 
