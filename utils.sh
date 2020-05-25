@@ -502,6 +502,12 @@ function create_key ()
 	pkcs11_gen_key "$token" "$key_id" "$type" "$label" &
 	show_wait $! "Подождите" "Идет генерация ключевой пары"
 	res=$?
+
+	if [[ $res -eq 2 ]]
+	then
+		show_text "Ошибка" "Такой тип ключа пока не поддерживается в системе"
+		return $res
+	fi
 	
 	if [[ $res -ne 0 ]]
 	then
@@ -614,7 +620,6 @@ function create_key_and_cert ()
 
 function choose_token ()
 {
-	echoerr "$LIBRTPKCS11ECP"
         get_token_list > get_token_list_res &
 	show_wait $! "Подождите" "Подождите, идет получение списка Рутокенов"
         token_list=`cat get_token_list_res`

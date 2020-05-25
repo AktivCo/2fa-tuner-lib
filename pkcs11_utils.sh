@@ -151,7 +151,12 @@ function pkcs11_gen_key ()
 	type=$3
 	label=$4
 
-	pkcs11-tool --module "$LIBRTPKCS11ECP" --keypairgen --key-type "$type" -l -p "$PIN" --id "$key_id" --label "$label" --slot-description "$token" 2>&1 > /dev/null
+	out=`pkcs11-tool --module "$LIBRTPKCS11ECP" --keypairgen --key-type "$type" -l -p "$PIN" --id "$key_id" --label "$label" --slot-description "$token" 2>&1`
+	if [[ "`echo -e "$out" | grep "Unknown key type"`" ]]
+	then
+		echoerr "Тип ключа $type не поддерживается в системе"
+		return 2
+	fi
 	return $?
 }
 
