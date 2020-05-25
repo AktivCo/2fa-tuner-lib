@@ -47,7 +47,7 @@ function init()
 		IMPL_DIR="$TWO_FA_LIB_DIR/implementation/astra"
 		;;
 	*"ALT"*)
-		LIBRTPKCS11ECP="" # Defined later
+		LIBRTPKCS11ECP=/usr/lib64/librtpkcs11ecp.so
 		PKCS11_ENGINE=/usr/lib64/openssl/engines-1.1/pkcs11.so
 		PAM_PKCS11_DIR=/etc/security/pam_pkcs11
 		IPA_NSSDB_DIR=/etc/pki/nssdb
@@ -67,6 +67,11 @@ function init()
 	if ! [[ -z "$ENGINE_DIR" ]]
 	then
 		PKCS11_ENGINE=`echo "${ENGINE_DIR}/pkcs11.so"`
+	fi
+	local GUESS_LIBRTPKCS11ECP=`whereis  librtpkcs11ecp | cut -d " " -f 2`
+	if ! [[ -z "$GUESS_LIBRTPKCS11ECP" ]]
+	then
+		LIBRTPKCS11ECP="$GUESS_LIBRTPKCS11ECP"
 	fi
 
 	case $XDG_CURRENT_DESKTOP in
@@ -609,6 +614,7 @@ function create_key_and_cert ()
 
 function choose_token ()
 {
+	echoerr "$LIBRTPKCS11ECP"
         get_token_list > get_token_list_res &
 	show_wait $! "Подождите" "Подождите, идет получение списка Рутокенов"
         token_list=`cat get_token_list_res`

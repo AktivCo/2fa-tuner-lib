@@ -30,10 +30,8 @@ function _install_common_packages ()
 		echoerr "Не могу установить один из пакетов: $pkgs из репозитория"
 		return 1
 	fi
-	LIBRTPKCS11ECP=`whereis  librtpkcs11ecp | cut -d " " -f 2`
 	
 	sudo systemctl restart pcscd
-
 	return 0
 }
 
