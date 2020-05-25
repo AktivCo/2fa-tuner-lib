@@ -88,8 +88,8 @@ function init()
 		;;
 	esac
 
-	SCRIPT=`realpath -s $0`
-	SCRIPT_DIR=`dirname $SCRIPT`
+	SCRIPT=`realpath -s "$0"`
+	SCRIPT_DIR=`dirname "$SCRIPT"`
 
 	cd $(mktemp -d);
 	TMP_DIR=`pwd`
