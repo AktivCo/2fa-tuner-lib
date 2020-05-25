@@ -14,7 +14,7 @@ function check_pkgs ()
 
 function _install_common_packages ()
 {
-        local pkgs="openssl-engine_pkcs11 librtpkcs11ecp opensc ccid pcsc-lite libp11 pcsc-tools python3-tk dialog"
+        local pkgs="openssl-engine_pkcs11 librtpkcs11ecp opensc ccid pcsc-lite libp11 pcsc-tools python3-modules-tkinter dialog"
         check_update="$1"
 
         if ! [[ -z "$check_updates" ]]
