@@ -60,3 +60,9 @@ function _setup_autolock ()
 {
 	sudo cp "$IMPL_DIR/smartcard-screensaver.desktop" /etc/xdg/autostart/smartcard-screensaver.desktop
 }
+
+function _setup_domain_authentication ()
+{
+        echo
+}
+

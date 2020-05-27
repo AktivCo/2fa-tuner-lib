@@ -23,7 +23,7 @@ function _install_common_packages ()
 	sudo systemctl restart pcscd
 }
 
-function install_packages_for_local_auth ()
+function _install_packages_for_local_auth ()
 {
         sudo yum -q -y install p11-kit pam_pkcs11 rpmdevtools dialog;
         if [[ $? -ne 0 ]]; then echoerr "Не могу установить один из пакетов: ccid opensc gdm-plugin-smartcard p11-kit pam_pkcs11 rpmdevtools dialog из репозитория"; fi
@@ -78,4 +78,9 @@ function _setup_local_authentication ()
 function _setup_autolock ()
 {
 	sudo cp "$IMPL_DIR/smartcard-screensaver.desktop" /etc/xdg/autostart/smartcard-screensaver.desktop
+}
+
+function _setup_domain_authentication ()
+{
+	echo
 }
