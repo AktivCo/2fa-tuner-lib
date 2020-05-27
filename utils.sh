@@ -110,6 +110,7 @@ function setup_domain_authentication ()
 {
 	DB=/etc/pki/nssdb
 	sssd_conf=/etc/sssd/sssd.conf
+	sudo mkdir $DB 2> /dev/null;
 	if ! [ "$(ls -A $DB)" ]
 	then
 	sudo certutil -N -d "$DB"
