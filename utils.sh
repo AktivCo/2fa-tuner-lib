@@ -16,6 +16,7 @@ function init() {
 		LIBRTPKCS11ECP=/usr/lib64/librtpkcs11ecp.so
 		PKCS11_ENGINE=/usr/lib64/engines-1.1/pkcs11.so
 		PAM_PKCS11_DIR=/etc/pam_pkcs11
+		IPA_NSSDB_DIR=/etc/pki/nssdb
 		IMPL_DIR=$TWO_FA_LIB_DIR/implementation/redos/
 		. "$IMPL_DIR/redos_setup.sh"
 		;;
@@ -23,6 +24,7 @@ function init() {
 		LIBRTPKCS11ECP=/usr/lib/librtpkcs11ecp.so
 		PKCS11_ENGINE=/usr/lib/x86_64-linux-gnu/engines-1.1/pkcs11.so
 		PAM_PKCS11_DIR=/etc/pam_pkcs11
+		IPA_NSSDB_DIR=/etc/pki/nssdb
 		IMPL_DIR=$TWO_FA_LIB_DIR/implementation/astra
 		. "$IMPL_DIR/astra_setup.sh"
 		;;
@@ -30,6 +32,7 @@ function init() {
 		LIBRTPKCS11ECP="" # Defined later
 		PKCS11_ENGINE=/usr/lib64/openssl/engines-1.1/pkcs11.so
 		PAM_PKCS11_DIR=/etc/security/pam_pkcs11
+		IPA_NSSDB_DIR=/etc/pki/nssdb
 		IMPL_DIR=$TWO_FA_LIB_DIR/implementation/alt
 		. "$IMPL_DIR/alt_setup.sh"
 		;;
@@ -37,6 +40,7 @@ function init() {
 		LIBRTPKCS11ECP=/usr/lib64/librtpkcs11ecp.so
                 PKCS11_ENGINE=/usr/lib64/openssl-1.0.0/engines//pkcs11.so
                 PAM_PKCS11_DIR=/etc/pam_pkcs11
+		IPA_NSSDB_DIR=/etc/ipa/nssdb
 		IMPL_DIR=$TWO_FA_LIB_DIR/implementation/rosa
                 . "$IMPL_DIR/rosa_setup.sh"
 		;;
@@ -108,19 +112,18 @@ function setup_autolock ()
 
 function setup_domain_authentication ()
 {
-	DB=/etc/pki/nssdb
 	sssd_conf=/etc/sssd/sssd.conf
-	sudo mkdir $DB 2> /dev/null;
-	if ! [ "$(ls -A $DB)" ]
+	sudo mkdir $IPA_NSSDB_DIR 2> /dev/null;
+	if ! [ "$(ls -A $IPA_NSSDB_DIR)" ]
 	then
-	sudo certutil -N -d "$DB"
+	sudo certutil -N -d "$IPA_NSSDB_DIR"
 	fi
 
 	CA_path=`$DIALOG --title "Укажите путь до корневого сертификата" --fselect "$HOME" 0 0`;
 	if ! [ -f "$CA_path" ]; then echoerr "$CA_path doesn't exist"; fi
 
-	sudo certutil -A -d /etc/pki/nssdb/ -n 'IPA CA' -t CT,C,C -a -i "$CA_path"
-	sudo modutil -dbdir "$DB" -add "My PKCS#11 module" -libfile librtpkcs11ecp.so 2> /dev/null;
+	sudo certutil -A -d $IPA_NSSDB_DIR -n 'IPA CA' -t CT,C,C -a -i "$CA_path"
+	sudo modutil -dbdir "$IPA_NSSDB_DIR" -add "My PKCS#11 module" -libfile librtpkcs11ecp.so 2> /dev/null;
 	if ! [ "$(sudo cat "$sssd_conf" | grep 'pam_cert_auth=True')" ]
 	then
 		sudo sed -i '/^\[pam\]/a pam_cert_auth=True' "$sssd_conf"
