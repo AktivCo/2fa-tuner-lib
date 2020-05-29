@@ -66,7 +66,7 @@ function init() {
 		LOCK_SCREEN_CMD="fly-wmfunc FLYWM_LOCK"
 		;;
 	"KDE")
-		SCREENSAVER_NAME=""
+		SCREENSAVER_NAME="kde"
 		LOCK_SCREEN_CMD="qdbus org.freedesktop.ScreenSaver /ScreenSaver Lock"
 		;;
 	esac
