@@ -61,12 +61,6 @@ function create_key_and_cert ()
 	echo $cert_id
 }
 
-function get_token_password ()
-{
-	pin=`$DIALOG --title "Ввод PIN-кода"  --passwordbox "Введите PIN-код от Рутокена:" 0 0 ""`;
-	echo $pin
-}
-
 function import_cert_on_token ()
 {
 	cert=$1
@@ -94,4 +88,35 @@ function gen_key ()
 	echo "$out"
 }
 
+function pkcs11_create_cert_req ()
+{
+	cert_id=$1
+	subj="$2"
+	req_path="$3"
+	choice=$4
+
+        openssl_req="engine dynamic -pre SO_PATH:$PKCS11_ENGINE -pre ID:pkcs11 -pre LIST_ADD:1  -pre LOAD -pre MODULE_PATH:$LIBRTPKCS11ECP \n req -engine pkcs11 -new -key \"0:$cert_id\" -keyform engine -passin \"pass:$PIN\" -subj $subj"
+        if [[ choice -eq 1  ]]
+        then
+                printf "$openssl_req -x509 -outform DER -out \"$req_path\""| openssl > /dev/null;
+
+                if [[ $? -ne 0 ]]; then echoerr "Не удалось создать сертификат открытого ключа"; fi
+        	pkcs11-tool --module $LIBRTPKCS11ECP -l -p "$PIN" -y cert -w "$req_path" --id $cert_id > /dev/null 2> /dev/null;
+        else
+                printf "$openssl_req -out \"$req_path\" -outform PEM" | openssl > /dev/null;
+
+                if [[ $? -ne 0 ]]; then echoerr "Не удалось создать заявку на сертификат открытого ключа"; fi
+        fi
+}
+
+function get_token_list () 
+{
+	echo -e "`pkcs11-tool --module $LIBRTPKCS11ECP -T 2> /dev/null | grep "Slot *" | cut -d ":" -f2- | awk '$1=$1'`"
+}
+
+function get_token_info ()
+{
+        token_info=`pkcs11-tool --module /usr/lib/librtpkcs11ecp.so -T | awk -v token="$1" '$0 ~ token {print; for(i=1; i<=9; i++) { getline; print}}'`
+        echo -e "$token_info"
+}
 

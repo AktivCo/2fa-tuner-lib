@@ -6,10 +6,28 @@ TWO_FA_LIB_DIR=`cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd`
 NUMBER_REGEXP='^[0123456789abcdefABCDEF]+$'
 CUR_DIR=`pwd`
 DIALOG="dialog --keep-tite --stdout"
+YAD="yad --width=400 --height=400"
 
-function init() { 
+function init() 
+{ 
 	source /etc/os-release
 	OS_NAME=$NAME
+	
+	if [ -f "/etc/debian_version" ]; then
+		LIBRTPKCS11ECP=/usr/lib/librtpkcs11ecp.so
+                PKCS11_ENGINE=/usr/lib/x86_64-linux-gnu/engines-1.1/pkcs11.so
+                PAM_PKCS11_DIR=/etc/pam_pkcs11
+                IPA_NSSDB_DIR=/etc/pki/nssdb
+                IMPL_DIR="$TWO_FA_LIB_DIR/implementation/debian"
+	fi
+
+	if [ -f "/etc/redhat-release" ]; then
+        	LIBRTPKCS11ECP=/usr/lib64/librtpkcs11ecp.so
+                PKCS11_ENGINE=/usr/lib64/engines-1.1/pkcs11.so
+                PAM_PKCS11_DIR=/etc/pam_pkcs11
+                IPA_NSSDB_DIR=/etc/pki/nssdb
+                IMPL_DIR="$TWO_FA_LIB_DIR/implementation/redhat/"
+	fi
 
 	case $OS_NAME in
         "RED OS") 
@@ -17,34 +35,31 @@ function init() {
 		PKCS11_ENGINE=/usr/lib64/engines-1.1/pkcs11.so
 		PAM_PKCS11_DIR=/etc/pam_pkcs11
 		IPA_NSSDB_DIR=/etc/pki/nssdb
-		IMPL_DIR=$TWO_FA_LIB_DIR/implementation/redos/
-		. "$IMPL_DIR/redos_setup.sh"
+		IMPL_DIR="$TWO_FA_LIB_DIR/implementation/redos/"
 		;;
         "Astra Linux"*)
 		LIBRTPKCS11ECP=/usr/lib/librtpkcs11ecp.so
 		PKCS11_ENGINE=/usr/lib/x86_64-linux-gnu/engines-1.1/pkcs11.so
 		PAM_PKCS11_DIR=/etc/pam_pkcs11
 		IPA_NSSDB_DIR=/etc/pki/nssdb
-		IMPL_DIR=$TWO_FA_LIB_DIR/implementation/astra
-		. "$IMPL_DIR/astra_setup.sh"
+		IMPL_DIR="$TWO_FA_LIB_DIR/implementation/astra"
 		;;
 	*"ALT"*)
 		LIBRTPKCS11ECP="" # Defined later
 		PKCS11_ENGINE=/usr/lib64/openssl/engines-1.1/pkcs11.so
 		PAM_PKCS11_DIR=/etc/security/pam_pkcs11
 		IPA_NSSDB_DIR=/etc/pki/nssdb
-		IMPL_DIR=$TWO_FA_LIB_DIR/implementation/alt
-		. "$IMPL_DIR/alt_setup.sh"
+		IMPL_DIR="$TWO_FA_LIB_DIR/implementation/alt"
 		;;
 	*"ROSA"*)
 		LIBRTPKCS11ECP=/usr/lib64/librtpkcs11ecp.so
                 PKCS11_ENGINE=/usr/lib64/openssl-1.0.0/engines//pkcs11.so
                 PAM_PKCS11_DIR=/etc/pam_pkcs11
 		IPA_NSSDB_DIR=/etc/pki/nssdb
-		IMPL_DIR=$TWO_FA_LIB_DIR/implementation/rosa
-                . "$IMPL_DIR/rosa_setup.sh"
+		IMPL_DIR="$TWO_FA_LIB_DIR/implementation/rosa"
 		;;
-        esac
+	esac
+	. "$IMPL_DIR/setup.sh"
 
 	ENGINE_DIR=`openssl version -a | grep "ENGINESDIR" | cut -d ":" -f 2 | tr -d '"' | awk '{$1=$1};1'`
 	if ! [[ -z "$ENGINE_DIR" ]]
@@ -74,6 +89,22 @@ function init() {
 	SCRIPT_DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
 	cd $(mktemp -d);
+}
+
+function set_dialog_manager ()
+{
+	echo
+	manager=$1
+	case $manager in 
+	"yad")
+		DIALOG_MANAGER="$YAD"
+		. "$TWO_FA_LIB_DIR/yad.sh"
+		;;
+	*)
+		DIALOG_MANAGER="$DIALOG"
+		. "$TWO_FA_LIB_DIR/dialog.sh"
+		;;
+	esac
 }
 
 function cleanup() { rm -rf `pwd`; cd "$CUR_DIR"; }
@@ -227,36 +258,91 @@ function import_cert ()
 	import_cert_on_token cert.crt $key_id
 }
 
+function get_token_password ()
+{
+	get_password "Ввод PIN-кода" "Введите PIN-код от Рутокена:"
+}
+
+function get_cert_subj ()
+{
+        C="/C=RU";
+        ST=`$DIALOG --title 'Данные сертификата' --inputbox 'Регион:' 0 0 'Москва'`;
+        if [[ -n "$ST" ]]; then ST="/ST=$ST"; else ST=""; fi
+
+        L=`$DIALOG --title 'Данные сертификата' --inputbox 'Населенный пункт:' 0 0 ''`;
+        if [[ -n "$L" ]]; then L="/L=$L"; else L=""; fi
+
+        O=`$DIALOG --title 'Данные сертификата' --inputbox 'Организация:' 0 0 ''`;
+        if [[ -n "$O" ]]; then O="/O=$O"; else O=""; fi
+
+        OU=`$DIALOG --title 'Данные сертификата' --inputbox 'Подразделение:' 0 0 ''`;
+        if [[ -n "$OU" ]]; then OU="/OU=$OU"; else OU=""; fi
+
+        CN=`$DIALOG --stdout --title 'Данные сертификата' --inputbox 'Общее имя:' 0 0 ''`;
+        if [[ -n "$CN" ]]; then CN="/CN=$CN"; else CN=""; fi
+
+        email=`$DIALOG --stdout --title 'Данные сертификата' --inputbox 'Электронная почта:' 0 0 ''`;
+        if [[ -n "$email" ]]; then email="/emailAddress=$email"; else email=""; fi
+
+	
+	echo "\"$C$ST$L$O$OU$CN$email\""
+}
+
 function create_cert_req ()
 {
-	key_id=$1
-	C="/C=RU";
-	ST=`$DIALOG --title 'Данные сертификата' --inputbox 'Регион:' 0 0 'Москва'`;
-	if [[ -n "$ST" ]]; then ST="/ST=$ST"; else ST=""; fi
-
-	L=`$DIALOG --title 'Данные сертификата' --inputbox 'Населенный пункт:' 0 0 ''`;
-	if [[ -n "$L" ]]; then L="/L=$L"; else L=""; fi
-
-	O=`$DIALOG --title 'Данные сертификата' --inputbox 'Организация:' 0 0 ''`;
-	if [[ -n "$O" ]]; then O="/O=$O"; else O=""; fi
-
-	OU=`$DIALOG --title 'Данные сертификата' --inputbox 'Подразделение:' 0 0 ''`;
-	if [[ -n "$OU" ]]; then OU="/OU=$OU"; else OU=""; fi
-
-	CN=`$DIALOG --title "Данные сертификата" --inputbox "Общее имя (должно совпадать с именем пользователя, для которого создается генерируется сертификат):" 0 0 ""`;
-	if [[ -n "$CN" ]]; then CN="/CN=$CN"; else CN=""; fi
-
-	email=`$DIALOG --stdout --title 'Данные сертификата' --inputbox 'Электронная почта:' 0 0 ''`;
-	if [[ -n "$email" ]]; then email="/emailAddress=$email"; else email=""; fi
-
+	cert_id=$1
+	
 	req_path=`$DIALOG --title "Куда сохранить заявку" --fselect "$CUR_DIR/cert.csr" 0 0`
+	
+	subj=`get_cert_subj`
 
-	openssl_req="engine dynamic -pre SO_PATH:$PKCS11_ENGINE -pre ID:pkcs11 -pre LIST_ADD:1  -pre LOAD -pre MODULE_PATH:$LIBRTPKCS11ECP \n req -engine pkcs11 -passin \"pass:$PIN\"-new -key 0:$key_id -keyform engine -out \"$req_path\" -outform PEM -subj \"$C$ST$L$O$OU$CN$email\""
-
-	printf "$openssl_req" | openssl > /dev/null;
+	pkcs11_create_cert_req $cert_id "$subj" "$req_path" 0
 
 	if [[ $? -ne 0 ]]; then echoerr "Не удалось создать заявку на сертификат открытого ключа"; fi
-
-	$DIALOG --msgbox "Отправьте заявку на получение сертификата в УЦ вашего домена. После получение сертификата, запустите setup.sh и закончите настройку." 0 0
-	exit
 }
+
+function create_key_and_cert ()
+{
+        cert_id=`gen_cert_id`
+        out=`gen_key $cert_id`
+        if [[ $? -ne 0 ]]; then echoerr "Не удалось создать ключевую пару: $out"; fi
+
+        choice=`$DIALOG --stdout --title "Создание сертификата" --menu "Укажите опцию" 0 0 0 1 "Создать самоподписанный сертификат" 2 "Создать заявку на сертификат"`
+        
+	subj=`get_cert_subj`
+	
+	pkcs11_create_cert_req $cert_id "$subj" "$req_path" $choice
+	
+        if [[ $? -ne 0 ]]; then echoerr "Не удалось загрзить сертификат на токен"; fi
+        echo $cert_id
+}
+
+function choose_token ()
+{
+        token_list=`get_token_list`
+        token_list=`echo -e "${token_list}\nОбновить список"`
+	
+	choice=`show_list "Выбор токена" "Name" "$token_list"`
+        
+	if [ $? -ne 0 ]
+        then
+                return 1
+        fi
+
+        if [ "$choice" == "Обновить список" ] || [ -z "$choice" ]
+        then
+                choose_token
+                return $?
+        fi
+
+        echo $choice
+        return 0
+}
+
+function show_token_info ()
+{
+        token=$1
+        token_info=`get_token_info $token`
+	show_text "$title" "Информация об устройстве:\n$token_info" 
+}
+

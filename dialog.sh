@@ -1,0 +1,30 @@
+function show_list ()
+{
+        local title="$1"
+        local column="$2"
+        local list="$3"
+
+	local list=`echo -e "$list" | awk '{printf("%s\t\"%s\"\n", NR, $0)}'`;
+	
+	local id=`echo $list | xargs $DIALOG --title "$title" --menu "$column" 0 0 0`;
+        local elem=`echo -e "$list" | sed "${id}q;d" | cut -f2 -d$'\t'`;
+	echo "${elem:1:-1}"
+	#TODO return code
+	return 0
+}
+
+function get_password ()
+{
+	title="$1"
+	msg="$2"
+        pin=`$DIALOG --title "$title"  --passwordbox "$msg" 0 0 ""`;
+        echo $pin
+}
+
+function show_text ()
+{
+	title="$1"
+	text="$2"
+	
+	$DIALOG --title "$title" --no-nl-expand --msgbox "$text" 0 0
+}
