@@ -143,5 +143,6 @@ function change_user_pin ()
 	old_pin=$PIN
 	new_pin=$1
 	PIN=$new_pin
-	pkcs11-tool --module $LIBRTPKCS11ECP --change-pin -l -p "$old_pin" --new-pin "$new_pin"
+	token=$2
+	pkcs11-tool --module $LIBRTPKCS11ECP --change-pin -l -p "$old_pin" --new-pin "$new_pin" --slot-description "$token"
 }
