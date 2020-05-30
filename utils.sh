@@ -321,7 +321,6 @@ function choose_token ()
 {
         token_list=`get_token_list`
         token_list=`echo -e "${token_list}\nОбновить список"`
-	
 	choice=`show_list "Выбор токена" "Name" "$token_list"`
         
 	if [ $? -ne 0 ]
@@ -335,7 +334,7 @@ function choose_token ()
                 return $?
         fi
 
-        echo $choice
+        echo "$choice"
         return 0
 }
 
@@ -343,6 +342,16 @@ function show_token_info ()
 {
         token=$1
         token_info=`get_token_info $token`
-	show_text "$title" "Информация об устройстве:\n$token_info" 
+	show_text "$token" "Информация об устройстве:\n$token_info" 
 }
 
+function show_token_object ()
+{
+	token="$1"
+	objs=`get_token_objects "$token"`	
+	objs=`python3 "$TWO_FA_LIB_DIR/python_utils/parse_objects.py" "$objs"`
+	header=`echo -e "$objs" | head -n 1`
+	objs=`echo -e "$objs" | tail -n +2`
+	echo -e "$header"
+	show_list "Объекты на токене $token" "$header" "$objs"
+}

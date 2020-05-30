@@ -3,8 +3,13 @@ function show_list()
 	local title="$1"
 	local column="$2"
 	local list="$3"
+	
+	list=`echo -e "$list" | sed -r "s/\t/\n/g"`
 	echo -e "$list" > list
-	choice=`$YAD --title "$title" --list --separator '' --column "$column" < list`
+	
+	column=`echo -e "$column" | sed -r "s/\t/ --column /g"`
+	echo -e "${items[1]}" 1>&2
+	choice=`$YAD --title "$title" --list --separator '' --column $column < list`
 	ret=$?
 	echo "$choice"
 	return $ret 

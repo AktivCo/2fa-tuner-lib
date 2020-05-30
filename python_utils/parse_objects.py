@@ -6,7 +6,7 @@ if __name__ == "__main__":
         exit(1)
 
     public_keys=[]
-    privte_keys=[]
+    private_keys=[]
     certificates=[]
 
     current_list= None
@@ -17,7 +17,7 @@ if __name__ == "__main__":
             if line.startswith("Public"):
                 current_list=public_keys
             elif line.startswith("Private"):
-                current_list=pivate_keys
+                current_list=private_keys
             elif line.startswith("Certificate"):
                 current_list = certificates
             else:
@@ -28,15 +28,18 @@ if __name__ == "__main__":
         if current_list == None:
             exit(3)
         current_list[-1][line.split(":",1)[0].strip()] = line.split(":",1)[-1].strip()
-
-    
-    for object_list in [public_keys, privte_keys, certificates]:
+   
+    all_attributes=set()
+    for object_list in [public_keys, private_keys, certificates]:
         attributes = reduce(lambda attrs, obj: attrs.union(obj.keys()), object_list, set())
-        attributes = sorted(attributes)
-        yad_string = "--list "
-        yad_string += "".join(map(lambda attr: f' --column "{attr}"', attributes))
+        all_attributes.update(attributes)
+    
+    all_attributes=["ID", "label"] + sorted(all_attributes.difference({"ID", "label"}))
+    
+    print("TYPE\t" + "\t".join(all_attributes))
+    for object_list, _type in [(public_keys, "pub"), (private_keys, "priv"), (certificates, "cert")]:
         for obj in object_list:
-            for attr in attributes:
-                yad_string += f' "{obj.get(attr,"")}"'
-        print(yad_string)
-
+            yad_string = f"{_type}"
+            for attr in all_attributes:
+                yad_string += f'\t{obj.get(attr,"")}'
+            print(yad_string)

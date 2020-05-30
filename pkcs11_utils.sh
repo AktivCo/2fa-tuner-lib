@@ -120,3 +120,10 @@ function get_token_info ()
         echo -e "$token_info"
 }
 
+function get_token_objects ()
+{
+	token="$1"
+	token_objs=`pkcs11-tool --module $LIBRTPKCS11ECP -O -l -p "$PIN" --slot-description "$token"`
+        echo -e "$token_objs"
+}
+
