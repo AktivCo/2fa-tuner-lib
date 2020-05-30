@@ -137,3 +137,11 @@ function format_token ()
 	pkcs15-init --create-pkcs15 --so-pin "$admin_pin" --so-puk "" 
 	pkcs15-init --store-pin --label "User PIN" --auth-id 02 --pin "$uesr_pin" --puk "" --so-pin "$admin_pin"
 }
+
+function change_user_pin ()
+{
+	old_pin=$PIN
+	new_pin=$1
+	PIN=$new_pin
+	pkcs11-tool --module $LIBRTPKCS11ECP --change-pin -l -p "$old_pin" --new-pin "$new_pin"
+}
