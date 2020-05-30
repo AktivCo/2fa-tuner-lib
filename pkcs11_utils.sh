@@ -127,3 +127,13 @@ function get_token_objects ()
         echo -e "$token_objs"
 }
 
+function format_token ()
+{
+	local user_pin=$1
+	local admin_pin=$2
+	PIN=$user_pin
+	
+	pkcs15-init --erase-card
+	pkcs15-init --create-pkcs15 --so-pin "$admin_pin" --so-puk "" 
+	pkcs15-init --store-pin --label "User PIN" --auth-id 02 --pin "$uesr_pin" --puk "" --so-pin "$admin_pin"
+}
