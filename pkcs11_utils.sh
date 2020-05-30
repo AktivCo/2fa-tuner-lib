@@ -153,3 +153,9 @@ function change_admin_pin ()
 	local new_pin=$2
 	echo -e "$old_pin\n$new_pin\n$new_pin\n" | pkcs15-tool --change-pin
 }
+
+function unlock_pin ()
+{
+	local $so_pin=$1
+	echo q | rtadmin -P -o $so_pon
+}
