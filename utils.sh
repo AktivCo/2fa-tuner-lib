@@ -321,8 +321,10 @@ function create_key_and_cert ()
 
 function choose_token ()
 {
-        token_list=`get_token_list`
-        token_list=`echo -e "${token_list}\nОбновить список"`
+        get_token_list > get_token_list_res &
+	show_wait $! "Подождите" "Подождите, идет получение списка токенов"
+        token_list=`cat get_token_list_res`
+	token_list=`echo -e "${token_list}\nОбновить список"`
 	choice=`show_list "Выбор токена" "Name" "$token_list"`
         
 	if [ $? -ne 0 ]
@@ -343,14 +345,18 @@ function choose_token ()
 function show_token_info ()
 {
         token=$1
-        token_info=`get_token_info $token`
+        get_token_info $token > get_token_info_res &
+	show_wait $! "Подождите" "Подождите, идет получение информации о токене"
+	token_info=`cat get_token_info_res`
 	show_text "$token" "Информация об устройстве:\n$token_info" 
 }
 
 function show_token_object ()
 {
 	token="$1"
-	objs=`get_token_objects "$token"`	
+	get_token_objects "$token" > get_token_object_res &
+	show_wait $! "Подождите" "Подождите, идет получение объектов на токене"
+	objs=`cat get_token_object_res`
 	objs=`python3 "$TWO_FA_LIB_DIR/python_utils/parse_objects.py" "$objs"`
 	header=`echo -e "$objs" | head -n 1`
 	objs=`echo -e "$objs" | tail -n +2`
@@ -364,14 +370,16 @@ function format_token ()
 	local old_admin_pin=`get_password "Ввод PIN-кода" "Введите старый PIN-код администратора:"`
 	local user_pin=`get_password "Ввод PIN-кода" "Введите новый PIN-код пользователя:"`
         local admin_pin=`get_password "Ввод PIN-кода" "Введите новый PIN-код администратора:"`
-	pkcs11_format_token "$token" "$user_pin" "$admin_pin"	
+	pkcs11_format_token "$token" "$user_pin" "$admin_pin" &
+	show_wait $! "Подождите" "Подождите, идет форматирование"
 }
 
 function change_user_pin ()
 {
 	token="$1"
         local new_user_pin=`get_password "Ввод PIN-кода" "Введите новый PIN-код пользователя:"`
-	pkcs11_change_user_pin "$token" "$new_user_pin"	
+	pkcs11_change_user_pin "$token" "$new_user_pin"	&
+	show_wait $! "Подождите" "Подождите, идет изменение PIN кода"
 }
 
 function change_admin_pin ()
@@ -379,14 +387,16 @@ function change_admin_pin ()
 	token="$1"
 	local old_admin_pin=`get_password "Ввод PIN-кода" "Введите старый PIN-код администратора:"`
         local admin_pin=`get_password "Ввод PIN-кода" "Введите новый PIN-код администратора:"`
-	pkcs11_change_user_pin "$token" "$old_admin_pin" "$admin_pin"
+	pkcs11_change_user_pin "$token" "$old_admin_pin" "$admin_pin" &
+        show_wait $! "Подождите" "Подождите, идет изменение PIN кода"
 }
 
 function unlock_pin ()
 {
 	token="$1"
         local admin_pin=`get_password "Ввод PIN-кода" "Введите PIN-код администратора:"`
-	pkcs11_change_user_pin "$token" "$admin_pin"
+	pkcs11_change_user_pin "$token" "$admin_pin" &
+        show_wait $! "Подождите" "Подождите, идет разблокировка PIN кода"
 }
 
 function show_wait ()
@@ -395,7 +405,7 @@ function show_wait ()
 	title="$2"
 	text="$3"
 
-	show_text "$text" "$title" &
+	show_text "$title" "$text" &
 
 	dialog_pid=$!
 	
