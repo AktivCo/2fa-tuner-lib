@@ -371,3 +371,22 @@ function show_wait ()
 	wait $pid
 	pkill -P $dialog_pid
 }
+
+function show_menu ()
+{
+        token="$1"
+        menu_list="$2"
+        cmd_list="$3"
+
+	choice=`show_list "Меню" "Команда" "$menu_list"`
+	
+	if [[ -z "$choice" ]]	
+	then
+		return 1
+	fi
+	choice_id=`echo -e "$menu_list" | sed -n "/$choice/=" `
+	
+	cmd=`echo -e "$cmd_list" | sed "${choice_id}q;d"`
+	$cmd "$token"
+	return 0
+}
