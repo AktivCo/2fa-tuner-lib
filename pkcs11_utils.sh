@@ -127,35 +127,38 @@ function get_token_objects ()
         echo -e "$token_objs"
 }
 
-function format_token ()
+function pkcs11_format_token ()
 {
-	local user_pin=$1
-	local admin_pin=$2
+	local token="$1"
+	local user_pin="$2"
+	local admin_pin="$3"
 	PIN=$user_pin
 	
 	pkcs15-init --erase-card
 	pkcs15-init --create-pkcs15 --so-pin "$admin_pin" --so-puk "" 
-	pkcs15-init --store-pin --label "User PIN" --auth-id 02 --pin "$uesr_pin" --puk "" --so-pin "$admin_pin"
+	pkcs15-init --store-pin --label "User PIN" --auth-id 02 --pin "$user_pin" --puk "" --so-pin "$admin_pin"
 }
 
-function change_user_pin ()
+function pkcs11_change_user_pin ()
 {
+	token=$1
 	old_pin=$PIN
-	new_pin=$1
+	new_pin=$2
 	PIN=$new_pin
-	token=$2
 	pkcs11-tool --module $LIBRTPKCS11ECP --change-pin -l -p "$old_pin" --new-pin "$new_pin" --slot-description "$token"
 }
 
-function change_admin_pin ()
+function pkcs11_change_admin_pin ()
 {
-	local old_pin=$1
-	local new_pin=$2
+	local $token=$1
+	local old_pin=$2
+	local new_pin=$3
 	echo -e "$old_pin\n$new_pin\n$new_pin\n" | pkcs15-tool --change-pin
 }
 
-function unlock_pin ()
+function pkcs11_unlock_pin ()
 {
-	local $so_pin=$1
-	echo q | rtadmin -P -o $so_pon
+	local $token=$1
+	local $so_pin=$2
+	echo q | rtadmin -P -o $so_pin
 }

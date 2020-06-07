@@ -358,6 +358,37 @@ function show_token_object ()
 	show_list "Объекты на токене $token" "$header" "$objs"
 }
 
+function format_token ()
+{
+	token="$1"
+	local old_admin_pin=`get_password "Ввод PIN-кода" "Введите старый PIN-код администратора:"`
+	local user_pin=`get_password "Ввод PIN-кода" "Введите новый PIN-код пользователя:"`
+        local admin_pin=`get_password "Ввод PIN-кода" "Введите новый PIN-код администратора:"`
+	pkcs11_format_token "$token" "$user_pin" "$admin_pin"	
+}
+
+function change_user_pin ()
+{
+	token="$1"
+        local new_user_pin=`get_password "Ввод PIN-кода" "Введите новый PIN-код пользователя:"`
+	pkcs11_change_user_pin "$token" "$new_user_pin"	
+}
+
+function change_admin_pin ()
+{
+	token="$1"
+	local old_admin_pin=`get_password "Ввод PIN-кода" "Введите старый PIN-код администратора:"`
+        local admin_pin=`get_password "Ввод PIN-кода" "Введите новый PIN-код администратора:"`
+	pkcs11_change_user_pin "$token" "$old_admin_pin" "$admin_pin"
+}
+
+function unlock_pin ()
+{
+	token="$1"
+        local admin_pin=`get_password "Ввод PIN-кода" "Введите PIN-код администратора:"`
+	pkcs11_change_user_pin "$token" "$admin_pin"
+}
+
 function show_wait ()
 {
 	pid="$1"
