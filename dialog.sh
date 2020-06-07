@@ -27,3 +27,14 @@ function show_text ()
 	
 	$DIALOG --title "$title" --no-nl-expand --msgbox "$text" 0 0
 }
+
+function yesno ()
+{
+        title="$1"
+        text="$2"
+
+        $DIALOG --title "$title" --no-nl-expand --yesno "$text" 0 0
+
+	return $?
+}
+

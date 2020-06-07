@@ -6,7 +6,8 @@ TWO_FA_LIB_DIR=`cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd`
 NUMBER_REGEXP='^[0123456789abcdefABCDEF]+$'
 CUR_DIR=`pwd`
 DIALOG="dialog --keep-tite --stdout"
-YAD="yad --width=400 --height=400"
+YAD="yad --center --width=400 --height=400"
+SIMPLE_YAD="yad --center "
 
 function init() 
 { 
@@ -86,7 +87,8 @@ function init()
 		;;
 	esac
 
-	SCRIPT_DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+	SCRIPT=`realpath -s $0`
+	SCRIPT_DIR=`dirname $SCRIPT`
 
 	cd $(mktemp -d);
 }
@@ -354,4 +356,18 @@ function show_token_object ()
 	objs=`echo -e "$objs" | tail -n +2`
 	echo -e "$header"
 	show_list "Объекты на токене $token" "$header" "$objs"
+}
+
+function show_wait ()
+{
+	pid="$1"
+	title="$2"
+	text="$3"
+
+	show_text "$text" "$title" &
+
+	dialog_pid=$!
+	
+	wait $pid
+	pkill -P $dialog_pid
 }

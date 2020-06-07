@@ -27,6 +27,12 @@ function show_text ()
 {
 	title="$1"
 	text="$2"
-        $YAD --title "$title" --text "$text" --no-markup
+        $SIMPLE_YAD --title "$title" --text "$text" --no-markup
 }
 
+function yesno ()
+{
+	title="$1"
+	text="$2"
+	$SIMPLE_YAD --title "$title" --text "$text" --no-markup --button=gtk-yes:0 --button=gtk-no:1 
+}
