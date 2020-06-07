@@ -361,7 +361,12 @@ function show_token_object ()
 	header=`echo -e "$objs" | head -n 1`
 	objs=`echo -e "$objs" | tail -n +2`
 	
-	show_list "Объекты на токене $token" "$header" "$objs"
+	obj=`show_list "Объекты на токене $token" "$header" "$objs"`
+	
+	type=`echo "$obj" | cut -f1  -d ' '`
+	id=`echo "$obj" | cut -f2  -d ' '`
+	import_object "$token" "$type" "$id" "cert.crt"
+	xdg-open "cert.crt"
 }
 
 function format_token ()

@@ -9,9 +9,9 @@ function show_list()
 	
 	column=`echo -e "$column" | sed -r "s/\t/ --column /g"`
 	
-	choice=`$YAD --title "$title" --list --separator '' --column $column < list`
+	choice=`$YAD --title "$title" --list --separator ' ' --column $column < list`
 	ret=$?
-	echo "$choice"
+	echo "${choice:0:-1}"
 	return $ret 
 }
 

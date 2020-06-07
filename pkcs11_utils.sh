@@ -162,3 +162,13 @@ function pkcs11_unlock_pin ()
 	local $so_pin=$2
 	echo q | rtadmin -P -o $so_pin
 }
+
+function import_object ()
+{
+	local token=$1
+	local type=$2
+	local id=$3
+	local file=$4
+	pkcs11-tool --module "$LIBRTPKCS11ECP" -r --type "$type" --id "$id" -l -p $PIN > $file
+	
+}
