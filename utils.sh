@@ -354,7 +354,7 @@ function show_token_object ()
 	objs=`python3 "$TWO_FA_LIB_DIR/python_utils/parse_objects.py" "$objs"`
 	header=`echo -e "$objs" | head -n 1`
 	objs=`echo -e "$objs" | tail -n +2`
-	echo -e "$header"
+	
 	show_list "Объекты на токене $token" "$header" "$objs"
 }
 
@@ -384,6 +384,7 @@ function show_menu ()
 	then
 		return 1
 	fi
+
 	choice_id=`echo -e "$menu_list" | sed -n "/$choice/=" `
 	
 	cmd=`echo -e "$cmd_list" | sed "${choice_id}q;d"`

@@ -8,7 +8,7 @@ function show_list()
 	echo -e "$list" > list
 	
 	column=`echo -e "$column" | sed -r "s/\t/ --column /g"`
-	echo -e "${items[1]}" 1>&2
+	
 	choice=`$YAD --title "$title" --list --separator '' --column $column < list`
 	ret=$?
 	echo "$choice"
