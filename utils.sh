@@ -99,11 +99,13 @@ function set_dialog_manager ()
 	manager=$1
 	case $manager in 
 	"yad")
-		DIALOG_MANAGER="$YAD"
 		. "$TWO_FA_LIB_DIR/yad.sh"
 		;;
+	"python")
+                . "$TWO_FA_LIB_DIR/python_utils/gui_dialog.py"
+                ;;
+
 	*)
-		DIALOG_MANAGER="$DIALOG"
 		. "$TWO_FA_LIB_DIR/dialog.sh"
 		;;
 	esac
