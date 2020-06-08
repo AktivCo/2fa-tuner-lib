@@ -102,7 +102,7 @@ function set_dialog_manager ()
 		. "$TWO_FA_LIB_DIR/yad.sh"
 		;;
 	"python")
-                . "$TWO_FA_LIB_DIR/python_utils/gui_dialog.py"
+                . "$TWO_FA_LIB_DIR/python_gui.sh"
                 ;;
 
 	*)
@@ -366,7 +366,7 @@ function show_token_object ()
 	obj=`show_list "Объекты на токене $token" "$header" "$objs"`
 	
 	type=`echo "$obj" | cut -f1  -d ' '`
-	id=`echo "$obj" | cut -f2  -d ' '`
+	id=`echo "$obj" | cut -f2`
 	import_object "$token" "$type" "$id" "cert.crt"
 	xdg-open "cert.crt"
 }
