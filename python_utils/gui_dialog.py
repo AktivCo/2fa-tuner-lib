@@ -42,6 +42,7 @@ def show_list(title, columns):
 
     tree.bind("<Double-1>", onClick)
     root.mainloop()
+    exit(255)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Simple python gui dialog gregator')
