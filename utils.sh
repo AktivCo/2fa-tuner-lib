@@ -117,19 +117,38 @@ echoerr() { echo -e "Ошибка: $@" 1>&2; cleanup; exit; }
 
 function install_common_packages ()
 {
-	_install_common_packages
+	check_updates=$1
+	_install_common_packages $check_updates
+	
+	return $?	
 }
 
 function install_packages_for_local_auth ()
 {
-	install_common_packages
-        _install_packages_for_local_auth
+	check_updates=$1
+	install_common_packages $check_updates
+	if [[ $? -eq 1 ]]
+	then
+		return 1
+	fi
+
+        _install_packages_for_local_auth $check_updates
+	
+	return $?
 }
 
 function install_packages_for_domain_auth ()
 {
-	install_common_packages
-        _install_packages_for_domain_auth
+	check_updates=$1
+	install_common_packages  $check_updates
+	if [[ $? -eq 1 ]]
+        then
+                return 1
+        fi
+
+        _install_packages_for_domain_auth  $check_updates
+	
+	return $?
 }
 
 
@@ -417,7 +436,9 @@ function show_wait ()
 	dialog_pid=$!
 	
 	wait $pid
+	ret_code=$?
 	pkill -P $dialog_pid
+	return $ret_code
 }
 
 function show_menu ()

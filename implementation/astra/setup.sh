@@ -1,7 +1,32 @@
 #!/bin/bash
 
+function check_pkgs ()
+{
+        pkgs=$1
+        if [[ -z "`apt-get --just-print install $pkgs | grep "NEW"`" ]]
+        then
+                return 0
+        fi
+        return 1
+
+}
+
 function _install_common_packages ()
 {
+	local pkgs="libengine-pkcs11-openssl1.1 opensc libccid pcscd libp11-2 dialog"
+        check_update="$1"
+
+        if ! [[ -z "$check_updates" ]]
+        then
+                check_pkgs $pkgs
+                if  [[ $? -eq 0 && -f $LIBRTPKCS11ECP ]]
+                then
+                        return 0
+                fi
+
+                return 1
+        fi
+
 	sudo apt-get -qq update
 	if ! [[ -f $LIBRTPKCS11ECP ]]
 	then
@@ -10,14 +35,21 @@ function _install_common_packages ()
 		sudo cp librtpkcs11ecp.so $LIBRTPKCS11ECP;
 	fi
 
-	sudo apt-get -qq install libengine-pkcs11-openssl1.1 opensc libccid pcscd libp11-2 dialog;
-	if [[ $? -ne 0 ]]; then echoerr "Не могу установить один из пакетов: libengine-pkcs11-openssl1.1 opensc libccid pcscd libp11-2 dialog из репозитория"; fi
+	sudo apt-get -qq install $pkgs;
+	if [[ $? -ne 0 ]]; then echoerr "Не могу установить один из пакетов: $pkgs из репозитория"; fi
 }
 
 function _install_packages_for_local_auth ()
 {
-        sudo apt-get -qq install libpam-p11 libpam-pkcs11;
-        if [[ $? -ne 0 ]]; then echoerr "Не могу установить один из пакетов: libpam-p11 libpam-pkcs11 из репозитория"; fi
+        local pkgs="libpam-p11 libpam-pkcs11"
+        if ! [[ -z "$check_updates" ]]
+        then
+                check_pkgs $pkgs
+                return $?
+        fi
+
+        sudo apt-get -qq install $pkgs;
+        if [[ $? -ne 0 ]]; then echoerr "Не могу установить один из пакетов: $pkgs из репозитория"; fi
 }
 
 function _install_packages_for_domain_auth ()
