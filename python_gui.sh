@@ -35,3 +35,11 @@ function yesno ()
 	text="$2"
 	python3 $TWO_FA_LIB_DIR/python_utils/gui_dialog.py YESNO --title "$title" --text "$text"
 }
+
+function show_wait_dialog()
+{
+        title="$1"
+        text="$2"
+        python3 $TWO_FA_LIB_DIR/python_utils/gui_dialog.py SHOW_WAIT --title "$title" --text "$text"
+}
+

@@ -38,3 +38,9 @@ function yesno ()
 	return $?
 }
 
+function show_wait_dialog ()
+{
+        $TODO
+        show_text "$1" "$2"
+}
+

@@ -431,7 +431,7 @@ function show_wait ()
 	title="$2"
 	text="$3"
 
-	show_text "$title" "$text" &
+	show_wait_dialog "$title" "$text" &
 
 	dialog_pid=$!
 	

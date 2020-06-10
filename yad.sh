@@ -36,3 +36,10 @@ function yesno ()
 	text="$2"
 	$SIMPLE_YAD --title "$title" --text "$text" --no-markup --button=gtk-yes:0 --button=gtk-no:1 
 }
+
+function show_wait_dialog ()
+{
+	$TODO
+	show_text "$1" "$2"
+}
+
