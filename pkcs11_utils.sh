@@ -134,9 +134,7 @@ function pkcs11_format_token ()
 	local admin_pin="$3"
 	PIN=$user_pin
 	
-	pkcs15-init --erase-card
-	pkcs15-init --create-pkcs15 --so-pin "$admin_pin" --so-puk "" 
-	pkcs15-init --store-pin --label "User PIN" --auth-id 02 --pin "$user_pin" --puk "" --so-pin "$admin_pin"
+	rtadmin -f -u $user_pin -a $admin_pin -q
 }
 
 function pkcs11_change_user_pin ()
