@@ -167,6 +167,6 @@ function import_object ()
 	local type=$2
 	local id=$3
 	local file=$4
-	pkcs11-tool --module "$LIBRTPKCS11ECP" -r --type "$type" --id "$id" -l -p $PIN > $file
+	pkcs11-tool --module "$LIBRTPKCS11ECP" --slot-description "$token" -r --type "$type" --id "$id" -l -p $PIN > $file
 	
 }
