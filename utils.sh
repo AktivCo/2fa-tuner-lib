@@ -345,7 +345,12 @@ function choose_token ()
         get_token_list > get_token_list_res &
 	show_wait $! "Подождите" "Подождите, идет получение списка токенов"
         token_list=`cat get_token_list_res`
-	token_list=`echo -e "${token_list}\nОбновить список"`
+	if [[ -z "${token_list}" ]]
+	then
+		token_list="Обновить список"
+	else
+		token_list=`echo -e "${token_list}\nОбновить список"`
+	fi
 	choice=`show_list "Выбор токена" "Name" "$token_list"`
         
 	if [ $? -ne 0 ]
