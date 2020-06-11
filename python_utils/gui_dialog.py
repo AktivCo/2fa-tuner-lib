@@ -21,7 +21,6 @@ def yesno(title, text):
 def show_msg(title, text):
     tk.Tk().withdraw()
     messagebox.showinfo(title, text)
-    root.mainloop()
 
 def get_pass(title, text):
     root = tk.Tk()
@@ -64,14 +63,24 @@ def show_list(title, columns):
     for item in rows:
         tree.insert('', 'end', values=item)
 
-    tree.pack(fill='both', expand=1)
+    buttonFrame= tk.Frame(root)
+    cancelButton = tk.Button(buttonFrame, text="Cancel", command= lambda: exit(255))
     
-    def onClick(event):
+    
+    def okButtonClicked(event):
         item = tree.selection()[0]
         print("\t".join(tree.item(item, "values")))
         exit(0)
 
-    tree.bind("<Double-1>", onClick)
+    tree.bind("<Double-1>", okButtonClicked)
+    
+    okButton = tk.Button(buttonFrame, text="OK", command= okButtonClicked)
+    
+    tree.pack(fill='both', expand=1)
+    okButton.pack(side=tk.RIGHT, padx=10, pady=10)
+    cancelButton.pack(side=tk.RIGHT, padx=10, pady=10)
+    buttonFrame.pack(fill='x')
+
     center(root)
     root.mainloop()
     exit(255)
