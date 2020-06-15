@@ -1,13 +1,14 @@
-from tkinter import messagebox
-from tkinter import simpledialog
 from tkinter import ttk
 import tkinter as tk
 
 import argparse
 from sys import argv, stdin
 
-def center(win):
+def center_and_style(win):
     win.update_idletasks()
+    win.style = ttk.Style()
+    win.style.theme_use("clam")
+    
     width = win.winfo_width()
     height = win.winfo_height()
     x = (win.winfo_screenwidth() // 2) - (width // 2)
@@ -15,26 +16,50 @@ def center(win):
     win.geometry('{}x{}+{}+{}'.format(width, height, x, y))
 
 def yesno(title, text):
-    tk.Tk().withdraw()
-    return messagebox.askquestion (title, text)
+    root = tk.Tk()
+    passwordtext = ttk.Label(root, text=text)
+
+    buttonFrame= ttk.Frame(root)
+    noButton = ttk.Button(buttonFrame, text="No", command= lambda: exit(1))
+
+    yesButton = tk.Button(buttonFrame, text="Yes", command= lambda: exit(0))
+
+    yesButton.pack(side=tk.RIGHT, padx=10, pady=10)
+    noButton.pack(side=tk.RIGHT, padx=10, pady=10)
+    buttonFrame.pack(fill='both', expand=1)
+    
+    center_and_style(root)
+    root.mainloop()
+    exit(255)
 
 def show_msg(title, text):
-    tk.Tk().withdraw()
-    messagebox.showinfo(title, text)
+    root = tk.Tk()
+    passwordtext = ttk.Label(root, text=text)
+
+    buttonFrame= ttk.Frame(root)
+    okButton = ttk.Button(buttonFrame, text="Ok", command= lambda: exit(0))
+
+    okButton.pack(side=tk.RIGHT, padx=10, pady=10)
+    buttonFrame.pack(fill='both', expand=1)
+    
+    center_and_style(root)
+    root.mainloop()
+    exit(255)
+
 
 def get_pass(title, text):
     root = tk.Tk()
-    passwordtext = tk.Label(root, text=text)
-    passwordguess = tk.Entry(root, show="*") 
+    passwordtext = ttk.Label(root, text=text)
+    passwordguess = ttk.Entry(root, show="*") 
     
-    buttonFrame= tk.Frame(root)
-    cancelButton = tk.Button(buttonFrame, text="Cancel", command= lambda: exit(255))
+    buttonFrame= ttk.Frame(root)
+    cancelButton = ttk.Button(buttonFrame, text="Cancel", command= lambda: exit(255))
 
-    def okButtonClicked(event):    
+    def okButtonClicked():    
         print(passwordguess.get())
         exit(0)
 
-    okButton = tk.Button(buttonFrame, text="OK", command= okButtonClicked)
+    okButton = ttk.Button(buttonFrame, text="Ok", command= okButtonClicked)
     root.bind('<Return>', okButtonClicked)
 
     passwordtext.pack()
@@ -42,7 +67,8 @@ def get_pass(title, text):
     cancelButton.pack(side=tk.LEFT, padx=10, pady=10)
     okButton.pack(side=tk.RIGHT, padx=10, pady=10)
     buttonFrame.pack(fill='both', expand=1)
-    center(root)
+    
+    center_and_style(root)
     root.mainloop()
     exit(255)
 
@@ -63,8 +89,8 @@ def show_list(title, columns):
     for item in rows:
         tree.insert('', 'end', values=item)
 
-    buttonFrame= tk.Frame(root)
-    cancelButton = tk.Button(buttonFrame, text="Cancel", command= lambda: exit(255))
+    buttonFrame= ttk.Frame(root)
+    cancelButton = ttk.Button(buttonFrame, text="Cancel", command= lambda: exit(255))
     
     
     def okButtonClicked(event):
@@ -74,28 +100,28 @@ def show_list(title, columns):
 
     tree.bind("<Double-1>", okButtonClicked)
     
-    okButton = tk.Button(buttonFrame, text="OK", command= okButtonClicked)
+    okButton = ttk.Button(buttonFrame, text="OK", command= okButtonClicked)
     
     tree.pack(fill='both', expand=1)
     okButton.pack(side=tk.RIGHT, padx=10, pady=10)
     cancelButton.pack(side=tk.RIGHT, padx=10, pady=10)
     buttonFrame.pack(fill='x')
 
-    center(root)
+    center_and_style(root)
     root.mainloop()
     exit(255)
 
 def show_wait(title, text):
     root = tk.Tk()
     root.title(title)
-    label = tk.Label(text=text)
+    label = ttk.Label(text=text)
     label.pack()
     
     processing_bar = ttk.Progressbar(root, orient='horizontal', mode='indeterminate')
     processing_bar.pack(fill='both', expand=1, padx=10, pady=10)
     
     processing_bar.start(30)
-    center(root)
+    center_and_style(root)
     root.mainloop()
 
 if __name__ == "__main__":
