@@ -91,6 +91,7 @@ function init()
 	SCRIPT_DIR=`dirname $SCRIPT`
 
 	cd $(mktemp -d);
+	TMP_DIR=`pwd`
 }
 
 function set_dialog_manager ()
@@ -111,7 +112,7 @@ function set_dialog_manager ()
 	esac
 }
 
-function cleanup() { rm -rf `pwd`; cd "$CUR_DIR"; }
+function cleanup() { rm -rf $TMP_DIR; cd "$CUR_DIR"; }
 
 echoerr() { echo -e "Ошибка: $@" 1>&2; cleanup; exit; }
 
