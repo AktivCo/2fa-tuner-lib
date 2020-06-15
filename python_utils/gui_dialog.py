@@ -23,7 +23,7 @@ def yesno(title, text):
     buttonFrame= ttk.Frame(root)
     noButton = ttk.Button(buttonFrame, text="No", command= lambda: exit(1))
 
-    yesButton = tk.Button(buttonFrame, text="Yes", command= lambda: exit(0))
+    yesButton = ttk.Button(buttonFrame, text="Yes", command= lambda: exit(0))
 
     text.pack(expand=1)
     yesButton.pack(side=tk.RIGHT, padx=10, pady=10)

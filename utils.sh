@@ -389,7 +389,12 @@ function show_token_object ()
 	
 	obj=`show_list "Объекты на токене $token" "$header" "$objs"`
 	
-	type=`echo "$obj" | cut -f1  -d ' '`
+	if ! [[ -z "$obj" ]]
+	then
+		return 0
+	fi
+
+	type=`echo "$obj" | cut -f1`
 	id=`echo "$obj" | cut -f2`
 	import_object "$token" "$type" "$id" "cert.crt"
 	xdg-open "cert.crt"
