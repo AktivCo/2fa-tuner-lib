@@ -16,8 +16,7 @@ def center_and_style(win):
     y = (win.winfo_screenheight() // 2) - (height // 2)
     win.geometry('{}x{}+{}+{}'.format(width, height, x, y))
 
-def yesno(title, text):
-    root = tk.Tk()
+def yesno(root, text):
     text = ttk.Label(root, text=text)
 
     buttonFrame= ttk.Frame(root)
@@ -34,9 +33,7 @@ def yesno(title, text):
     root.mainloop()
     exit(255)
 
-def show_msg(title, text):
-    root = tk.Tk()
-    root.title(title)
+def show_msg(root, text):
     msg = ttk.Label(root, text=text)
 
     buttonFrame= ttk.Frame(root)
@@ -46,13 +43,7 @@ def show_msg(title, text):
     okButton.pack(side=tk.RIGHT, padx=10, pady=10)
     buttonFrame.pack(fill='both', expand=1)
     
-    center_and_style(root)
-    root.mainloop()
-    exit(255)
-
-def get_pass(title, text):
-    root = tk.Tk()
-    root.title(title)
+def get_pass(root, text):
     passwordtext = ttk.Label(root, text=text)
     passwordguess = ttk.Entry(root, show="*") 
     
@@ -72,13 +63,8 @@ def get_pass(title, text):
     cancelButton.pack(side=tk.RIGHT, padx=10)
     buttonFrame.pack(fill='x', expand=1, padx=10, pady=3)
     
-    center_and_style(root)
-    root.mainloop()
-    exit(255)
 
-def show_list(title, columns):
-    root = tk.Tk()
-    root.title(title)
+def show_list(root, columns):
     rows=[]
 
     for line in stdin:
@@ -111,13 +97,7 @@ def show_list(title, columns):
     cancelButton.pack(side=tk.LEFT, padx=10, pady=10)
     buttonFrame.pack(fill='x', expand=1)
 
-    center_and_style(root)
-    root.mainloop()
-    exit(255)
-
-def show_wait(title, text):
-    root = tk.Tk()
-    root.title(title)
+def show_wait(root, text):
     label = ttk.Label(text=text)
     
     processing_bar = ttk.Progressbar(root, orient='horizontal', mode='indeterminate')
@@ -126,8 +106,6 @@ def show_wait(title, text):
     processing_bar.pack(fill='both', expand=1, padx=10, pady=10)
     
     processing_bar.start(30)
-    center_and_style(root)
-    root.mainloop()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Simple python gui dialog gregator')
@@ -135,23 +113,31 @@ if __name__ == "__main__":
     parser.add_argument('--title', type=str)
     parser.add_argument('--text', type=str)
     parser.add_argument('--column', action='append')
+    parser.add_argument('--extra', nargs=2, action='append')
+
     args = parser.parse_args(argv[1:])
 
     if len(args.cmd) == 0:
         exit(255)
     
+    root = tk.Tk()
+    root.title(args.title)
+
     if args.cmd[0] == 'LIST':
-        show_list(args.title, args.column)
+        show_list(root, args.column)
     if args.cmd[0] == 'GET_PASS':
-        get_pass(args.title, args.text)
+        get_pass(root, args.text)
     if args.cmd[0] == 'SHOW_TEXT':
-        show_msg(args.title, args.text)
+        show_msg(root, args.text)
     if args.cmd[0] == 'SHOW_WAIT':
-        show_wait(args.title, args.text)
+        show_wait(root, args.text)
     if args.cmd[0] == 'YESNO':
-        answer = yesno(args.title, args.text)
+        answer = yesno(root, args.text)
         if answer == "yes":
             exit(0)
         else:
             exit(1)
 
+    center_and_style(root)
+    root.mainloop()
+    exit(255)
