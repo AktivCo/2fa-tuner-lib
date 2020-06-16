@@ -415,7 +415,7 @@ function show_token_info ()
         get_token_info "$token" > get_token_info_res &
 	show_wait $! "Подождите" "Подождите, идет получение информации о токене"
 	token_info=`cat get_token_info_res`
-	show_text "$token" "`echo -e "Информация об устройстве:\n$token_info"`"
+	show_list "Информация об устройстве $token" "Attr\tval" "$token_info"
 	return 0
 }
 
@@ -431,7 +431,7 @@ function show_token_object ()
 	
 	obj=`show_list "Объекты на токене $token" "$header" "$objs"`
 	
-	if ! [[ -z "$obj" ]]
+	if [[ -z "$obj" ]]
 	then
 		return 0
 	fi

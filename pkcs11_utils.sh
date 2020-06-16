@@ -164,7 +164,8 @@ function get_token_list ()
 
 function get_token_info ()
 {
-        token_info=`pkcs11-tool --module /usr/lib/librtpkcs11ecp.so -T | awk -v token="$1" '$0 ~ token {print; for(i=1; i<=8; i++) { getline; print}}'`
+	token=$1
+        token_info=`pkcs11-tool --module $LIBRTPKCS11ECP -T | awk -v token="$token" '$0 ~ token {print; for(i=1; i<=8; i++) { getline; print}}' | awk '{$1=$1;print}' | sed -E "s/[[:space:]]*:[[:space:]]+/\t/"`
         echo -e "$token_info"
 	return 0
 }
