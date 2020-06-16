@@ -11,6 +11,11 @@ function token_present ()
 	return 0
 }
 
+function specific_token_present ()
+{
+	cnt=`lsusb | grep "0a89:0030" | wc -l`
+}
+
 function get_cert_list ()
 {
 	cert_ids=`pkcs11-tool --module $LIBRTPKCS11ECP -O --type cert 2> /dev/null | grep -Eo "ID:.*" |  awk '{print $2}'`;

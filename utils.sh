@@ -524,3 +524,32 @@ function show_menu ()
 	
 	return 0
 }
+
+function follow_token()
+{
+	menu_pid=$1
+	token="$2"
+
+	token_present=1
+	while  [[ "$token_present" -eq 1 ]]
+	do
+		echo > pcsc_scan_res
+		pcsc_scan -r > pcsc_scan_res &
+		pcsc_pid=$!
+		sleep 1
+		pkill $pcsc_pid
+
+		if ! ps -p $menu_pid > /dev/null
+		then
+   			return 0
+		fi
+
+		if [[ -z "`cat pcsc_scan_res | grep \"$token\"`" ]]
+		then
+			token_present=0
+		fi
+	done
+	
+	kill -- -$(ps -o pgid= $menu_pid | grep -o [0-9]*)	
+	return 1
+}
