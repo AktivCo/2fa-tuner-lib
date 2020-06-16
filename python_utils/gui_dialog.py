@@ -27,11 +27,7 @@ def yesno(root, text):
     text.pack(expand=1)
     yesButton.pack(side=tk.RIGHT, padx=10, pady=10)
     noButton.pack(side=tk.RIGHT, padx=10, pady=10)
-    buttonFrame.pack(fill='both', expand=1)
-    
-    center_and_style(root)
-    root.mainloop()
-    exit(255)
+    buttonFrame.pack(fill='x', side=tk.BOTTOM)
 
 def show_msg(root, text):
     msg = ttk.Label(root, text=text)
@@ -41,7 +37,7 @@ def show_msg(root, text):
 
     msg.pack(pady=10, padx=10)
     okButton.pack(side=tk.RIGHT, padx=10, pady=10)
-    buttonFrame.pack(fill='both', expand=1)
+    buttonFrame.pack(fill='x', side=tk.BOTTOM)
     
 def get_pass(root, text):
     passwordtext = ttk.Label(root, text=text)
@@ -61,8 +57,7 @@ def get_pass(root, text):
     passwordguess.pack(fill='both', expand=1, padx=10, ipady=3)
     okButton.pack(side=tk.RIGHT, padx=10)
     cancelButton.pack(side=tk.RIGHT, padx=10)
-    buttonFrame.pack(fill='x', expand=1, padx=10, pady=3)
-    
+    buttonFrame.pack(fill='x', padx=10, pady=3, side=tk.BOTTOM)
 
 def show_list(root, columns):
     rows=[]
@@ -82,8 +77,7 @@ def show_list(root, columns):
     buttonFrame= ttk.Frame(root)
     cancelButton = ttk.Button(buttonFrame, text="Cancel", command= lambda: exit(255))
     
-    
-    def okButtonClicked(event):
+    def okButtonClicked(event=None):
         item = tree.selection()[0]
         print("\t".join(tree.item(item, "values")))
         exit(0)
@@ -94,8 +88,8 @@ def show_list(root, columns):
     
     tree.pack(fill='both', expand=1)
     okButton.pack(side=tk.RIGHT, padx=10, pady=10)
-    cancelButton.pack(side=tk.LEFT, padx=10, pady=10)
-    buttonFrame.pack(fill='x', expand=1)
+    cancelButton.pack(side=tk.RIGHT, padx=10, pady=10)
+    buttonFrame.pack(fill='x', side=tk.BOTTOM)
 
 def show_wait(root, text):
     label = ttk.Label(text=text)
