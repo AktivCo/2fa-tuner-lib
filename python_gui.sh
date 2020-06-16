@@ -3,12 +3,19 @@ function show_list()
 	local title="$1"
 	local column="$2"
 	local list="$3"
+	local extra_name="$4"
+	local extra_cmd="$5"
 	
 	echo -e "$list" > list
 	
 	column=`echo -e "$column" | sed -r "s/\t/ --column /g"`
 	
-	choice=`python3 $TWO_FA_LIB_DIR/python_utils/gui_dialog.py LIST --title "$title" --column $column < list`
+	if [[ -z "$extra_name" ]]
+	then
+		choice=`python3 $TWO_FA_LIB_DIR/python_utils/gui_dialog.py LIST --title "$title" --column $column < list`
+	else
+		choice=`python3 $TWO_FA_LIB_DIR/python_utils/gui_dialog.py LIST --title "$title" --column $column --extra "$extra_name" "$extra_cmd" < list`
+	fi
 	ret=$?
 	echo "$choice"
 	return $ret 

@@ -88,7 +88,7 @@ def show_list(root, columns):
     
     tree.pack(fill='both', expand=1)
     okButton.pack(side=tk.RIGHT, padx=10, pady=10)
-    cancelButton.pack(side=tk.RIGHT, padx=10, pady=10)
+    cancelButton.pack(side=tk.LEFT, padx=10, pady=10)
     buttonFrame.pack(fill='x', side=tk.BOTTOM)
 
 def show_wait(root, text):
@@ -131,7 +131,10 @@ if __name__ == "__main__":
     if args.extra:
         extraButtonFrame= ttk.Frame(root)
         for cmd_name, cmd in args.extra:
-            btn = ttk.Button(extraButtonFrame, text=cmd_name, command= lambda: print("extra\n" + cmd))
+            def onClickCmd():
+                print(cmd)
+                exit(0)
+            btn = ttk.Button(extraButtonFrame, text=cmd_name, command=onClickCmd)
             btn.pack(side=tk.RIGHT, padx=10, fill="x", expand=1)
         extraButtonFrame.pack(fill="x")
 
