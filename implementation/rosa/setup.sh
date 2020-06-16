@@ -3,29 +3,45 @@
 function _install_common_packages ()
 {
 	sudo urpmi --force ccid opensc p11-kit rpmdevtools dialog libp11-devel engine_pkcs11
-	if [[ $? -ne 0 ]]; then echoerr "Не могу установить один из пакетов: ccid opensc p11-kit rpmdevtools dialog libp11-devel engine_pkcs11 из репозитория"; fi
+	if [[ $? -ne 0 ]]
+	then
+		echoerr "Не могу установить один из пакетов: ccid opensc p11-kit rpmdevtools dialog libp11-devel engine_pkcs11 из репозитория"
+		return 1
+	fi
 
 	if ! [[ -f $LIBRTPKCS11ECP ]]
         then
                 wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/PKCS11Lib/Current/Linux/x64/librtpkcs11ecp.so";
-                if [[ $? -ne 0 ]]; then echoerr "Не могу скачать пакет librtpkcs11ecp.so"; fi
+                if [[ $? -ne 0 ]]
+		then
+			echoerr "Не могу скачать пакет librtpkcs11ecp.so"
+			return 1
+		fi
                 sudo cp librtpkcs11ecp.so $LIBRTPKCS11ECP;
         fi
 
 	sudo systemctl restart pcscd
+
+	return 0
 }
 
 function _install_packages_for_local_auth ()
 {
         sudo urpmi --force pam_pkcs11 pam_pkcs11-tools
 
-        if [[ $? -ne 0 ]]; then echoerr "Не могу установить один из пакетов: pam_pkcs11 pam_pkcs11-tools из репозитория"; fi
+        if [[ $? -ne 0 ]]
+	then
+		echoerr "Не могу установить один из пакетов: pam_pkcs11 pam_pkcs11-tools из репозитория"
+		return 1
+	fi
+
         sudo systemctl restart pcscd
+	return 0
 }
 
 function _install_packages_for_domain_auth ()
 {
-        echo
+        return 0
 }
 
 function _setup_local_authentication ()
@@ -60,15 +76,18 @@ function _setup_local_authentication ()
 	then
 		awk "$pam_pkcs11_insert" $sys_auth | sudo tee $sys_auth  > /dev/null
 	fi
+
+	return 0
 }
 
 function _setup_autolock ()
 {
 	sudo cp "$IMPL_DIR/smartcard-screensaver.desktop" /etc/xdg/autostart/smartcard-screensaver.desktop
+	return 0
 }
 
 function _setup_domain_authentication ()
 {
-        echo
+        return 0
 }
 

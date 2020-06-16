@@ -25,9 +25,15 @@ function _install_common_packages ()
 	sudo apt-get -qq update
 	sudo apt-get -qq install $pkgs 
 	LIBRTPKCS11ECP=`whereis  librtpkcs11ecp | cut -d " " -f 2`
-	if [[ $? -ne 0 ]]; then echoerr "Не могу установить один из пакетов: $pkgs из репозитория"; fi
+	if [[ $? -ne 0 ]]
+	then
+		echoerr "Не могу установить один из пакетов: $pkgs из репозитория"
+		return 1
+	fi
 	
 	sudo systemctl restart pcscd
+
+	return 0
 }
 
 
@@ -41,14 +47,19 @@ function _install_packages_for_local_auth ()
         fi
 
         sudo apt-get -qq install $pkgs;
-        if [[ $? -ne 0 ]]; then echoerr "Не могу установить один из пакетов: $pkgs из репозитория"; fi
+        if [[ $? -ne 0 ]]
+	then
+		echoerr "Не могу установить один из пакетов: $pkgs из репозитория"
+		return 1
+	fi
 
         sudo systemctl restart pcscd
+	return 0
 }
 
 function _install_packages_for_domain_auth ()
 {
-        echo
+        return 0
 }
 
 function _setup_local_authentication ()
@@ -83,15 +94,18 @@ function _setup_local_authentication ()
 	then
 		awk "$pam_pkcs11_insert" $sys_auth | sudo tee $sys_auth  > /dev/null  
 	fi
+
+	return 0
 }
 
 function _setup_autolock ()
 {
 	sudo cp "$IMPL_DIR/smartcard-screensaver.desktop" /etc/xdg/autostart/smartcard-screensaver.desktop
+	return 0
 }
 
 function _setup_domain_authentication ()
 {
-        echo
+        return 0
 }
 

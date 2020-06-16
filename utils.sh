@@ -92,6 +92,8 @@ function init()
 
 	cd $(mktemp -d);
 	TMP_DIR=`pwd`
+	
+	return 0
 }
 
 function set_dialog_manager ()
@@ -110,18 +112,20 @@ function set_dialog_manager ()
 		. "$TWO_FA_LIB_DIR/dialog.sh"
 		;;
 	esac
+
+	return 0
 }
 
-function cleanup() { rm -rf $TMP_DIR; cd "$CUR_DIR"; }
+function cleanup() { rm -rf $TMP_DIR; cd "$CUR_DIR"; return 0; }
 
-echoerr() { echo -e "Ошибка: $@" 1>&2; cleanup; exit; }
+echoerr() { echo -e "Ошибка: $@" 1>&2; return 0; }
 
 function install_common_packages ()
 {
 	check_updates=$1
 	_install_common_packages $check_updates
 	
-	return $?	
+	return $?
 }
 
 function install_packages_for_local_auth ()
@@ -130,6 +134,7 @@ function install_packages_for_local_auth ()
 	install_common_packages $check_updates
 	if [[ $? -eq 1 ]]
 	then
+		echoerr "can't install common packages"
 		return 1
 	fi
 
@@ -144,6 +149,7 @@ function install_packages_for_domain_auth ()
 	install_common_packages  $check_updates
 	if [[ $? -eq 1 ]]
         then
+		echoerr "can't install common packages"
                 return 1
         fi
 
@@ -156,6 +162,7 @@ function install_packages_for_domain_auth ()
 function setup_local_authentication ()
 {
 	_setup_local_authentication "$1" "$2"
+	return $?
 }
 
 function setup_autolock ()
@@ -163,6 +170,7 @@ function setup_autolock ()
 	LIBRTPKCS11ECP="$LIBRTPKCS11ECP" LOCK_SCREEN_CMD="$LOCK_SCREEN_CMD" envsubst < "$TWO_FA_LIB_DIR/common_files/pkcs11_eventmgr.conf" | sudo tee "$PAM_PKCS11_DIR/pkcs11_eventmgr.conf" > /dev/null
 	_setup_autolock
 	sudo systemctl daemon-reload
+	return $?
 }
 
 function setup_domain_authentication ()
@@ -171,11 +179,15 @@ function setup_domain_authentication ()
 	sudo mkdir $IPA_NSSDB_DIR 2> /dev/null;
 	if ! [ "$(ls -A $IPA_NSSDB_DIR)" ]
 	then
-	sudo certutil -N -d "$IPA_NSSDB_DIR"
+		sudo certutil -N -d "$IPA_NSSDB_DIR"
 	fi
 
 	CA_path=`$DIALOG --title "Укажите путь до корневого сертификата" --fselect "$HOME" 0 0`;
-	if ! [ -f "$CA_path" ]; then echoerr "$CA_path doesn't exist"; fi
+	if ! [ -f "$CA_path" ]
+	then 
+		echoerr "$CA_path doesn't exist"
+		return 1
+	fi
 
 	sudo certutil -A -d $IPA_NSSDB_DIR -n 'IPA CA' -t CT,C,C -a -i "$CA_path"
 	sudo modutil -dbdir "$IPA_NSSDB_DIR" -add "My PKCS#11 module" -libfile librtpkcs11ecp.so 2> /dev/null;
@@ -191,6 +203,8 @@ function setup_domain_authentication ()
 	_setup_domain_authentication
 
 	sudo systemctl restart sssd
+	
+	return 0
 }
 
 function choose_cert ()
@@ -199,7 +213,7 @@ function choose_cert ()
 	if [[ -z "$cert_ids" ]]
 	then
 		echo "None"
-		exit
+		return 0
 	fi
 
 	cert_ids=`echo -e "$cert_ids\n\"Новый сертификат\""`;
@@ -207,6 +221,8 @@ function choose_cert ()
 	cert_id=`echo $cert_ids | xargs $DIALOG --title "Выбор сертификата" --menu "Выбeрите сертификат" 0 0 0`;
 	cert_id=`echo "$cert_ids" | sed "${cert_id}q;d" | cut -f2 -d$'\t'`;
 	echo "$cert_id"
+
+	return 0
 }
 
 function choose_user ()
@@ -221,6 +237,8 @@ function choose_user ()
 		user=`echo "$users" | sed "${user}q;d" | cut -f2 -d$'\t'`;
 	fi
 	echo "$user"
+
+	return 0
 }
 
 function choose_key ()
@@ -229,7 +247,7 @@ function choose_key ()
 	if [[ -z "$key_ids" ]]
 	then
 		echo "Нет ключей"
-	exit;
+		return 0
 	fi
 
 	key_ids=`echo -e "$key_ids\n\"Новый ключ\""`;
@@ -237,32 +255,39 @@ function choose_key ()
 	key_id=`echo $key_ids | xargs $DIALOG --title "Выбор ключа" --menu "Выберите ключ" 0 0 0`;
 	key_id=`echo "$key_ids" | sed "${key_id}q;d" | cut -f2 -d$'\t'`;
 	echo "$key_id"
+
+	return 0
 }
 
 function gen_cert_id ()
 {
 	res="1"
+	cert_ids=`get_cert_list`
+	
 	while [[ -n "$res" ]]
 	do
-		cert_ids=`get_cert_list`
 		rand=`echo $(( $RANDOM % 10000 ))`
 		res=`echo $cert_ids | grep -w $rand`
 	done
 	
 	echo "$rand"
+
+	return 0
 }
 
 function gen_key_id ()
 {
 	res="1"
+	key_ids=`get_key_list`
 	while [[ -n "$res" ]]
 	do
-		cert_ids=`get_key_list`
 		rand=`echo $(( $RANDOM % 10000 ))`
-		res=`echo $cert_ids | grep -w $rand`
+		res=`echo $key_ids | grep -w $rand`
 	done
 
 	echo "$rand"
+
+	return 0
 }
 
 function import_cert ()
@@ -272,6 +297,7 @@ function import_cert ()
 	if [[ -z "$key_ids" ]]
 	then
 		echoerr "На Рутокене нет ключей";
+		return 1
 	fi
 
 	key_ids=`echo "$key_ids" | awk '{printf("%s\t%s\n", NR, $0)}'`;
@@ -280,11 +306,14 @@ function import_cert ()
 
 	openssl x509 -in $cert_path -out cert.crt -inform PEM -outform DER;
 	import_cert_on_token cert.crt $key_id
+
+	return $?
 }
 
 function get_token_password ()
 {
 	get_password "Ввод PIN-кода" "Введите PIN-код от Рутокена:"
+	return $?
 }
 
 function get_cert_subj ()
@@ -310,6 +339,7 @@ function get_cert_subj ()
 
 	
 	echo "\"$C$ST$L$O$OU$CN$email\""
+	return 0
 }
 
 function create_cert_req ()
@@ -322,14 +352,24 @@ function create_cert_req ()
 
 	pkcs11_create_cert_req $cert_id "$subj" "$req_path" 0
 
-	if [[ $? -ne 0 ]]; then echoerr "Не удалось создать заявку на сертификат открытого ключа"; fi
+	if [[ $? -ne 0 ]]
+	then
+		echoerr "Не удалось создать заявку на сертификат открытого ключа"
+		return 1
+	fi
+
+	return 0
 }
 
 function create_key_and_cert ()
 {
         cert_id=`gen_cert_id`
         out=`gen_key $cert_id`
-        if [[ $? -ne 0 ]]; then echoerr "Не удалось создать ключевую пару: $out"; fi
+        if [[ $? -ne 0 ]]
+	then
+		echoerr "Не удалось создать ключевую пару: $out"
+		return 1
+	fi
 
         choice=`$DIALOG --stdout --title "Создание сертификата" --menu "Укажите опцию" 0 0 0 1 "Создать самоподписанный сертификат" 2 "Создать заявку на сертификат"`
         
@@ -337,8 +377,14 @@ function create_key_and_cert ()
 	
 	pkcs11_create_cert_req $cert_id "$subj" "$req_path" $choice
 	
-        if [[ $? -ne 0 ]]; then echoerr "Не удалось загрзить сертификат на токен"; fi
-        echo $cert_id
+        if [[ $? -ne 0 ]]
+	then
+		echoerr "Не удалось загрзить сертификат на токен"
+		return 1
+	fi
+        
+	echo $cert_id
+	return 0
 }
 
 function choose_token ()
@@ -376,6 +422,7 @@ function show_token_info ()
 	show_wait $! "Подождите" "Подождите, идет получение информации о токене"
 	token_info=`cat get_token_info_res`
 	show_text "$token" "`echo -e "Информация об устройстве:\n$token_info"`"
+	return 0
 }
 
 function show_token_object ()
@@ -399,6 +446,7 @@ function show_token_object ()
 	id=`echo "$obj" | cut -f2`
 	import_object "$token" "$type" "$id" "cert.crt"
 	xdg-open "cert.crt"
+	return 0
 }
 
 function format_token ()
@@ -409,6 +457,7 @@ function format_token ()
         local admin_pin=`get_password "Ввод PIN-кода" "Введите новый PIN-код администратора:"`
 	pkcs11_format_token "$token" "$user_pin" "$admin_pin" &
 	show_wait $! "Подождите" "Подождите, идет форматирование"
+	return $?
 }
 
 function change_user_pin ()
@@ -417,6 +466,7 @@ function change_user_pin ()
         local new_user_pin=`get_password "Ввод PIN-кода" "Введите новый PIN-код пользователя:"`
 	pkcs11_change_user_pin "$token" "$new_user_pin"	&
 	show_wait $! "Подождите" "Подождите, идет изменение PIN кода"
+	return $?
 }
 
 function change_admin_pin ()
@@ -426,6 +476,7 @@ function change_admin_pin ()
         local admin_pin=`get_password "Ввод PIN-кода" "Введите новый PIN-код администратора:"`
 	pkcs11_change_user_pin "$token" "$old_admin_pin" "$admin_pin" &
         show_wait $! "Подождите" "Подождите, идет изменение PIN кода"
+	return $?
 }
 
 function unlock_pin ()
@@ -434,6 +485,7 @@ function unlock_pin ()
         local admin_pin=`get_password "Ввод PIN-кода" "Введите PIN-код администратора:"`
 	pkcs11_change_user_pin "$token" "$admin_pin" &
         show_wait $! "Подождите" "Подождите, идет разблокировка PIN кода"
+	return $?
 }
 
 function show_wait ()
@@ -469,5 +521,6 @@ function show_menu ()
 	
 	cmd=`echo -e "$cmd_list" | sed "${choice_id}q;d"`
 	$cmd "$token"
+	
 	return 0
 }

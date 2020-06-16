@@ -31,12 +31,22 @@ function _install_common_packages ()
 	if ! [[ -f $LIBRTPKCS11ECP ]]
 	then
 		wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/PKCS11Lib/Current/Linux/x64/librtpkcs11ecp.so";
-        	if [[ $? -ne 0 ]]; then echoerr "Не могу скачать пакет librtpkcs11ecp.so"; fi 
+        	if [[ $? -ne 0 ]]
+		then
+			echoerr "Не могу скачать пакет librtpkcs11ecp.so"
+			return 1
+		fi 
 		sudo cp librtpkcs11ecp.so $LIBRTPKCS11ECP;
 	fi
 
 	sudo apt-get -qq install $pkgs;
-	if [[ $? -ne 0 ]]; then echoerr "Не могу установить один из пакетов: $pkgs из репозитория"; fi
+	if [[ $? -ne 0 ]]
+	then
+		echoerr "Не могу установить один из пакетов: $pkgs из репозитория"
+		return 1
+	fi
+	
+	return 0
 }
 
 function _install_packages_for_local_auth ()
@@ -49,12 +59,18 @@ function _install_packages_for_local_auth ()
         fi
 
         sudo apt-get -qq install $pkgs;
-        if [[ $? -ne 0 ]]; then echoerr "Не могу установить один из пакетов: $pkgs из репозитория"; fi
+        if [[ $? -ne 0 ]]
+	then
+		echoerr "Не могу установить один из пакетов: $pkgs из репозитория"
+		return 1
+	fi
+
+	return 0
 }
 
 function _install_packages_for_domain_auth ()
 {
-	echo
+	return 0
 }
 
 function _setup_local_authentication ()
@@ -73,16 +89,20 @@ function _setup_local_authentication ()
 	chown $user:$user -R $home/.eid
 	read -p "ВАЖНО: Нажмите Enter и в следующем окне выберите Pam_p11"
 	sudo pam-auth-update;
+
+	return 0
 }
 
 function _setup_autolock ()
 {
 	sudo cp "$IMPL_DIR/smartcard-screensaver.desktop" /etc/xdg/autostart/smartcard-screensaver.desktop
 	sudo systemctl daemon-reload
+	return 0
 }
 
 function _setup_domain_authentication ()
 {
 	sudo sed -i -e "s/^auth.*success=2.*pam_unix.*$/auth    \[success=2 default=ignore\]    pam_sss.so forward_pass/g" -e "s/^auth.*success=1.*pam_sss.*$/auth    \[success=1 default=ignore\]    pam_unix.so nullok_secure try_first_pass/g" /etc/pam.d/common-auth
+	return 0
 }
 

@@ -31,12 +31,20 @@ function _install_common_packages ()
 	if ! [[ -f $LIBRTPKCS11ECP ]]
 	then
 		wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/PKCS11Lib/Current/Linux/x64/librtpkcs11ecp.so";
-        	if [[ $? -ne 0 ]]; then echoerr "Не могу скачать пакет librtpkcs11ecp.so"; fi 
+        	if [[ $? -ne 0 ]]
+		then
+			echoerr "Не могу скачать пакет librtpkcs11ecp.so"
+			return 1
+		fi 
 		sudo cp librtpkcs11ecp.so $LIBRTPKCS11ECP;
 	fi
 
 	sudo apt-get -qq install $pkgs;
-	if [[ $? -ne 0 ]]; then echoerr "Не могу установить один из пакетов: $pkgs из репозитория"; fi
+	if [[ $? -ne 0 ]]
+	then
+		echoerr "Не могу установить один из пакетов: $pkgs из репозитория"
+		return 1
+	fi
 }
 
 function _install_packages_for_local_auth ()
@@ -49,12 +57,16 @@ function _install_packages_for_local_auth ()
 	fi
 
         sudo apt-get -qq install $pkgs;
-        if [[ $? -ne 0 ]]; then echoerr "Не могу установить один из пакетов: $pkgs из репозитория"; fi
+        if [[ $? -ne 0 ]]
+	then
+		echoerr "Не могу установить один из пакетов: $pkgs из репозитория"
+		return 1
+	fi
 }
 
 function _install_packages_for_domain_auth ()
 {
-	echo
+	return 0
 }
 
 function _setup_local_authentication ()
@@ -63,7 +75,11 @@ function _setup_local_authentication ()
 	home=`getent passwd $user | cut -d: -f6`
 
 	pkcs11-tool --module $LIBRTPKCS11ECP -r -y cert --id $1 > cert.crt 2> /dev/null;
-	if [[ $? -ne 0 ]]; then echoerr "Не удалось загрзить загрзить сертификат с Рутокена"; fi 
+	if [[ $? -ne 0 ]]
+	then
+		echoerr "Не удалось загрзить загрзить сертификат с Рутокена"
+		return 1
+	fi 
 	openssl x509 -in cert.crt -out cert.pem -inform DER -outform PEM;
 	mkdir "$home/.eid" 2> /dev/null;
 	chmod 0755 "$home/.eid";
