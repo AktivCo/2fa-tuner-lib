@@ -2,7 +2,7 @@ from tkinter import ttk
 import tkinter as tk
 
 import argparse
-from sys import argv, stdin
+from sys import argv, stdin, stderr
 
 def center_and_style(win):
     win.style = ttk.Style()
@@ -87,9 +87,32 @@ def show_list(root, columns):
         item = tree.selection()[0]
         print("\t".join(tree.item(item, "values")))
         exit(0)
+    
+    def arrowDown(event=None):
+        item = tree.selection()[0]
+        next_item = tree.next(item)
+
+        if tree.item(next_item, "values") == "":
+            return
+
+        tree.focus(next_item)
+        tree.selection_set(next_item)
+
+    def arrowUp(event=None):
+        item = tree.selection()[0]
+        prev_item = tree.prev(item)
+        
+        if tree.item(prev_item, "values") == "":
+            return
+
+        tree.focus(prev_item)
+        tree.selection_set(prev_item)
 
     tree.bind("<Double-1>", okButtonClicked)
-    
+    root.bind('<Return>', okButtonClicked)
+    root.bind('<Down>', arrowDown)
+    root.bind('<Up>', arrowUp)
+
     okButton = ttk.Button(buttonFrame, text="OK", command= okButtonClicked)
     
     tree.pack(fill='both', expand=1)
