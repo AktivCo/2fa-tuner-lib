@@ -26,6 +26,7 @@ def yesno(root, text):
 
     text.pack(expand=1)
     yesButton.pack(side=tk.RIGHT, padx=10, pady=10)
+    yesButton.focus_set()
     noButton.pack(side=tk.RIGHT, padx=10, pady=10)
     buttonFrame.pack(fill='x', side=tk.BOTTOM)
 
@@ -55,6 +56,7 @@ def get_pass(root, text):
 
     passwordtext.pack(pady=3, padx=10)
     passwordguess.pack(fill='both', expand=1, padx=10, ipady=3)
+    passwordguess.focus_set()
     okButton.pack(side=tk.RIGHT, padx=10)
     cancelButton.pack(side=tk.RIGHT, padx=10)
     buttonFrame.pack(fill='x', padx=10, pady=3, side=tk.BOTTOM)
@@ -65,14 +67,18 @@ def show_list(root, columns):
     for line in stdin:
         rows.append(line[:-1].split("\t"))
     
-    tree = ttk.Treeview(columns=columns, show="headings")
+    tree = ttk.Treeview(root, columns=columns, show="headings")
 
     for col in columns:
         tree.heading(col, text=col.title())
-        tree.column(col, minwidth=100, width=300, stretch=tk.YES)
+        tree.column(col)
 
     for item in rows:
         tree.insert('', 'end', values=item)
+
+    child_id = tree.get_children()[0]
+    tree.focus(child_id)
+    tree.selection_set(child_id)
 
     buttonFrame= ttk.Frame(root)
     cancelButton = ttk.Button(buttonFrame, text="Cancel", command= lambda: exit(255))
