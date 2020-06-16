@@ -37,7 +37,7 @@ if __name__ == "__main__":
     all_attributes=["ID", "label"] + sorted(all_attributes.difference({"ID", "label"}))
     
     print("TYPE\t" + "\t".join(all_attributes))
-    for object_list, _type in [(public_keys, "pub"), (private_keys, "priv"), (certificates, "cert")]:
+    for object_list, _type in [(public_keys, "Открытый ключ"), (private_keys, "Закрытый ключ"), (certificates, "Сертификат")]:
         for obj in object_list:
             yad_string = f"{_type}"
             for attr in all_attributes:

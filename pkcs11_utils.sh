@@ -225,3 +225,13 @@ function import_object ()
 	pkcs11-tool --module "$LIBRTPKCS11ECP" --slot-description "$token" -r --type "$type" --id "$id" -l -p $PIN > $file
 	return $?
 }
+
+function remove_object ()
+{
+        local token=$1
+        local type=$2
+        local id=$3
+        pkcs11-tool --module "$LIBRTPKCS11ECP" --slot-description "$token" -b --type "$type" --id "$id" -l -p "$PIN"
+        return $?
+}
+

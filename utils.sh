@@ -435,12 +435,47 @@ function show_token_object ()
 	then
 		return 0
 	fi
-
+	
 	type=`echo "$obj" | cut -f1`
 	id=`echo "$obj" | cut -f2`
-	import_object "$token" "$type" "$id" "cert.crt"
-	xdg-open "cert.crt"
-	return 0
+
+	case "$type" in
+        "Закрытый ключ")
+                type=privkey
+		;;
+        "Открытый ключ")
+		type=pubkey
+                ;;
+        "Сертификат")
+		type=cert
+                ;;
+        esac
+
+	if  [[ $type == "cert" ]]
+	then
+		actions=`echo -e "Удалить\nПокaзать"`
+		act=`show_list "Выбор действия" "Действие" "$actions"`
+	else
+		act=`show_list "Выбор действия" "Действие" "Удалить"`
+	fi
+
+	case "$act" in
+	"Покaзать")
+		import_object "$token" "$type" "$id" "cert.crt" &
+		show_wait $! "Подождите" "Подождите, идет чтение объекта"
+		xdg-open "cert.crt"
+		;;
+	"Удалить")
+		remove_object "$token" "$type" "$id"&
+		show_wait $! "Подождите" "Подождите, идет удаление объекта"
+		;;
+	*)
+		return 0
+		;;
+	esac
+
+	show_token_object $token
+	return $?
 }
 
 function format_token ()
