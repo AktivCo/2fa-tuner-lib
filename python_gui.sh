@@ -19,7 +19,9 @@ function get_password ()
         title="$1"
         msg="$2"
         pin=`python3 $TWO_FA_LIB_DIR/python_utils/gui_dialog.py GET_PASS --title "$title" --text "$msg"`;
-        echo $pin
+        ret=$?
+	echo $pin
+	return $ret
 }
 
 function show_text ()
@@ -34,6 +36,7 @@ function yesno ()
 	title="$1"
 	text="$2"
 	python3 $TWO_FA_LIB_DIR/python_utils/gui_dialog.py YESNO --title "$title" --text "$text"
+	return $?
 }
 
 function show_wait_dialog()
