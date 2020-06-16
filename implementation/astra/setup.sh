@@ -2,7 +2,7 @@
 
 function check_pkgs ()
 {
-        pkgs=$1
+        pkgs=$@
         if [[ -z "`apt-get --just-print install $pkgs | grep "NEW"`" ]]
         then
                 return 0
