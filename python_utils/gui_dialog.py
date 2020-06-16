@@ -128,6 +128,13 @@ if __name__ == "__main__":
     if args.cmd[0] == 'YESNO':
         yesno(root, args.text)
 
+    if args.extra:
+        extraButtonFrame= ttk.Frame(root)
+        for cmd_name, cmd in args.extra:
+            btn = ttk.Button(extraButtonFrame, text=cmd_name, command= lambda: print("extra\n" + cmd))
+            btn.pack(side=tk.RIGHT, padx=10, fill="x", expand=1)
+        extraButtonFrame.pack(fill="x")
+
     center_and_style(root)
     root.mainloop()
     exit(255)
