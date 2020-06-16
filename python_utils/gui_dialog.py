@@ -132,11 +132,7 @@ if __name__ == "__main__":
     if args.cmd[0] == 'SHOW_WAIT':
         show_wait(root, args.text)
     if args.cmd[0] == 'YESNO':
-        answer = yesno(root, args.text)
-        if answer == "yes":
-            exit(0)
-        else:
-            exit(1)
+        yesno(root, args.text)
 
     center_and_style(root)
     root.mainloop()
