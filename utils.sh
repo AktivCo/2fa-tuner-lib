@@ -539,9 +539,24 @@ function show_token_object ()
 function format_token ()
 {
 	token="$1"
-	local old_admin_pin=`get_password "Ввод PIN-кода" "Введите старый PIN-код администратора:"`
-	local user_pin=`get_password "Ввод PIN-кода" "Введите новый PIN-код пользователя:"`
-        local admin_pin=`get_password "Ввод PIN-кода" "Введите новый PIN-код администратора:"`
+	old_admin_pin=`get_password "Ввод PIN-кода" "Введите старый PIN-код администратора:"`
+	if [[ $? -ne 0 ]]
+        then
+                return 0
+        fi
+
+	user_pin=`get_password "Ввод PIN-кода" "Введите новый PIN-код пользователя:"`
+        if [[ $? -ne 0 ]]
+        then
+                return 0
+        fi
+
+	admin_pin=`get_password "Ввод PIN-кода" "Введите новый PIN-код администратора:"`
+        if [[ $? -ne 0 ]]
+        then
+                return 0
+        fi
+
 	pkcs11_format_token "$token" "$user_pin" "$admin_pin" &
 	show_wait $! "Подождите" "Подождите, идет форматирование"
         res=$?
@@ -556,7 +571,12 @@ function format_token ()
 function change_user_pin ()
 {
 	token="$1"
-        local new_user_pin=`get_password "Ввод PIN-кода" "Введите новый PIN-код пользователя:"`
+        new_user_pin=`get_password "Ввод PIN-кода" "Введите новый PIN-код пользователя:"`
+        if [[ $? -ne 0 ]]
+        then
+                return 0
+        fi
+
 	pkcs11_change_user_pin "$token" "$new_user_pin"	&
 	show_wait $! "Подождите" "Подождите, идет изменение PIN кода"
         res=$?
@@ -571,8 +591,18 @@ function change_user_pin ()
 function change_admin_pin ()
 {
 	token="$1"
-	local old_admin_pin=`get_password "Ввод PIN-кода" "Введите старый PIN-код администратора:"`
-        local admin_pin=`get_password "Ввод PIN-кода" "Введите новый PIN-код администратора:"`
+	old_admin_pin=`get_password "Ввод PIN-кода" "Введите старый PIN-код администратора:"`
+        if [[ $? -ne 0 ]]
+        then
+                return 0
+        fi
+
+	local admin_pin=`get_password "Ввод PIN-кода" "Введите новый PIN-код администратора:"`
+        if [[ $? -ne 0 ]]
+        then
+                return 0
+        fi
+
 	pkcs11_change_admin_pin "$token" "$old_admin_pin" "$admin_pin" &
         show_wait $! "Подождите" "Подождите, идет изменение PIN кода"
         res=$?
@@ -587,7 +617,12 @@ function change_admin_pin ()
 function unlock_pin ()
 {
 	token="$1"
-        local admin_pin=`get_password "Ввод PIN-кода" "Введите PIN-код администратора:"`
+        admin_pin=`get_password "Ввод PIN-кода" "Введите PIN-код администратора:"`
+	if [[ $? -ne 0 ]]
+	then
+		return 0
+	fi
+
 	pkcs11_unlock_pin "$token" "$admin_pin" &
         show_wait $! "Подождите" "Подождите, идет разблокировка PIN кода"
 	res=$?
