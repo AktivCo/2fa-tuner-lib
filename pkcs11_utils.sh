@@ -19,8 +19,15 @@ function specific_token_present ()
 function check_pin()
 {
 	token=$1
-	pkcs11-tool --module $LIBRTPKCS11ECP -l -p $PIN --show-info --slot-description "$token"
-	return $?
+	pin=$2
+	out=`pkcs11-tool --module "$LIBRTPKCS11ECP" -l -p "$pin" --show-info --slot-description "$token" 2>&1`
+	res=$?
+	out=`echo -e "$out" | grep "CKR_PIN_LOCKED"`
+	if ! [[ -z "$out" ]]
+	then
+		return 2
+	fi	
+	return $res
 }
 
 function get_cert_list ()

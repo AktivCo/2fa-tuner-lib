@@ -334,8 +334,43 @@ function import_cert ()
 
 function get_token_password ()
 {
-	get_password "Ввод PIN-кода" "Введите PIN-код от Рутокена:"
-	return $?
+	res=1
+	while [[ $res -ne 0 ]]
+	do
+		pin=`get_password "Ввод PIN-кода" "Введите PIN-код от Рутокена:"`
+		res=$?
+		
+		if [[ $res -ne 0 ]]
+		then
+			return $res 
+		fi
+
+		check_pin "$token" "$pin" &
+		show_wait $! "Подождите" "Идет проверка PIN кода"
+		res=$?
+
+		if [[ $res -eq 2 ]]
+		then
+			yesno "PIN код заблокирован" "`echo -e \"PIN код пользователя заблокирован.\nРазблокировать его с помощью PIN кода администратора?\"`"
+
+			res=$?
+			if [[ $req -ne 0 ]]
+			then
+				return $res
+			fi
+
+			unlock_pin "$token"
+			res=$?
+		fi
+
+		if [[ $res -ne 0 ]]
+		then
+			show_text "Ошибка" "Неверный PIN код"
+		fi
+	done
+
+	echo "$pin"
+	return 0
 }
 
 function get_cert_subj ()
