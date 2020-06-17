@@ -30,7 +30,6 @@ function _install_common_packages ()
 		return 1
 	fi
 	LIBRTPKCS11ECP=`whereis  librtpkcs11ecp | cut -d " " -f 2`
-	RTADMIN="rtAdmin -z $LIBRTPKCS11ECP"
 	
 	sudo systemctl restart pcscd
 

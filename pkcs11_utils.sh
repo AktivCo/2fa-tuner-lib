@@ -16,6 +16,13 @@ function specific_token_present ()
 	cnt=`lsusb | grep "0a89:0030" | wc -l`
 }
 
+function check_pin()
+{
+	token=$1
+	pkcs11-tool --module $LIBRTPKCS11ECP -l -p $PIN --show-info --slot-description "$token"
+	return $?
+}
+
 function get_cert_list ()
 {
 	cert_ids=`pkcs11-tool --module $LIBRTPKCS11ECP -O --type cert 2> /dev/null | grep -Eo "ID:.*" |  awk '{print $2}'`;
@@ -185,7 +192,7 @@ function pkcs11_format_token ()
 	local admin_pin="$3"
 	PIN=$user_pin
 	
-	$RTADMIN -f -u $user_pin -a $admin_pin -q
+	$RTADMIN -z $LIBRTPKCS11ECP -f -u $user_pin -a $admin_pin -q
 	return $?
 }
 
@@ -212,7 +219,7 @@ function pkcs11_unlock_pin ()
 {
 	local $token=$1
 	local $so_pin=$2
-	echo q | $RTADMIN -P -o $so_pin
+	$RTADMIN -z $LIBRTPKCS11ECP -q -P -o $so_pin
 	return $?
 }
 

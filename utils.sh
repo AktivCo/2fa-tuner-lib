@@ -8,6 +8,7 @@ CUR_DIR=`pwd`
 DIALOG="dialog --keep-tite --stdout"
 YAD="yad --center --width=400 --height=400"
 SIMPLE_YAD="yad --center "
+RTADMIN=rtAdmin
 
 function init() 
 { 
@@ -61,7 +62,7 @@ function init()
 		;;
 	esac
 	. "$IMPL_DIR/setup.sh"
-
+	
 	ENGINE_DIR=`openssl version -a | grep "ENGINESDIR" | cut -d ":" -f 2 | tr -d '"' | awk '{$1=$1};1'`
 	if ! [[ -z "$ENGINE_DIR" ]]
 	then
@@ -123,10 +124,11 @@ echoerr() { echo -e "Ошибка: $@" 1>&2; return 0; }
 function install_common_packages ()
 {
 	check_updates=$1
+	rtadmin_path=/usr/bin/rtAdmin
 
         if ! [[ -z "$check_updates" ]]
         then
-                if ! [[ -f /usr/bin/rtadmin ]]
+                if ! [[ -f $rtadmin_path ]]
 		then
 			return 1
         
@@ -139,8 +141,8 @@ function install_common_packages ()
                 	return 1
         	fi
 		
-		sudo mv rtAdmin /usr/bin/rtadmin
-		chmod +x /usr/bin/rtadmin
+		sudo mv rtAdmin $rtadmin_path
+		chmod +x $rtadmin_path
 	fi
 	
 	_install_common_packages $check_updates
