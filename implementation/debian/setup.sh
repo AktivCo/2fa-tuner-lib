@@ -29,16 +29,14 @@ function _install_common_packages ()
 	fi
 	
 	sudo apt-get -qq update
-	if ! [[ -f $LIBRTPKCS11ECP ]]
+
+	wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/PKCS11Lib/Current/Linux/x64/librtpkcs11ecp.so";
+        if [[ $? -ne 0 ]]
 	then
-		wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/PKCS11Lib/Current/Linux/x64/librtpkcs11ecp.so";
-        	if [[ $? -ne 0 ]]
-		then
-			echoerr "Не могу скачать пакет librtpkcs11ecp.so"
-			return 1
-		fi 
-		sudo cp librtpkcs11ecp.so $LIBRTPKCS11ECP;
-	fi
+		echoerr "Не могу скачать пакет librtpkcs11ecp.so"
+		return 1
+	fi 
+	sudo cp librtpkcs11ecp.so $LIBRTPKCS11ECP;
 
 	sudo apt-get -qq install $pkgs;
 	if [[ $? -ne 0 ]]

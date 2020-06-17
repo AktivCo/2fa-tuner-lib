@@ -123,6 +123,26 @@ echoerr() { echo -e "Ошибка: $@" 1>&2; return 0; }
 function install_common_packages ()
 {
 	check_updates=$1
+
+        if ! [[ -z "$check_updates" ]]
+        then
+                if ! [[ -f /usr/bin/rtadmin ]]
+		then
+			return 1
+        
+		fi
+	else
+		wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/Utilites/rtAdmin/2.0/Linux/rtadmin.zip";
+		if [[ $? -ne 0 ]]
+        	then
+                	echoerr "Не могу скачать утилиту rtadmin"
+                	return 1
+        	fi
+		
+		unzip -q rtadmin.zip
+		sudo mv linux64/rtadmin /usr/bin/rtadmin
+	fi
+	
 	_install_common_packages $check_updates
 	
 	return $?
