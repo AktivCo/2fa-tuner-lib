@@ -572,7 +572,7 @@ function change_admin_pin ()
 	token="$1"
 	local old_admin_pin=`get_password "Ввод PIN-кода" "Введите старый PIN-код администратора:"`
         local admin_pin=`get_password "Ввод PIN-кода" "Введите новый PIN-код администратора:"`
-	pkcs11_change_user_pin "$token" "$old_admin_pin" "$admin_pin" &
+	pkcs11_change_admin_pin "$token" "$old_admin_pin" "$admin_pin" &
         show_wait $! "Подождите" "Подождите, идет изменение PIN кода"
         res=$?
 
@@ -587,7 +587,7 @@ function unlock_pin ()
 {
 	token="$1"
         local admin_pin=`get_password "Ввод PIN-кода" "Введите PIN-код администратора:"`
-	pkcs11_change_user_pin "$token" "$admin_pin" &
+	pkcs11_unlock_pin "$token" "$admin_pin" &
         show_wait $! "Подождите" "Подождите, идет разблокировка PIN кода"
 	res=$?
 
