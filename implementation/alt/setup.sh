@@ -24,12 +24,13 @@ function _install_common_packages ()
         
 	sudo apt-get -qq update
 	sudo apt-get -qq install $pkgs 
-	LIBRTPKCS11ECP=`whereis  librtpkcs11ecp | cut -d " " -f 2`
 	if [[ $? -ne 0 ]]
 	then
 		echoerr "Не могу установить один из пакетов: $pkgs из репозитория"
 		return 1
 	fi
+	LIBRTPKCS11ECP=`whereis  librtpkcs11ecp | cut -d " " -f 2`
+	RTADMIN="rtAdmin -z $LIBRTPKCS11ECP"
 	
 	sudo systemctl restart pcscd
 

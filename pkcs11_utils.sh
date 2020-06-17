@@ -185,7 +185,7 @@ function pkcs11_format_token ()
 	local admin_pin="$3"
 	PIN=$user_pin
 	
-	rtadmin -f -u $user_pin -a $admin_pin -q
+	$RTADMIN -f -u $user_pin -a $admin_pin -q
 	return $?
 }
 
@@ -212,7 +212,7 @@ function pkcs11_unlock_pin ()
 {
 	local $token=$1
 	local $so_pin=$2
-	echo q | rtadmin -P -o $so_pin
+	echo q | $RTADMIN -P -o $so_pin
 	return $?
 }
 
