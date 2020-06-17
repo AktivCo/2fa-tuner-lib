@@ -35,11 +35,12 @@ def show_msg(root, text):
 
     buttonFrame= ttk.Frame(root)
     okButton = ttk.Button(buttonFrame, text="Ok", command= lambda: exit(0))
+    root.bind('<Return>', lambda x: exit(0))
 
     msg.pack(pady=10, padx=10)
     okButton.pack(side=tk.RIGHT, padx=10, pady=10)
     buttonFrame.pack(fill='x', side=tk.BOTTOM)
-    
+
 def get_pass(root, text):
     passwordtext = ttk.Label(root, text=text)
     passwordguess = ttk.Entry(root, show="*") 
