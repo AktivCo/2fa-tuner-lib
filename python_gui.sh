@@ -53,3 +53,8 @@ function show_wait_dialog()
         python3 $TWO_FA_LIB_DIR/python_utils/gui_dialog.py SHOW_WAIT --title "$title" --text "$text"
 }
 
+function dialog_manager_enabeled()
+{
+	python3 -c "import tkinter" 2> /dev/null	
+	return $?
+}

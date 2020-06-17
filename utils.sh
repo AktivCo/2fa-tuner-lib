@@ -650,9 +650,15 @@ function show_wait ()
 	title="$2"
 	text="$3"
 
-	show_wait_dialog "$title" "$text" &
-
-	dialog_pid=$!
+	dialog_manager_enabeled
+	if [[ $? -ne 0 ]]
+	then
+		zenity --info --text="$text" --title="$title" &
+		dialog_pid=$!	
+	else
+		show_wait_dialog "$title" "$text" &
+		dialog_pid=$!
+	fi
 	
 	wait $pid
 	ret_code=$?

@@ -14,7 +14,7 @@ function check_pkgs ()
 
 function _install_common_packages ()
 {
-	local pkgs="libengine-pkcs11-openssl1.1 opensc libccid pcscd pcsc-tools libp11-3 dialog"
+	local pkgs="libengine-pkcs11-openssl1.1 python3-tk opensc libccid pcscd pcsc-tools libp11-3 dialog"
 	check_update="$1"
 	
 	if ! [[ -z "$check_updates" ]]
