@@ -218,7 +218,7 @@ function pkcs11_change_admin_pin ()
 	local token=$1
 	local old_pin=$2
 	local new_pin=$3
-	echo -e "$old_pin\n$new_pin\n$new_pin\n" | pkcs15-tool --change-pin
+	pkcs11-tool --module "$LIBRTPKCS11ECP" -c --login-type so --so-pin "$old_pin" -l --new-pin "$new_pin"
 	return $?
 }
 
