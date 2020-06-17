@@ -334,6 +334,7 @@ function import_cert ()
 
 function get_token_password ()
 {
+	token=$1
 	res=1
 	while [[ $res -ne 0 ]]
 	do
@@ -354,18 +355,18 @@ function get_token_password ()
 			yesno "PIN код заблокирован" "`echo -e \"PIN код пользователя заблокирован.\nРазблокировать его с помощью PIN кода администратора?\"`"
 
 			res=$?
-			if [[ $req -ne 0 ]]
+			if [[ $res -ne 0 ]]
 			then
 				return $res
 			fi
 
 			unlock_pin "$token"
 			res=$?
-		fi
-
-		if [[ $res -ne 0 ]]
-		then
-			show_text "Ошибка" "Неверный PIN код"
+		else
+			if [[ $res -ne 0 ]]
+			then
+				show_text "Ошибка" "Неверный PIN код"
+			fi
 		fi
 	done
 

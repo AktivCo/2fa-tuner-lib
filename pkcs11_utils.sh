@@ -199,7 +199,7 @@ function pkcs11_format_token ()
 	local admin_pin="$3"
 	PIN=$user_pin
 	
-	$RTADMIN -z $LIBRTPKCS11ECP -f -u $user_pin -a $admin_pin -q
+	$RTADMIN -z "$LIBRTPKCS11ECP" -f -u "$user_pin" -a "$admin_pin" -q
 	return $?
 }
 
@@ -209,13 +209,13 @@ function pkcs11_change_user_pin ()
 	old_pin=$PIN
 	new_pin=$2
 	PIN=$new_pin
-	pkcs11-tool --module $LIBRTPKCS11ECP --change-pin -l -p "$old_pin" --new-pin "$new_pin" --slot-description "$token"
+	pkcs11-tool --module "$LIBRTPKCS11ECP" --change-pin -l -p "$old_pin" --new-pin "$new_pin" --slot-description "$token"
 	return $?
 }
 
 function pkcs11_change_admin_pin ()
 {
-	local $token=$1
+	local token=$1
 	local old_pin=$2
 	local new_pin=$3
 	echo -e "$old_pin\n$new_pin\n$new_pin\n" | pkcs15-tool --change-pin
@@ -224,9 +224,9 @@ function pkcs11_change_admin_pin ()
 
 function pkcs11_unlock_pin ()
 {
-	local $token=$1
-	local $so_pin=$2
-	$RTADMIN -z $LIBRTPKCS11ECP -q -P -o $so_pin
+	local token=$1
+	local so_pin=$2
+	$RTADMIN -z "$LIBRTPKCS11ECP" -q -P -o "$so_pin"
 	return $?
 }
 
@@ -236,7 +236,7 @@ function import_object ()
 	local type=$2
 	local id=$3
 	local file=$4
-	pkcs11-tool --module "$LIBRTPKCS11ECP" --slot-description "$token" -r --type "$type" --id "$id" -l -p $PIN > $file
+	pkcs11-tool --module "$LIBRTPKCS11ECP" --slot-description "$token" -r --type "$type" --id "$id" -l -p "$PIN" > "$file"
 	return $?
 }
 
