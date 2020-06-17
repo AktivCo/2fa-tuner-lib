@@ -543,7 +543,13 @@ function format_token ()
         local admin_pin=`get_password "Ввод PIN-кода" "Введите новый PIN-код администратора:"`
 	pkcs11_format_token "$token" "$user_pin" "$admin_pin" &
 	show_wait $! "Подождите" "Подождите, идет форматирование"
-	return $?
+        res=$?
+
+        if [[ $res -ne 0 ]]
+        then
+                show_text "Ошибка" "Не удалось отформатировать токен"
+        fi
+        return $res
 }
 
 function change_user_pin ()
@@ -552,7 +558,13 @@ function change_user_pin ()
         local new_user_pin=`get_password "Ввод PIN-кода" "Введите новый PIN-код пользователя:"`
 	pkcs11_change_user_pin "$token" "$new_user_pin"	&
 	show_wait $! "Подождите" "Подождите, идет изменение PIN кода"
-	return $?
+        res=$?
+
+        if [[ $res -ne 0 ]]
+        then
+                show_text "Ошибка" "Не удалось изменить PIN пользователя"
+        fi
+        return $res
 }
 
 function change_admin_pin ()
@@ -562,7 +574,13 @@ function change_admin_pin ()
         local admin_pin=`get_password "Ввод PIN-кода" "Введите новый PIN-код администратора:"`
 	pkcs11_change_user_pin "$token" "$old_admin_pin" "$admin_pin" &
         show_wait $! "Подождите" "Подождите, идет изменение PIN кода"
-	return $?
+        res=$?
+
+        if [[ $res -ne 0 ]]
+        then
+                show_text "Ошибка" "Не удалось изменить PIN администратора"
+        fi
+        return $res
 }
 
 function unlock_pin ()
@@ -571,7 +589,13 @@ function unlock_pin ()
         local admin_pin=`get_password "Ввод PIN-кода" "Введите PIN-код администратора:"`
 	pkcs11_change_user_pin "$token" "$admin_pin" &
         show_wait $! "Подождите" "Подождите, идет разблокировка PIN кода"
-	return $?
+	res=$?
+
+	if [[ $res -ne 0 ]]
+	then
+		show_text "Ошибка" "Не удалось разблокировать PIN пользователя"
+	fi
+	return $res
 }
 
 function show_wait ()
