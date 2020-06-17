@@ -132,15 +132,15 @@ function install_common_packages ()
         
 		fi
 	else
-		wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/Utilites/rtAdmin/2.0/Linux/rtadmin.zip";
+		wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/Utilites/rtAdmin/1.3/linux/x86_64/rtAdmin";
 		if [[ $? -ne 0 ]]
         	then
-                	echoerr "Не могу скачать утилиту rtadmin"
+                	echoerr "Не могу скачать утилиту rtAdmin"
                 	return 1
         	fi
 		
-		unzip -q rtadmin.zip
-		sudo mv linux64/rtadmin /usr/bin/rtadmin
+		sudo mv rtAdmin /usr/bin/rtadmin
+		chmod +x /usr/bin/rtadmin
 	fi
 	
 	_install_common_packages $check_updates
