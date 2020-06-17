@@ -557,6 +557,16 @@ function format_token ()
                 return 0
         fi
 
+	check_admin_pin "$token" "$old_admin_pin"&
+	show_wait $! "Подождите" "Идет проверка старого PIN кода администратора"
+	res=$?
+
+	if [[ $res -ne 0 ]]
+	then
+		show_text "Ошибка" "Старый PIN код администратора невереный"
+		return $res
+	fi
+
 	pkcs11_format_token "$token" "$user_pin" "$admin_pin" &
 	show_wait $! "Подождите" "Подождите, идет форматирование"
         res=$?

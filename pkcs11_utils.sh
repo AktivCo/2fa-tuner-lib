@@ -30,6 +30,20 @@ function check_pin()
 	return $res
 }
 
+function check_admin_pin()
+{
+        token=$1
+        pin=$2
+        out=`pkcs11-tool --module "$LIBRTPKCS11ECP" -l --so-pin "$pin" --login-type so --show-info --slot-description "$token" 2>&1`
+        res=$?
+        out=`echo -e "$out" | grep "CKR_PIN_LOCKED"`
+        if ! [[ -z "$out" ]]
+        then
+                return 2
+        fi
+        return $res
+}
+
 function get_cert_list ()
 {
 	cert_ids=`pkcs11-tool --module $LIBRTPKCS11ECP -O --type cert 2> /dev/null | grep -Eo "ID:.*" |  awk '{print $2}'`;
