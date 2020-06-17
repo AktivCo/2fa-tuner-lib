@@ -654,7 +654,7 @@ function show_wait ()
 	if [[ $? -ne 0 ]]
 	then
 		zenity --info --text="$text" --title="$title" &
-		dialog_pid=$!	
+		dialog_pid=$!
 	else
 		show_wait_dialog "$title" "$text" &
 		dialog_pid=$!
@@ -663,6 +663,7 @@ function show_wait ()
 	wait $pid
 	ret_code=$?
 	pkill -P $dialog_pid
+	kill $dialog_pid
 	return $ret_code
 }
 
