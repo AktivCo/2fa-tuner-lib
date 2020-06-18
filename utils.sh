@@ -473,7 +473,7 @@ function show_token_info ()
         get_token_info "$token" > get_token_info_res &
 	show_wait $! "Подождите" "Подождите, идет получение информации"
 	token_info=`cat get_token_info_res`
-	show_list "Информация об устройстве $token" "Атрибут\tЗначение" "$token_info"
+	show_list "Информация об устройстве $token" "`echo -e "Атрибут\tЗначение"`" "$token_info"
 	return 0
 }
 

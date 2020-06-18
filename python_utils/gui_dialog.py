@@ -136,7 +136,7 @@ if __name__ == "__main__":
     parser.add_argument('cmd', nargs=1, type=str)
     parser.add_argument('--title', type=str)
     parser.add_argument('--text', type=str)
-    parser.add_argument('--column', action='append')
+    parser.add_argument('--column', type=str)
     parser.add_argument('--extra', nargs=2, action='append')
 
     args = parser.parse_args(argv[1:])
@@ -148,7 +148,7 @@ if __name__ == "__main__":
     root.title(args.title)
 
     if args.cmd[0] == 'LIST':
-        show_list(root, args.column)
+        show_list(root, args.column.split("\t"))
     if args.cmd[0] == 'GET_PASS':
         get_pass(root, args.text)
     if args.cmd[0] == 'SHOW_TEXT':
