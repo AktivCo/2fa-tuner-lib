@@ -18,14 +18,34 @@ function show_list()
 	return $ret 
 }
 
+function get_string ()
+{
+        title="$1"
+        msg="$2"
+        string=`python3 $TWO_FA_LIB_DIR/python_utils/gui_dialog.py GET_STRING --title "$title" --text "$msg"`;
+        ret=$?
+	echo -e "$string"
+	return $ret
+}
+
+function show_form ()
+{
+        title="$1"
+        msg="$2"
+        form=`python3 $TWO_FA_LIB_DIR/python_utils/gui_dialog.py SHOW_FORM --title "$title" --text "$msg"`;
+        ret=$?
+	echo -e "form"
+        return $ret
+}
+
 function get_password ()
 {
         title="$1"
         msg="$2"
         pin=`python3 $TWO_FA_LIB_DIR/python_utils/gui_dialog.py GET_PASS --title "$title" --text "$msg"`;
         ret=$?
-	echo $pin
-	return $ret
+        echo -e "$pin"
+        return $ret
 }
 
 function show_text ()

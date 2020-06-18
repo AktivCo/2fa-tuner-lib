@@ -129,24 +129,27 @@ function import_cert_on_token ()
 
 function get_key_list ()
 {
-        key_ids=`pkcs11-tool --module $LIBRTPKCS11ECP -O --type pubkey 2> /dev/null | grep -Eo "ID:.*" |  awk '{print $2}'`;
+        key_ids=`pkcs11-tool --module $LIBRTPKCS11ECP -O --type pubkey --slot-description "$token" 2> /dev/null | grep -Eo "ID:.*" |  awk '{print $2}'`;
         echo "$key_ids";
 	return 0
 }
 
 function get_cert_list ()
 {
-        cert_ids=`pkcs11-tool --module $LIBRTPKCS11ECP -O --type cert 2> /dev/null | grep -Eo "ID:.*" |  awk '{print $2}'`;
+        cert_ids=`pkcs11-tool --module $LIBRTPKCS11ECP -O --type cert  --slot-description "$token" 2> /dev/null | grep -Eo "ID:.*" |  awk '{print $2}'`;
         echo "$cert_ids";
 	return 0
 }
 
-function gen_key ()
+function pkcs11_gen_key ()
 {
-        key_id=$1
-	out=`pkcs11-tool --module $LIBRTPKCS11ECP --keypairgen --key-type rsa:2048 -l -p "$PIN" --id "$key_id" 2>&1`;
-	echo "$out"
-	return 0
+	token=$1
+        key_id=$2
+	type=$3
+	label=$4
+
+	pkcs11-tool --module "$LIBRTPKCS11ECP" --keypairgen --key-type "$type" -l -p "$PIN" --id "$key_id" --label "$label" --slot-description "$token" 2>&1 > /dev/null
+	return $?
 }
 
 function pkcs11_create_cert_req ()

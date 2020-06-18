@@ -42,23 +42,26 @@ def show_msg(root, text):
     okButton.pack(side=tk.RIGHT, padx=10, pady=10)
     buttonFrame.pack(fill='x', side=tk.BOTTOM)
 
-def get_pass(root, text):
-    passwordtext = ttk.Label(root, text=text)
-    passwordguess = ttk.Entry(root, show="*") 
+def get_str(root, text, hide=False):
+    text = ttk.Label(root, text=text)
+    if hide:
+        guess = ttk.Entry(root, show="*") 
+    else:
+        guess = ttk.Entry(root) 
     
     buttonFrame= ttk.Frame(root)
     cancelButton = ttk.Button(buttonFrame, text="Cancel", command= lambda: exit(255))
 
     def okButtonClicked(event=None):    
-        print(passwordguess.get())
+        print(guess.get())
         exit(0)
 
     okButton = ttk.Button(buttonFrame, text="Ok", command= okButtonClicked)
     root.bind('<Return>', okButtonClicked)
 
-    passwordtext.pack(pady=3, padx=10)
-    passwordguess.pack(fill='both', expand=1, padx=10, ipady=3)
-    passwordguess.focus_set()
+    text.pack(pady=3, padx=10)
+    guess.pack(fill='both', expand=1, padx=10, ipady=3)
+    guess.focus_set()
     okButton.pack(side=tk.RIGHT, padx=10)
     cancelButton.pack(side=tk.RIGHT, padx=10)
     buttonFrame.pack(fill='x', padx=10, pady=3, side=tk.BOTTOM)
@@ -180,7 +183,9 @@ if __name__ == "__main__":
     if args.cmd[0] == 'LIST':
         show_list(root, args.column.split("\t"))
     if args.cmd[0] == 'GET_PASS':
-        get_pass(root, args.text)
+        get_str(root, args.text, hide=True)
+    if args.cmd[0] == 'GET_STRING':
+        get_str(root, args.text)
     if args.cmd[0] == 'SHOW_TEXT':
         show_msg(root, args.text)
     if args.cmd[0] == 'SHOW_WAIT':
@@ -195,7 +200,7 @@ if __name__ == "__main__":
     if args.extra:
         extraButtonFrame= ttk.Frame(root)
         for cmd in args.extra.split("\t"):
-            def onClickCmd():
+            def onClickCmd(cmd=cmd):
                 print(cmd)
                 exit(0)
 

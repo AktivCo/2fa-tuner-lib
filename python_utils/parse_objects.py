@@ -27,8 +27,12 @@ if __name__ == "__main__":
             continue
         if current_list == None:
             exit(3)
-        current_list[-1][line.split(":",1)[0].strip()] = line.split(":",1)[-1].strip()
-   
+        
+        if line.count(":"):
+            atr=line.split(":",1)[0].strip()
+            current_list[-1][atr] = line.split(":",1)[-1].strip()
+        else:
+            current_list[-1][atr] = current_list[-1][atr] + line.strip()
     all_attributes=set()
     for object_list in [public_keys, private_keys, certificates]:
         attributes = reduce(lambda attrs, obj: attrs.union(obj.keys()), object_list, set())
@@ -43,7 +47,9 @@ if __name__ == "__main__":
             "subject": "Кому выдан",
             "usage": "Назначение",
             "type": "Свойства",
-            "access": "Доступ"}
+            "access": "Доступ",
+            "value": "Значение",
+            "params oid": "OID параметров"}
 
     renamed_all_attributes=[ attr_name_map[x.lower()] for x in all_attributes ]
 

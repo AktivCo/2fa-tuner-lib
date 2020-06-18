@@ -283,8 +283,9 @@ function choose_key ()
 
 function gen_cert_id ()
 {
+	token=$1
 	res="1"
-	cert_ids=`get_cert_list`
+	cert_ids=`get_cert_list "$token"`
 	
 	while [[ -n "$res" ]]
 	do
@@ -299,8 +300,9 @@ function gen_cert_id ()
 
 function gen_key_id ()
 {
+	token=$1
 	res="1"
-	key_ids=`get_key_list`
+	key_ids=`get_key_list "$token"`
 	while [[ -n "$res" ]]
 	do
 		rand=`echo $(( $RANDOM % 10000 ))`
@@ -319,7 +321,7 @@ function import_cert ()
 	
 	if [[ -z $key_id ]]
 	then
-		key_id=`gen_key_id`
+		key_id=`gen_key_id "$token"`
 	fi
 
 	cert_path=`open_file_dialog "Путь до сертификата" "Укажите путь до сертификата" "$HOME"`;
@@ -425,10 +427,53 @@ function create_cert_req ()
 	return 0
 }
 
+function create_key ()
+{
+	token="$1"
+	key_id="$2"
+
+	if [[ -z "$key_id" ]]
+	then
+		key_id=`gen_key_id "$token"`
+	fi
+	
+	local types=`echo -e "RSA-2048\nГОСТ-2012 256\nГОСТ-2012 512"`
+	type=`show_list "Укажите алгоритм ключевой пары" "Алгоритм" "$types"`
+	
+	if [[ $? -ne 0 ]]
+	then
+		return 0
+	fi
+
+	case $type in
+	"RSA-2048") type=rsa:2048;;
+	"ГОСТ-2012 256") type=GOSTR3410-2012-256:B;;
+	"ГОСТ-2012 512") type=GOSTR3410-2012-512:A;;
+	esac
+
+	label=`get_string "Метка ключевой пары" "Укажите метку ключевой пары"`
+        if [[ $? -ne 0 ]]
+        then
+                return 0
+        fi
+
+	pkcs11_gen_key "$token" "$key_id" "$type" "$label" &
+	show_wait $! "Подождите" "Идет генерация ключевой пары"
+	res=$?
+	
+	if [[ $res -ne 0 ]]
+	then
+		show_text "Ошибка" "Во время генерации ключа произошла ошибка"
+		return $res
+	fi
+
+	return 0
+}
+
 function create_key_and_cert ()
 {
         cert_id=`gen_cert_id`
-        out=`gen_key $cert_id`
+        out=`pkcs11_gen_key $cert_id` RSA-2048
         if [[ $? -ne 0 ]]
 	then
 		echoerr "Не удалось создать ключевую пару: $out"
@@ -493,7 +538,7 @@ function show_token_object ()
 	header=`echo -e "$objs" | head -n 1`
 	objs=`echo -e "$objs" | tail -n +2`
 	
-	extra=`echo -e "Импортировать ключ и сертификат\tСоздать ключ\tИмпортировать сертификат"`
+	extra=`echo -e "Импорт ключевой пары и сертификата\tГенерация ключевой пары\tИмпорт сертификата"`
 	obj=`show_list "Объекты на Рутокене $token" "$header" "$objs" "$extra"`
 	
 	if [[ -z "$obj" ]]
@@ -502,14 +547,16 @@ function show_token_object ()
 	fi
 
 	extra=0
-	case $obj in
-	"Создать ключ")
+	case "$obj" in
+	"Генерация ключевой пары")
 		extra=1
+		create_key "$token"
 		;;
-	"Импортировать ключ и сертификат")
+	"Импорт ключевой пары и сертификата")
 		extra=1
+		import_key_and_cert "$token"
 		;;
-	"Импортировать сертификат")
+	"Импорт сертификата")
 		extra=1
 		import_cert "$token"
 		;;
