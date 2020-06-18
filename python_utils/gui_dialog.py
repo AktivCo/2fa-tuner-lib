@@ -1,5 +1,6 @@
 from tkinter import ttk
 import tkinter as tk
+from tkinter import filedialog
 
 import argparse
 from sys import argv, stdin
@@ -87,6 +88,9 @@ def show_list(root, columns):
     
     def okButtonClicked(event=None):
         item = tree.selection()[0]
+        if tree.item(item, "values") == "":
+            return
+
         print("\t".join(tree.item(item, "values")))
         exit(0)
     
@@ -132,8 +136,12 @@ def show_wait(root, text):
     
     processing_bar.start(30)
 
-def save_file(root, text, file):
-    target = ttk.asksaveasfile(filetypes = file)
+def save_file(root, title, file, start_dir):
+    root.withdraw()
+    root.style = ttk.Style()
+    root.style.theme_use("clam")
+
+    target = filedialog.asksaveasfile(parent=root, title=title, initialdir=start_dir)
     try:
         shutil.copyfile(file, target)
     except:
@@ -149,6 +157,7 @@ if __name__ == "__main__":
     parser.add_argument('--column', type=str)
     parser.add_argument('--extra', nargs=2, action='append')
     parser.add_argument('--file', type=str)
+    parser.add_argument('--start_dir', type=str)
 
     args = parser.parse_args(argv[1:])
 
@@ -169,7 +178,7 @@ if __name__ == "__main__":
     if args.cmd[0] == 'YESNO':
         yesno(root, args.text)
     if args.cmd[0] == 'SAVE_FILE':
-        save_file(root, args.text)
+        save_file(root, args.title, args.file, args.start_dir)
 
     if args.extra:
         extraButtonFrame= ttk.Frame(root)
@@ -180,6 +189,8 @@ if __name__ == "__main__":
             btn = ttk.Button(extraButtonFrame, text=cmd_name, command=onClickCmd)
             btn.pack(side=tk.RIGHT, padx=10, fill="x", expand=1)
         extraButtonFrame.pack(fill="x")
+
+    root.bind("<Escape>", lambda x: exit(255))
 
     center_and_style(root)
     root.mainloop()
