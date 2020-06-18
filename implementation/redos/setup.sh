@@ -34,7 +34,7 @@ function _install_common_packages ()
 		wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/PKCS11Lib/Current/Linux/x64/librtpkcs11ecp.so";
         	if [[ $? -ne 0 ]]
 		then
-			echoerr "Не могу скачать пакет librtpkcs11ecp.so"
+			echoerr "Не могу загрузить пакет librtpkcs11ecp.so"
 			return 1
 		fi 
 		sudo cp librtpkcs11ecp.so $LIBRTPKCS11ECP;

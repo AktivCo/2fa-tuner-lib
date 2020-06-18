@@ -84,7 +84,7 @@ function create_key_and_cert ()
 		
 		if [[ $? -ne 0 ]]
 		then
-			echoerr "Не удалось создать сертификат открытого ключа"
+			echoerr "Не удалось создать сертификат"
 			return 1
 		fi 
 	else
@@ -92,11 +92,11 @@ function create_key_and_cert ()
 		
 		if [[ $? -ne 0 ]]
 		then
-			echoerr "Не удалось создать заявку на сертификат открытого ключа"
+			echoerr "Не удалось создать заявку на сертификат"
 			return 1
 		fi 
 		
-		$DIALOG --msgbox "Отправьте заявку на сертификат в УЦ для выпуска сертификата. После получение сертификата, запишите его на токен с помощью import_cert_to_token.sh под индентификатором $cert_id. И повторите запуск setup.sh" 0 0
+		$DIALOG --msgbox "Отправьте заявку на сертификат в УЦ для выпуска сертификата. После получение сертификата, запишите его на Рутокен с помощью import_cert_to_token.sh под индентификатором $cert_id. И повторите запуск setup.sh" 0 0
 		return 0
 	fi
 
@@ -104,7 +104,7 @@ function create_key_and_cert ()
 	pkcs11-tool --module $LIBRTPKCS11ECP -l -p "$PIN" -y cert -w cert.crt --id $cert_id > /dev/null 2> /dev/null;
 	if [[ $? -ne 0 ]]
 	then
-		echoerr "Не удалось загрзить сертификат на токен"
+		echoerr "Не удалось сохранить сертификат на Рутокен"
 		return 1
 	fi 
 	echo $cert_id
@@ -119,7 +119,7 @@ function import_cert_on_token ()
 	pkcs11-tool --module $LIBRTPKCS11ECP -l -p "$PIN" -y cert -w "$cert" --id "$key" > /dev/null 2> /dev/null;
 	if [[ $? -ne 0 ]]
 	then
-		echoerr "Не удалось загрзить сертификат на Рутокен"
+		echoerr "Не удалось сохранить сертификат на Рутокен"
 		return 1
 	fi
 
@@ -162,7 +162,7 @@ function pkcs11_create_cert_req ()
 
                 if [[ $? -ne 0 ]]
 		then
-			echoerr "Не удалось создать сертификат открытого ключа"
+			echoerr "Не удалось создать сертификат"
 			return 1
 		fi
         	pkcs11-tool --module $LIBRTPKCS11ECP -l -p "$PIN" -y cert -w "$req_path" --id $cert_id > /dev/null 2> /dev/null;
@@ -171,7 +171,7 @@ function pkcs11_create_cert_req ()
 
                 if [[ $? -ne 0 ]]
 		then
-			echoerr "Не удалось создать заявку на сертификат открытого ключа"
+			echoerr "Не удалось создать заявку на сертификат"
 			return 1
 		fi
         fi
