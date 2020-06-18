@@ -72,11 +72,18 @@ def show_list(root, columns):
     for line in stdin:
         rows.append(line[:-1].split("\t"))
     
-    tree = ttk.Treeview(root, columns=columns, show="headings")
+    treeFrame = ttk.Frame(root)
+    tree = ttk.Treeview(treeFrame, columns=columns, show="headings")
+    tree.grid(row=0, column=0, sticky="NSEW")
+    sbar_y = ttk.Scrollbar(treeFrame, orient="vertical", command=tree.yview)
+    sbar_x = ttk.Scrollbar(treeFrame, orient="horizontal", command=tree.xview)
+    sbar_y.grid(row=0, column=1, sticky="NS")
+    sbar_x.grid(row=1, column=0, sticky="EW")
+    tree.config(yscrollcommand=sbar_y.set, height=15, xscrollcommand=sbar_x.set)
 
     for col in columns:
         tree.heading(col, text=col.title())
-        tree.column(col)
+        tree.column(col, width=300)
 
     for item in rows:
         tree.insert('', 'end', values=item)
@@ -123,7 +130,10 @@ def show_list(root, columns):
 
     okButton = ttk.Button(buttonFrame, text="OK", command= okButtonClicked)
     
-    tree.pack(fill='both', expand=1)
+    treeFrame.pack(fill='both', expand=1)
+    treeFrame.columnconfigure(0, weight=1)
+    treeFrame.rowconfigure(0, weight=1)
+
     okButton.pack(side=tk.RIGHT, padx=10, pady=10)
     cancelButton.pack(side=tk.LEFT, padx=10, pady=10)
     buttonFrame.pack(fill='x', side=tk.BOTTOM)
