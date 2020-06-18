@@ -524,8 +524,12 @@ function show_token_object ()
 		xdg-open "cert.crt"
 		;;
 	"Удалить")
-		remove_object "$token" "$type" "$id"&
-		show_wait $! "Подождите" "Подождите, идет удаление объекта"
+		yesno "Удаление объекта" "Вы уверены, что хотите удалить этот объект?"
+		if [[ $? -eq 0 ]]
+		then
+			remove_object "$token" "$type" "$id"&
+			show_wait $! "Подождите" "Подождите, идет удаление объекта"
+		fi
 		;;
 	*)
 		return 0
