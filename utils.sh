@@ -334,10 +334,25 @@ function import_cert ()
 	then
 		openssl x509 -in "$cert_path" -out cert.crt -inform PEM -outform DER;
 	fi
+
+        label=`get_string "Метка сертификата" "Укажите метку сертификата"`
+        if [[ $? -ne 0 ]]
+        then
+                return 0
+        fi
+
 	
-	import_cert_on_token "$token" "$cert_path" $key_id &
+	import_obj_on_token "$token" "cert" "$cert_path" "$label" "$key_id" &
 	show_wait $! "Подождите" "Идет импорт сертификата"
-	return $?
+        res=$?
+	if [[ $res -ne 0 ]]
+        then
+                show_text "Ошибка" "Не удалось импортировать сертификат на токен"
+                return $res
+        fi
+
+	return 0
+
 }
 
 function get_token_password ()
@@ -470,6 +485,80 @@ function create_key ()
 	return 0
 }
 
+function import_key_and_cert()
+{
+	token=$1
+	key_id=$2
+	
+	if [[ -z "$key_id" ]]
+        then
+                key_id=`gen_key_id "$token"`
+        fi
+
+	pfx_path=`open_file_dialog "Путь до pdx файла" "Укажите путь до pfx файла" "$HOME"`;
+	
+	pass=`get_password "Пароль" "Введите пароль от pfx контейнера"`
+        if [[ $? -ne 0 ]]
+        then
+                return 0
+        fi
+
+	
+	openssl pkcs12 -in "$pfx_path" -nocerts -out encrypted.key -passin "pass:$pass" -passout "pass:$pass"
+	if [[ $? -ne 0 ]]
+        then
+		show_text "Ошибка" "Ошибка во время чтения ключа"
+        	return 1
+	fi
+
+	openssl pkcs12 -in "$pfx_path" -nokeys -out cert.pem -passin "pass:$pass"
+	
+	openssl x509 -in cert.pem -out cert.crt -outform DER
+	openssl x509 -in cert.pem -pubkey -noout | openssl enc -base64 -d > publickey.der
+	openssl rsa -in encrypted.key -out key.der -outform DER -passin "pass:$pass"
+
+	label=`get_string "Метка ключевой пары" "Укажите метку ключевой пары"`
+        if [[ $? -ne 0 ]]
+        then
+                return 0
+        fi
+
+	import_obj_on_token "$token" "privkey" key.der "$label" "$key_id" &
+	show_wait $! "Подождите" "Идет импорт закрытого ключа"
+        res=$?
+	if [[ $res -ne 0 ]]
+	then
+		show_text "Ошибка" "Не удалось импортировать закрытый ключ на токен"
+		rm encrypted.key cert.pem cert.crt key.der publickey.der
+		return $res
+	fi
+
+        import_obj_on_token "$token" "pubkey" publickey.der "$label" "$key_id" &
+        show_wait $! "Подождите" "Идет импорт открытого ключа"
+        res=$?
+        if [[ $res -ne 0 ]]
+        then
+		show_text "Ошибка" "Не удалось импортировать закрытый ключ на токен"
+                rm encrypted.key cert.pem cert.crt key.der publickey.der
+                return $res
+        fi
+
+	import_obj_on_token "$token" "cert" cert.crt "$label" "$key_id" &
+        show_wait $! "Подождите" "Идет импорт сертификата"
+	res=$?
+        if [[ $res -ne 0 ]]
+        then
+                show_text "Ошибка" "Не удалось импортировать сертификат на токен"
+                rm encrypted.key cert.pem cert.crt key.der publickey.der
+                return $res
+        fi
+
+
+	rm encrypted.key cert.pem cert.crt key.der publickey.der
+	return $res
+		
+}
+
 function create_key_and_cert ()
 {
         cert_id=`gen_cert_id`
@@ -594,12 +683,12 @@ function show_token_object ()
 
 	case "$act" in
 	"Просмотр")
-		import_object "$token" "$type" "$id" "cert.crt" &
+		export_object "$token" "$type" "$id" "cert.crt" &
 		show_wait $! "Подождите" "Подождите, идет чтение объекта"
 		xdg-open "cert.crt"
 		;;
 	"Сохранить на диске")
-		import_object "$token" "$type" "$id" "cert.crt" &
+		export_object "$token" "$type" "$id" "cert.crt" &
                 show_wait $! "Подождите" "Подождите, идет чтение объекта"
 		target=`save_file_dialog "Сохранение сертификата" "Укажите, куда сохранить сертификат" "$CUR_DIR"`
 		if [[ $? -eq 0 ]]

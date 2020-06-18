@@ -112,15 +112,18 @@ function create_key_and_cert ()
 	return 0
 }
 
-function import_cert_on_token ()
+function import_obj_on_token ()
 {
 	token=$1
-	cert=$2
-	key=$3
-	pkcs11-tool --module "$LIBRTPKCS11ECP" -l -p "$PIN" -y cert -w "$cert" --id "$key" --slot-description "$token" > /dev/null 2> /dev/null;
+	type=$2
+	path_to_obj=$3
+	label=$4
+	key_id=$5
+	
+	pkcs11-tool --module "$LIBRTPKCS11ECP" -l -p "$PIN" -y "$type" -w "$path_to_obj" --id "$key_id" --label "$label" --slot-description "$token" > /dev/null 2> /dev/null;
 	if [[ $? -ne 0 ]]
 	then
-		echoerr "Не удалось сохранить сертификат на Рутокен"
+		echoerr "Не удалось импортировать объкт на Рутокен"
 		return 1
 	fi
 
@@ -243,7 +246,7 @@ function pkcs11_unlock_pin ()
 	return $?
 }
 
-function import_object ()
+function export_object ()
 {
 	local token=$1
 	local type=$2
