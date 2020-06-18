@@ -4,7 +4,6 @@ from tkinter import filedialog
 
 import argparse
 from sys import argv, stdin
-import shutil
 
 def center_and_style(win):
     win.style = ttk.Style()
@@ -141,12 +140,12 @@ def save_file(root, title, file, start_dir):
     root.style = ttk.Style()
     root.style.theme_use("clam")
 
-    target = filedialog.asksaveasfile(parent=root, title=title, initialdir=start_dir)
-    try:
-        shutil.copyfile(file, target)
-    except:
-        exit(1)
-    exit(0)
+    target = filedialog.asksaveasfilename(parent=root, title=title, initialdir=start_dir)
+    if target:
+        print(target)
+        exit(0)
+    else:
+        exit(255)
 
 
 if __name__ == "__main__":

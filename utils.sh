@@ -526,7 +526,8 @@ function show_token_object ()
 	"Сохранить")
 		import_object "$token" "$type" "$id" "cert.crt" &
                 show_wait $! "Подождите" "Подождите, идет чтение объекта"
-                save_file_dialog "Сохранение сертификата" "Укажите, куда сохранить сертификат" cert.crt "$CUR_DIR"
+		target=`save_file_dialog "Сохранение сертификата" "Укажите, куда сохранить сертификат" cert.crt "$CUR_DIR"`
+		cp cert.crt "$target"
 		;;
 	"Удалить")
 		yesno "Удаление объекта" "Уверены, что хотите удалить объект?"
