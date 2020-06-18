@@ -8,7 +8,7 @@ function _install_common_packages ()
 		wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/PKCS11Lib/Current/Linux/x64/librtpkcs11ecp.so";
         	if [[ $? -ne 0 ]]
 		then
-			echoerr "Не могу скачать пакет librtpkcs11ecp.so"
+			echoerr "Не могу загрузить пакет librtpkcs11ecp.so"
 			return 1
 		fi 
 		sudo cp librtpkcs11ecp.so $LIBRTPKCS11ECP;
@@ -24,8 +24,8 @@ function _install_common_packages ()
         sudo yum -q -y install libp11 engine_pkcs11;
         if [[ $? -ne 0 ]]
         then
-                $DIALOG --msgbox "Скачайте последнюю версии пакетов libp11 engine_pkcs11 отсюда https://apps.fedoraproject.org/packages/libp11/builds/ и установите их с помощью команд sudo rpm -i /path/to/package. Или соберите сами их из исходников" 0 0
-                echoerr "Установите пакеты libp11 и engine_pkcs11 отсюда https://apps.fedoraproject.org/packages/libp11/builds/"
+                $DIALOG --msgbox "Скачайте последнюю версии пакетов libp11, engine_pkcs11 по ссылке https://apps.fedoraproject.org/packages/libp11/builds/ и установите с помощью команд sudo rpm -i /path/to/package. Или соберите из исходников" 0 0
+                echoerr "Установите пакеты libp11 и engine_pkcs11 по ссылке https://apps.fedoraproject.org/packages/libp11/builds/"
         	return 1
 	fi
 

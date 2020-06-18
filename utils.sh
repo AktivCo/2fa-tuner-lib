@@ -137,7 +137,7 @@ function install_common_packages ()
 		wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/Utilites/rtAdmin/1.3/linux/x86_64/rtAdmin";
 		if [[ $? -ne 0 ]]
         	then
-                	echoerr "Не могу скачать утилиту rtAdmin"
+                	echoerr "Не могу загрузить утилиту rtAdmin"
                 	return 1
         	fi
 		
@@ -338,7 +338,7 @@ function get_token_password ()
 	res=1
 	while [[ $res -ne 0 ]]
 	do
-		pin=`get_password "Ввод PIN-кода" "Введите PIN-код от Рутокена:"`
+		pin=`get_password "Ввод PIN-кода" "Введите PIN-код Пользователя:"`
 		res=$?
 		
 		if [[ $res -ne 0 ]]
@@ -347,12 +347,12 @@ function get_token_password ()
 		fi
 
 		check_pin "$token" "$pin" &
-		show_wait $! "Подождите" "Идет проверка PIN кода"
+		show_wait $! "Подождите" "Идет проверка PIN-кода"
 		res=$?
 
 		if [[ $res -eq 2 ]]
 		then
-			yesno "PIN код заблокирован" "`echo -e \"PIN код пользователя заблокирован.\nРазблокировать его с помощью PIN кода администратора?\"`"
+			yesno "PIN-код заблокирован" "`echo -e \"PIN-код Пользователя заблокирован.\nРазблокировать его с помощью PIN-кода Администратора?\"`"
 
 			res=$?
 			if [[ $res -ne 0 ]]
@@ -365,7 +365,7 @@ function get_token_password ()
 		else
 			if [[ $res -ne 0 ]]
 			then
-				show_text "Ошибка" "Неверный PIN код"
+				show_text "Ошибка" "Неправильный PIN-код"
 			fi
 		fi
 	done
@@ -412,7 +412,7 @@ function create_cert_req ()
 
 	if [[ $? -ne 0 ]]
 	then
-		echoerr "Не удалось создать заявку на сертификат открытого ключа"
+		echoerr "Не удалось создать заявку на сертификат"
 		return 1
 	fi
 
@@ -437,7 +437,7 @@ function create_key_and_cert ()
 	
         if [[ $? -ne 0 ]]
 	then
-		echoerr "Не удалось загрзить сертификат на токен"
+		echoerr "Не удалось записать сертификат на Рутокен"
 		return 1
 	fi
         
@@ -448,9 +448,9 @@ function create_key_and_cert ()
 function choose_token ()
 {
         get_token_list > get_token_list_res &
-	show_wait $! "Подождите" "Подождите, идет получение списка токенов"
+	show_wait $! "Подождите" "Подождите, идет получение списка Рутокенов"
         token_list=`cat get_token_list_res`
-	choice=`show_list "Выбор токена" "Name" "$token_list" "Обновить список" "Обновить список"`
+	choice=`show_list "Выберите Рутокен" "Подключенные устройства" "$token_list" "Обновить список" "Обновить список"`
         
 	if [ $? -ne 0 ]
         then
@@ -471,7 +471,7 @@ function show_token_info ()
 {
         token=$1
         get_token_info "$token" > get_token_info_res &
-	show_wait $! "Подождите" "Подождите, идет получение информации о токене"
+	show_wait $! "Подождите" "Подождите, идет получение информации"
 	token_info=`cat get_token_info_res`
 	show_list "Информация об устройстве $token" "Атрибут\tЗначение" "$token_info"
 	return 0
@@ -481,13 +481,13 @@ function show_token_object ()
 {
 	token="$1"
 	get_token_objects "$token" > get_token_object_res &
-	show_wait $! "Подождите" "Подождите, идет получение объектов на токене"
+	show_wait $! "Подождите" "Подождите, идет поиск объектов"
 	objs=`cat get_token_object_res`
 	objs=`python3 "$TWO_FA_LIB_DIR/python_utils/parse_objects.py" "$objs"`
 	header=`echo -e "$objs" | head -n 1`
 	objs=`echo -e "$objs" | tail -n +2`
 	
-	obj=`show_list "Объекты на токене $token" "$header" "$objs"`
+	obj=`show_list "Объекты на Рутокене $token" "$header" "$objs"`
 	
 	if [[ -z "$obj" ]]
 	then
@@ -511,10 +511,10 @@ function show_token_object ()
 
 	if  [[ $type == "cert" ]]
 	then
-		actions=`echo -e "Удалить\nПокaзать"`
-		act=`show_list "Выбор действия" "Действие" "$actions"`
+		actions=`echo -e "Удалить\nПросмотр"`
+		act=`show_list "Выберите действие" "Действия" "$actions"`
 	else
-		act=`show_list "Выбор действия" "Действие" "Удалить"`
+		act=`show_list "Выберите действие" "Действия" "Удалить"`
 	fi
 
 	case "$act" in
@@ -524,11 +524,11 @@ function show_token_object ()
 		xdg-open "cert.crt"
 		;;
 	"Удалить")
-		yesno "Удаление объекта" "Вы уверены, что хотите удалить этот объект?"
+		yesno "Удаление объекта" "Уверены, что хотите удалить объект?"
 		if [[ $? -eq 0 ]]
 		then
 			remove_object "$token" "$type" "$id"&
-			show_wait $! "Подождите" "Подождите, идет удаление объекта"
+			show_wait $! "Подождите" "Подождите, идет удаление"
 		fi
 		;;
 	*)
@@ -543,31 +543,31 @@ function show_token_object ()
 function format_token ()
 {
 	token="$1"
-	old_admin_pin=`get_password "Ввод PIN-кода" "Введите старый PIN-код администратора:"`
+	old_admin_pin=`get_password "Ввод текущего PIN-кода" "Введите текущий PIN-код Администратора:"`
 	if [[ $? -ne 0 ]]
         then
                 return 0
         fi
 
-	user_pin=`get_password "Ввод PIN-кода" "Введите новый PIN-код пользователя:"`
+	user_pin=`get_password "Ввод нового PIN-кода" "Введите новый PIN-код Пользователя:"`
         if [[ $? -ne 0 ]]
         then
                 return 0
         fi
 
-	admin_pin=`get_password "Ввод PIN-кода" "Введите новый PIN-код администратора:"`
+	admin_pin=`get_password "Ввод текущего PIN-кода" "Введите новый PIN-код Администратора:"`
         if [[ $? -ne 0 ]]
         then
                 return 0
         fi
 
 	check_admin_pin "$token" "$old_admin_pin"&
-	show_wait $! "Подождите" "Идет проверка старого PIN кода администратора"
+	show_wait $! "Подождите" "Идет проверка PIN-кода Администратора"
 	res=$?
 
 	if [[ $res -ne 0 ]]
 	then
-		show_text "Ошибка" "Старый PIN код администратора невереный"
+		show_text "Ошибка" "Введен неправильный текущий PIN-код Администратора"
 		return $res
 	fi
 
@@ -577,7 +577,7 @@ function format_token ()
 
         if [[ $res -ne 0 ]]
         then
-                show_text "Ошибка" "Не удалось отформатировать токен"
+                show_text "Ошибка" "Не удалось отформатировать Рутокен"
         fi
         return $res
 }
@@ -585,19 +585,19 @@ function format_token ()
 function change_user_pin ()
 {
 	token="$1"
-        new_user_pin=`get_password "Ввод PIN-кода" "Введите новый PIN-код пользователя:"`
+        new_user_pin=`get_password "Ввод нового PIN-кода" "Введите новый PIN-код Пользователя:"`
         if [[ $? -ne 0 ]]
         then
                 return 0
         fi
 
 	pkcs11_change_user_pin "$token" "$new_user_pin"	&
-	show_wait $! "Подождите" "Подождите, идет изменение PIN кода"
+	show_wait $! "Подождите" "Подождите, идет смена PIN-кода"
         res=$?
 
         if [[ $res -ne 0 ]]
         then
-                show_text "Ошибка" "Не удалось изменить PIN пользователя"
+                show_text "Ошибка" "Не удалось сменить PIN-код Пользователя"
         fi
         return $res
 }
@@ -605,25 +605,25 @@ function change_user_pin ()
 function change_admin_pin ()
 {
 	token="$1"
-	old_admin_pin=`get_password "Ввод PIN-кода" "Введите старый PIN-код администратора:"`
+	old_admin_pin=`get_password "Ввод текущего PIN-кода" "Введите текущий PIN-код Администратора:"`
         if [[ $? -ne 0 ]]
         then
                 return 0
         fi
 
-	local admin_pin=`get_password "Ввод PIN-кода" "Введите новый PIN-код администратора:"`
+	local admin_pin=`get_password "Ввод нового PIN-кода" "Введите новый PIN-код Администратора:"`
         if [[ $? -ne 0 ]]
         then
                 return 0
         fi
 
 	pkcs11_change_admin_pin "$token" "$old_admin_pin" "$admin_pin" &
-        show_wait $! "Подождите" "Подождите, идет изменение PIN кода"
+        show_wait $! "Подождите" "Подождите, идет смена PIN-кода"
         res=$?
 
         if [[ $res -ne 0 ]]
         then
-                show_text "Ошибка" "Не удалось изменить PIN администратора"
+                show_text "Ошибка" "Не удалось изменить PIN-код Администратора"
         fi
         return $res
 }
@@ -631,19 +631,19 @@ function change_admin_pin ()
 function unlock_pin ()
 {
 	token="$1"
-        admin_pin=`get_password "Ввод PIN-кода" "Введите PIN-код администратора:"`
+        admin_pin=`get_password "Ввод PIN-кода" "Введите PIN-код Администратора:"`
 	if [[ $? -ne 0 ]]
 	then
 		return 0
 	fi
 
 	pkcs11_unlock_pin "$token" "$admin_pin" &
-        show_wait $! "Подождите" "Подождите, идет разблокировка PIN кода"
+        show_wait $! "Подождите" "Подождите, идет разблокировка PIN-кода"
 	res=$?
 
 	if [[ $res -ne 0 ]]
 	then
-		show_text "Ошибка" "Не удалось разблокировать PIN пользователя"
+		show_text "Ошибка" "Не удалось разблокировать PIN-код Пользователя"
 	fi
 	return $res
 }
@@ -677,7 +677,7 @@ function show_menu ()
         menu_list="$2"
         cmd_list="$3"
 
-	choice=`show_list "Меню" "Команда" "$menu_list"`
+	choice=`show_list "Меню" "Выберите действие" "$menu_list"`
 	
 	if [[ -z "$choice" ]]	
 	then
