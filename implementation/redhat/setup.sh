@@ -1,54 +1,92 @@
 #!/bin/bash
 
+function check_pkgs ()
+{
+        pkgs=$@
+        out=`yum list updated`
+        if [[ -z "`echo -e "$out" | grep "x86_64"`" ]]
+        then
+                return 0
+        fi
+        return 1
+
+}
+
 function _install_common_packages ()
 {
-	sudo yum -q -y update
-	if ! [[ -f $LIBRTPKCS11ECP ]]
-	then
-		wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/PKCS11Lib/Current/Linux/x64/librtpkcs11ecp.so";
-        	if [[ $? -ne 0 ]]
-		then
-			echoerr "Не могу скачать пакет librtpkcs11ecp.so"
-			return 1
-		fi 
-		sudo cp librtpkcs11ecp.so $LIBRTPKCS11ECP;
-	fi
+        local pkgs="ccid opensc gdm-plugin-smartcard pcsc-tools libp11 engine_pkcs11 python3-tkinter dialog"
+        check_update="$1"
 
-	sudo yum -q -y install ccid opensc gdm-plugin-smartcard dialog;
-	if [[ $? -ne 0 ]]
-	then
-		echoerr "Не могу установить один из пакетов: ccid opensc gdm-plugin-smartcard p11-kit pam_pkcs11 rpmdevtools dialog из репозитория"
-		return 1
-	fi
+        if ! [[ -z "$check_updates" ]]
+        then
+                check_pkgs $pkgs
+                if  [[ $? -eq 0 && -f $LIBRTPKCS11ECP ]]
+                then
+                        return 0
+                fi
 
-        sudo yum -q -y install libp11 engine_pkcs11;
+                return 1
+        fi
+
+        sudo yum -q -y update
+        if ! [[ -f $LIBRTPKCS11ECP ]]
+        then
+                wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/PKCS11Lib/Current/Linux/x64/librtpkcs11ecp.so";
+                if [[ $? -ne 0 ]]
+                then
+                        echoerr "Не могу скачать пакет librtpkcs11ecp.so"
+                        return 1
+                fi
+                sudo cp librtpkcs11ecp.so $LIBRTPKCS11ECP;
+        fi
+
+        sudo yum -q -y install $pkgs;
         if [[ $? -ne 0 ]]
         then
-                $DIALOG --msgbox "Скачайте последнюю версии пакетов libp11 engine_pkcs11 отсюда https://apps.fedoraproject.org/packages/libp11/builds/ и установите их с помощью команд sudo rpm -i /path/to/package. Или соберите сами их из исходников" 0 0
-                echoerr "Установите пакеты libp11 и engine_pkcs11 отсюда https://apps.fedoraproject.org/packages/libp11/builds/"
-        	return 1
-	fi
+                echoerr "Не могу установить один из пакетов: $pkgs из репозитория"
+                return 1
+        fi
 
-	sudo systemctl restart pcscd
-	return 0
+        sudo systemctl restart pcscd
+        return 0
 }
 
 function _install_packages_for_local_auth ()
 {
-        sudo yum -q -y install p11-kit pam_pkcs11 rpmdevtools dialog;
-        if [[ $? -ne 0 ]]
-	then
-		echoerr "Не могу установить один из пакетов: ccid opensc gdm-plugin-smartcard p11-kit pam_pkcs11 rpmdevtools dialog из репозитория"
-		return 1
-	fi
+        local pkgs="p11-kit pam_pkcs11 rpmdevtools"
+        if ! [[ -z "$check_updates" ]]
+        then
+                check_pkgs $pkgs
+                return $?
+        fi
 
-	return 0
+        sudo yum -q -y install $pkgs;
+        if [[ $? -ne 0 ]]
+        then
+                echoerr "Не могу установить один из пакетов: $pkgs из репозитория"
+                return 1
+        fi
+
+        return 0
 }
 
 function _install_packages_for_domain_auth ()
 {
-	sudo yum -q -y install libsss_sudo;
-	return $?
+        local pkgs="libsss_sudo"
+        if ! [[ -z "$check_updates" ]]
+        then
+                check_pkgs $pkgs
+                return $?
+        fi
+
+        sudo yum -q -y install libsss_sudo;
+        if [[ $? -ne 0 ]]
+        then
+                echoerr "Не могу установить один из пакетов: $pkgs из репозитория"
+                return 1
+        fi
+
+        return 0
 }
 
 function _setup_local_authentication ()
