@@ -518,7 +518,7 @@ function show_token_object ()
 	fi
 
 	case "$act" in
-	"Покaзать")
+	"Просмотр")
 		import_object "$token" "$type" "$id" "cert.crt" &
 		show_wait $! "Подождите" "Подождите, идет чтение объекта"
 		xdg-open "cert.crt"
