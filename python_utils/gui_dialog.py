@@ -2,7 +2,8 @@ from tkinter import ttk
 import tkinter as tk
 
 import argparse
-from sys import argv, stdin, stderr
+from sys import argv, stdin
+import shutil
 
 def center_and_style(win):
     win.style = ttk.Style()
@@ -131,6 +132,15 @@ def show_wait(root, text):
     
     processing_bar.start(30)
 
+def save_file(root, text, file):
+    target = ttk.asksaveasfile(filetypes = file)
+    try:
+        shutil.copyfile(file, target)
+    except:
+        exit(1)
+    exit(0)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Simple python gui dialog gregator')
     parser.add_argument('cmd', nargs=1, type=str)
@@ -138,6 +148,7 @@ if __name__ == "__main__":
     parser.add_argument('--text', type=str)
     parser.add_argument('--column', type=str)
     parser.add_argument('--extra', nargs=2, action='append')
+    parser.add_argument('--file', type=str)
 
     args = parser.parse_args(argv[1:])
 
@@ -157,6 +168,8 @@ if __name__ == "__main__":
         show_wait(root, args.text)
     if args.cmd[0] == 'YESNO':
         yesno(root, args.text)
+    if args.cmd[0] == 'SAVE_FILE':
+        save_file(root, args.text)
 
     if args.extra:
         extraButtonFrame= ttk.Frame(root)

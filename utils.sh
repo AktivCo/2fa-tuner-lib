@@ -511,7 +511,7 @@ function show_token_object ()
 
 	if  [[ $type == "cert" ]]
 	then
-		actions=`echo -e "Удалить\nПросмотр"`
+		actions=`echo -e "Удалить\nПросмотр\nСохранить"`
 		act=`show_list "Выберите действие" "Действия" "$actions"`
 	else
 		act=`show_list "Выберите действие" "Действия" "Удалить"`
@@ -522,6 +522,11 @@ function show_token_object ()
 		import_object "$token" "$type" "$id" "cert.crt" &
 		show_wait $! "Подождите" "Подождите, идет чтение объекта"
 		xdg-open "cert.crt"
+		;;
+	"Сохранить")
+		import_object "$token" "$type" "$id" "cert.crt" &
+                show_wait $! "Подождите" "Подождите, идет чтение объекта"
+                save_file_dialog "Сохранение сертификата" "Укажите, куда сохранить сертификат" cert.crt
 		;;
 	"Удалить")
 		yesno "Удаление объекта" "Уверены, что хотите удалить объект?"
@@ -704,7 +709,7 @@ function follow_token()
 		pcsc_scan > pcsc_scan_res &
 		pcsc_pid=$!
 		sleep 1
-		pkill $pcsc_pid
+		kill $pcsc_pid
 
 		if ! ps -p $menu_pid > /dev/null
 		then
