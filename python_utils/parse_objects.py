@@ -33,10 +33,20 @@ if __name__ == "__main__":
     for object_list in [public_keys, private_keys, certificates]:
         attributes = reduce(lambda attrs, obj: attrs.union(obj.keys()), object_list, set())
         all_attributes.update(attributes)
-    
+
+
     all_attributes=["ID", "label"] + sorted(all_attributes.difference({"ID", "label"}))
     
-    print("TYPE\t" + "\t".join(all_attributes))
+    attr_name_map = {
+            "id": "Идентификатор",
+            "label": "Метка",
+            "subject": "Кому выдан",
+            "usage": "Назначение",
+            "type": "Свойства"}
+
+    renamed_all_attributes=[ attr_name_map[x.lower()] for x in all_attributes ]
+
+    print("Тип\t" + "\t".join(renamed_all_attributes))
     for object_list, _type in [(public_keys, "Открытый ключ"), (private_keys, "Закрытый ключ"), (certificates, "Сертификат")]:
         for obj in object_list:
             yad_string = _type
