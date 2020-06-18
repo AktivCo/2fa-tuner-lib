@@ -42,7 +42,8 @@ if __name__ == "__main__":
             "label": "Метка",
             "subject": "Кому выдан",
             "usage": "Назначение",
-            "type": "Свойства"}
+            "type": "Свойства",
+            "access": "Доступ"}
 
     renamed_all_attributes=[ attr_name_map[x.lower()] for x in all_attributes ]
 
