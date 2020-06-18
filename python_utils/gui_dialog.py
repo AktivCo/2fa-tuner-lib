@@ -135,12 +135,24 @@ def show_wait(root, text):
     
     processing_bar.start(30)
 
-def save_file(root, title, file, start_dir):
+def save_file(root, title, start_dir):
     root.withdraw()
     root.style = ttk.Style()
     root.style.theme_use("clam")
 
     target = filedialog.asksaveasfilename(parent=root, title=title, initialdir=start_dir)
+    if target:
+        print(target)
+        exit(0)
+    else:
+        exit(255)
+
+def open_file(root, title, start_dir):
+    root.withdraw()
+    root.style = ttk.Style()
+    root.style.theme_use("clam")
+
+    target = filedialog.askopenfilename(parent=root, title=title, initialdir=start_dir)
     if target:
         print(target)
         exit(0)
@@ -154,8 +166,7 @@ if __name__ == "__main__":
     parser.add_argument('--title', type=str)
     parser.add_argument('--text', type=str)
     parser.add_argument('--column', type=str)
-    parser.add_argument('--extra', nargs=2, action='append')
-    parser.add_argument('--file', type=str)
+    parser.add_argument('--extra', type=str)
     parser.add_argument('--start_dir', type=str)
 
     args = parser.parse_args(argv[1:])
@@ -177,15 +188,18 @@ if __name__ == "__main__":
     if args.cmd[0] == 'YESNO':
         yesno(root, args.text)
     if args.cmd[0] == 'SAVE_FILE':
-        save_file(root, args.title, args.file, args.start_dir)
+        save_file(root, args.title, args.start_dir)
+    if args.cmd[0] == 'OPEN_FILE':
+        open_file(root, args.title, args.start_dir)
 
     if args.extra:
         extraButtonFrame= ttk.Frame(root)
-        for cmd_name, cmd in args.extra:
+        for cmd in args.extra.split("\t"):
             def onClickCmd():
                 print(cmd)
                 exit(0)
-            btn = ttk.Button(extraButtonFrame, text=cmd_name, command=onClickCmd)
+
+            btn = ttk.Button(extraButtonFrame, text=cmd, command=onClickCmd)
             btn.pack(side=tk.RIGHT, padx=10, fill="x", expand=1)
         extraButtonFrame.pack(fill="x")
 

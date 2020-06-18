@@ -3,16 +3,15 @@ function show_list()
 	local title="$1"
 	local column="$2"
 	local list="$3"
-	local extra_name="$4"
-	local extra_cmd="$5"
+	local extra_cmd="$4"
 	
 	echo -e "$list" > list
 	
-	if [[ -z "$extra_name" ]]
+	if [[ -z "$extra_cmd" ]]
 	then
 		choice=`python3 $TWO_FA_LIB_DIR/python_utils/gui_dialog.py LIST --title "$title" --column "$column" < list`
 	else
-		choice=`python3 $TWO_FA_LIB_DIR/python_utils/gui_dialog.py LIST --title "$title" --column "$column" --extra "$extra_name" "$extra_cmd" < list`
+		choice=`python3 $TWO_FA_LIB_DIR/python_utils/gui_dialog.py LIST --title "$title" --column "$column" --extra "$extra_cmd" < list`
 	fi
 	ret=$?
 	echo "$choice"
@@ -55,10 +54,18 @@ function save_file_dialog()
 {
 	title="$1"
 	text="$2"
-	file="$3"
-	start_dir="$4"
-	python3 $TWO_FA_LIB_DIR/python_utils/gui_dialog.py SAVE_FILE --title "$title" --text "$text" --file "$file" --start_dir "$start_dir"
+	start_dir="$3"
+	python3 $TWO_FA_LIB_DIR/python_utils/gui_dialog.py SAVE_FILE --title "$title" --text "$text" --start_dir "$start_dir"
 	return $?
+}
+
+function open_file_dialog()
+{
+        title="$1"
+        text="$2"
+        start_dir="$3"
+        python3 $TWO_FA_LIB_DIR/python_utils/gui_dialog.py OPEN_FILE --title "$title" --text "$text" --start_dir "$start_dir"
+        return $?
 }
 
 function dialog_manager_enabeled()

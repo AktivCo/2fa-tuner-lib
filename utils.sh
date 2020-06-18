@@ -314,21 +314,27 @@ function gen_key_id ()
 
 function import_cert ()
 {
-	cert_path=`$DIALOG --title "Укажите путь до сертификата" --fselect $HOME 0 0`;
-	key_ids=`get_key_list`
-	if [[ -z "$key_ids" ]]
+	token=$1
+	key_id=$2
+	
+	if [[ -z $key_id ]]
 	then
-		echoerr "На Рутокене нет ключей";
-		return 1
+		key_id=`gen_key_id`
 	fi
 
-	key_ids=`echo "$key_ids" | awk '{printf("%s\t%s\n", NR, $0)}'`;
-	key_id=`echo $key_ids | xargs $DIALOG --title "Выбор ключа" --menu "Выберите ключ для которого выдан сертификат" 0 0 0`;
-	key_id=`echo "$key_ids" | sed "${key_id}q;d" | cut -f2 -d$'\t'`;
+	cert_path=`open_file_dialog "Путь до сертификата" "Укажите путь до сертификата" "$HOME"`;
+	if [[ $? -ne 0 ]]
+	then
+		return 0
+	fi	
 
-	openssl x509 -in $cert_path -out cert.crt -inform PEM -outform DER;
-	import_cert_on_token cert.crt $key_id
-
+	if ! [[ -z "`cat "$cert_path" | grep '\-----BEGIN CERTIFICATE-----'`" ]]
+	then
+		openssl x509 -in "$cert_path" -out cert.crt -inform PEM -outform DER;
+	fi
+	
+	import_cert_on_token "$token" "$cert_path" $key_id &
+	show_wait $! "Подождите" "Идет импорт сертификата"
 	return $?
 }
 
@@ -450,7 +456,7 @@ function choose_token ()
         get_token_list > get_token_list_res &
 	show_wait $! "Подождите" "Подождите, идет получение списка Рутокенов"
         token_list=`cat get_token_list_res`
-	choice=`show_list "Выберите Рутокен" "Подключенные устройства" "$token_list" "Обновить список" "Обновить список"`
+	choice=`show_list "Выберите Рутокен" "Подключенные устройства" "$token_list" "Обновить список"`
         
 	if [ $? -ne 0 ]
         then
@@ -487,11 +493,32 @@ function show_token_object ()
 	header=`echo -e "$objs" | head -n 1`
 	objs=`echo -e "$objs" | tail -n +2`
 	
-	obj=`show_list "Объекты на Рутокене $token" "$header" "$objs"`
+	extra=`echo -e "Импортировать ключ и сертификат\tСоздать ключ\tИмпортировать сертификат"`
+	obj=`show_list "Объекты на Рутокене $token" "$header" "$objs" "$extra"`
 	
 	if [[ -z "$obj" ]]
 	then
 		return 0
+	fi
+
+	extra=0
+	case $obj in
+	"Создать ключ")
+		extra=1
+		;;
+	"Импортировать ключ и сертификат")
+		extra=1
+		;;
+	"Импортировать сертификат")
+		extra=1
+		import_cert "$token"
+		;;
+	esac
+
+	if [[ $extra -eq 1 ]]
+	then
+	        show_token_object "$token"
+	        return $?
 	fi
 	
 	type=`echo "$obj" | cut -f1`
@@ -511,7 +538,7 @@ function show_token_object ()
 
 	if  [[ $type == "cert" ]]
 	then
-		actions=`echo -e "Удалить\nПросмотр\nСохранить"`
+		actions=`echo -e "Удалить\nПросмотр\nСохранить на диске"`
 		act=`show_list "Выберите действие" "Действия" "$actions"`
 	else
 		act=`show_list "Выберите действие" "Действия" "Удалить"`
@@ -523,11 +550,14 @@ function show_token_object ()
 		show_wait $! "Подождите" "Подождите, идет чтение объекта"
 		xdg-open "cert.crt"
 		;;
-	"Сохранить")
+	"Сохранить на диске")
 		import_object "$token" "$type" "$id" "cert.crt" &
                 show_wait $! "Подождите" "Подождите, идет чтение объекта"
-		target=`save_file_dialog "Сохранение сертификата" "Укажите, куда сохранить сертификат" cert.crt "$CUR_DIR"`
-		cp cert.crt "$target"
+		target=`save_file_dialog "Сохранение сертификата" "Укажите, куда сохранить сертификат" "$CUR_DIR"`
+		if [[ $? -eq 0 ]]
+		then
+			mv cert.crt "$target"
+		fi
 		;;
 	"Удалить")
 		yesno "Удаление объекта" "Уверены, что хотите удалить объект?"
@@ -542,7 +572,7 @@ function show_token_object ()
 		;;
 	esac
 
-	show_token_object $token
+	show_token_object "$token"
 	return $?
 }
 

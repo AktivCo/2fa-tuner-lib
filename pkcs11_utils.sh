@@ -114,9 +114,10 @@ function create_key_and_cert ()
 
 function import_cert_on_token ()
 {
-	cert=$1
-	key=$2
-	pkcs11-tool --module $LIBRTPKCS11ECP -l -p "$PIN" -y cert -w "$cert" --id "$key" > /dev/null 2> /dev/null;
+	token=$1
+	cert=$2
+	key=$3
+	pkcs11-tool --module "$LIBRTPKCS11ECP" -l -p "$PIN" -y cert -w "$cert" --id "$key" --slot-description "$token" > /dev/null 2> /dev/null;
 	if [[ $? -ne 0 ]]
 	then
 		echoerr "Не удалось сохранить сертификат на Рутокен"
