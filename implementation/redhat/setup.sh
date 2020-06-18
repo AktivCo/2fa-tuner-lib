@@ -3,7 +3,7 @@
 function check_pkgs ()
 {
         pkgs=$@
-        out=`yum list updated`
+        out=`yum list available $pkgs`
         if [[ -z "`echo -e "$out" | grep "x86_64"`" ]]
         then
                 return 0
