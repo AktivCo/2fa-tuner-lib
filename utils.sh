@@ -541,7 +541,8 @@ function show_token_object ()
 		actions=`echo -e "Удалить\nПросмотр\nСохранить на диске"`
 		act=`show_list "Выберите действие" "Действия" "$actions"`
 	else
-		act=`show_list "Выберите действие" "Действия" "Удалить"`
+		actions=`echo -e "Удалить\nИмпорт сертификата ключа"`
+		act=`show_list "Выберите действие" "Действия" "$actions"`
 	fi
 
 	case "$act" in
@@ -558,6 +559,9 @@ function show_token_object ()
 		then
 			mv cert.crt "$target"
 		fi
+		;;
+	"Импорт сертификата ключа")
+			import_cert "$token" "$id"
 		;;
 	"Удалить")
 		yesno "Удаление объекта" "Уверены, что хотите удалить объект?"
