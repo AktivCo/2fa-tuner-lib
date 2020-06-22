@@ -63,7 +63,7 @@ function init()
 	esac
 	. "$IMPL_DIR/setup.sh"
 	
-	ENGINE_DIR=`openssl version -a | grep "ENGINESDIR" | cut -d ":" -f 2 | tr -d '"' | awk '{$1=$1};1'`
+	ENGINE_DIR=`openssl version -a | grep "ENGINESDIR" | tail -1 | cut -d ":" -f 2 | tr -d '"' | awk '{$1=$1};1'`
 	if ! [[ -z "$ENGINE_DIR" ]]
 	then
 		PKCS11_ENGINE=`echo "${ENGINE_DIR}/pkcs11.so"`
