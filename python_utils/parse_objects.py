@@ -29,7 +29,7 @@ if __name__ == "__main__":
             exit(3)
         
         if line.count(":"):
-            atr=line.split(":",1)[0].strip()
+            atr=line.split(":",1)[0].strip().lower()
             current_list[-1][atr] = line.split(":",1)[-1].strip()
         else:
             current_list[-1][atr] = current_list[-1][atr] + line.strip()
@@ -38,9 +38,10 @@ if __name__ == "__main__":
         attributes = reduce(lambda attrs, obj: attrs.union(obj.keys()), object_list, set())
         all_attributes.update(attributes)
 
+    all_attributes.discard("value")
+    all_attributes.discard("params oid")
+    all_attributes=["id", "label"] + sorted(all_attributes.difference({"ID", "label"}))
 
-    all_attributes=["ID", "label"] + sorted(all_attributes.difference({"ID", "label"}))
-    
     attr_name_map = {
             "id": "Идентификатор",
             "label": "Метка",
@@ -51,7 +52,7 @@ if __name__ == "__main__":
             "value": "Значение",
             "params oid": "OID параметров"}
 
-    renamed_all_attributes=[ attr_name_map[x.lower()] for x in all_attributes ]
+    renamed_all_attributes=[ attr_name_map[x] for x in all_attributes ]
 
     print("Тип\t" + "\t".join(renamed_all_attributes))
     for object_list, _type in [(public_keys, "Открытый ключ"), (private_keys, "Закрытый ключ"), (certificates, "Сертификат")]:
