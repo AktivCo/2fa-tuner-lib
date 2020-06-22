@@ -32,9 +32,11 @@ function show_form ()
 {
         title="$1"
         msg="$2"
-        form=`python3 $TWO_FA_LIB_DIR/python_utils/gui_dialog.py SHOW_FORM --title "$title" --text "$msg"`;
+	asks="$3"
+	default="$4"
+        form=`python3 $TWO_FA_LIB_DIR/python_utils/gui_dialog.py SHOW_FORM --title "$title" --text "$msg" --asks "$asks" --default="$default"`;
         ret=$?
-	echo -e "form"
+	echo -e "$form"
         return $ret
 }
 

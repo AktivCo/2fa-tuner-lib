@@ -48,6 +48,41 @@ def show_msg(root, text):
     okButton.pack(side=tk.RIGHT, padx=10, pady=10)
     buttonFrame.pack(fill='x', side=tk.BOTTOM)
 
+def show_form(root, text, asks, default):
+    asks=asks.split("\n")
+    default=default.split("\n")
+    default.extend([""]*(len(asks) - len(default)))
+
+    msg = ttk.Label(root, text=text)
+
+    formFrame=ttk.Frame()
+    entries=[]
+    for i, ask in enumerate(asks):
+        ttk.Label(formFrame, text=ask + ":").grid(row=i, column=0, pady=3, sticky="W")
+        entry=ttk.Entry(formFrame)
+        entry.insert(tk.END, default[i])
+        entry.grid(row=i, column=1, pady=3, sticky="NSEW")
+        entries.append(entry)
+
+    buttonFrame= ttk.Frame(root)
+    cancelButton = ttk.Button(buttonFrame, text="Cancel", command= lambda: exit(255))
+    
+    def okButtonClicked(event=None, entries=entries):
+        for entry in entries:
+            print(entry.get())
+        exit(0)
+
+    okButton = ttk.Button(buttonFrame, text="Ok", command= okButtonClicked)
+    root.bind('<Return>', okButtonClicked)
+
+    msg.pack(pady=5, padx=10)
+    formFrame.pack(fill="both", padx=10, pady=10, expand=1)
+    formFrame.columnconfigure(1, weight=1)
+
+    okButton.pack(side=tk.RIGHT, padx=10, pady=10)
+    cancelButton.pack(side=tk.RIGHT, padx=10)
+    buttonFrame.pack(fill='x', side=tk.BOTTOM)
+
 def get_str(root, text, hide=False):
     text = ttk.Label(root, text=text)
     if hide:
@@ -58,7 +93,7 @@ def get_str(root, text, hide=False):
     buttonFrame= ttk.Frame(root)
     cancelButton = ttk.Button(buttonFrame, text="Cancel", command= lambda: exit(255))
 
-    def okButtonClicked(event=None):    
+    def okButtonClicked(event=None, guess=guess):
         print(guess.get())
         exit(0)
 
@@ -108,7 +143,7 @@ def show_list(root, columns):
     buttonFrame= ttk.Frame(root)
     cancelButton = ttk.Button(buttonFrame, text="Cancel", command= lambda: exit(255))
     
-    def okButtonClicked(event=None):
+    def okButtonClicked(event=None, tree=tree):
         item = tree.selection()[0]
         if tree.item(item, "values") == "":
             return
@@ -194,6 +229,8 @@ if __name__ == "__main__":
     parser.add_argument('--column', type=str)
     parser.add_argument('--extra', type=str)
     parser.add_argument('--start_dir', type=str)
+    parser.add_argument('--asks', type=str)
+    parser.add_argument('--default', type=str)
 
     args = parser.parse_args(argv[1:])
 
@@ -212,6 +249,8 @@ if __name__ == "__main__":
         get_str(root, args.text)
     if args.cmd[0] == 'SHOW_TEXT':
         show_msg(root, args.text)
+    if args.cmd[0] == "SHOW_FORM":
+        show_form(root, args.text, args.asks, args.default)
     if args.cmd[0] == 'SHOW_WAIT':
         show_wait(root, args.text)
     if args.cmd[0] == 'YESNO':
