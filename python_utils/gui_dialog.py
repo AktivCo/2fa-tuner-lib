@@ -1,22 +1,27 @@
 from tkinter import ttk
 import tkinter as tk
+import tkinter.font as tkfont
 from tkinter import filedialog
 
 import argparse
 from sys import argv, stdin
 from autoscrollbar import *
 
-def center_and_style(win):
+def style(win):
     win.style = ttk.Style()
     win.style.theme_use("clam")
 
+def center(win):
     win.update_idletasks()
-    
     width = win.winfo_width()
     height = win.winfo_height()
     x = (win.winfo_screenwidth() // 2) - (width // 2)
     y = (win.winfo_screenheight() // 2) - (height // 2)
     win.geometry('{}x{}+{}+{}'.format(width, height, x, y))
+
+def get_width(text):
+    font = tkfont.Font()
+    return font.measure(text)
 
 def yesno(root, text):
     text = ttk.Label(root, text=text)
@@ -82,12 +87,19 @@ def show_list(root, columns):
     sbar_x.grid(row=1, column=0, sticky="EW")
     tree.config(yscrollcommand=sbar_y.set, height=15, xscrollcommand=sbar_x.set)
 
+    rows_width=[get_width(col.title()) for col in columns]
     for col in columns:
         tree.heading(col, text=col.title())
-        tree.column(col, width=300)
+        tree.column(col)
 
     for item in rows:
+        for i, elem in enumerate(item):
+            rows_width[i]= min(max(get_width(elem), rows_width[i]), 500)
         tree.insert('', 'end', values=item)
+
+    for i, col in enumerate(columns):
+        tree.column(col, width=rows_width[i])
+
 
     child_id = tree.get_children()[0]
     tree.focus(child_id)
@@ -189,6 +201,7 @@ if __name__ == "__main__":
         exit(255)
     
     root = tk.Tk()
+    style(root)
     root.title(args.title)
 
     if args.cmd[0] == 'LIST':
@@ -221,6 +234,6 @@ if __name__ == "__main__":
 
     root.bind("<Escape>", lambda x: exit(255))
 
-    center_and_style(root)
+    center(root)
     root.mainloop()
     exit(255)
