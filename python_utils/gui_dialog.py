@@ -4,6 +4,7 @@ from tkinter import filedialog
 
 import argparse
 from sys import argv, stdin
+from autoscrollbar import *
 
 def center_and_style(win):
     win.style = ttk.Style()
@@ -75,8 +76,8 @@ def show_list(root, columns):
     treeFrame = ttk.Frame(root)
     tree = ttk.Treeview(treeFrame, columns=columns, show="headings")
     tree.grid(row=0, column=0, sticky="NSEW")
-    sbar_y = ttk.Scrollbar(treeFrame, orient="vertical", command=tree.yview)
-    sbar_x = ttk.Scrollbar(treeFrame, orient="horizontal", command=tree.xview)
+    sbar_y = AutoScrollbar(treeFrame, orient="vertical", command=tree.yview)
+    sbar_x = AutoScrollbar(treeFrame, orient="horizontal", command=tree.xview)
     sbar_y.grid(row=0, column=1, sticky="NS")
     sbar_x.grid(row=1, column=0, sticky="EW")
     tree.config(yscrollcommand=sbar_y.set, height=15, xscrollcommand=sbar_x.set)
