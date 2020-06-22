@@ -918,6 +918,6 @@ function follow_token()
 		fi
 	done
 	
-	kill -- -$(ps -o pgid= $menu_pid | grep -o [0-9]*)	
+	kill `pstree -p $menu_pid | sed 's/(/\n(/g' | grep '(' | sed 's/(\(.*\)).*/\1/' | tr "\n" " "`	
 	return 1
 }
