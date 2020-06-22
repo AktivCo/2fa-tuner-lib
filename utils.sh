@@ -289,7 +289,7 @@ function gen_cert_id ()
 	
 	while [[ -n "$res" ]]
 	do
-		rand=`echo $(( $RANDOM % 10000 ))`
+		rand=`openssl rand -hex 16`
 		res=`echo $cert_ids | grep -w $rand`
 	done
 	
@@ -305,7 +305,7 @@ function gen_key_id ()
 	key_ids=`get_key_list "$token"`
 	while [[ -n "$res" ]]
 	do
-		rand=`echo $(( $RANDOM % 10000 ))`
+		rand=`openssl rand -hex 16`
 		res=`echo $key_ids | grep -w $rand`
 	done
 
@@ -399,25 +399,37 @@ function get_token_password ()
 
 function get_cert_subj ()
 {
-        C="/C=RU";
-        ST=`$DIALOG --title 'Данные сертификата' --inputbox 'Регион:' 0 0 'Москва'`;
-        if [[ -n "$ST" ]]; then ST="/ST=$ST"; else ST=""; fi
+	form_atr="Регион
+Населенный пункт
+Организация
+Подразделение
+Общее имя
+Электронная почта"
+	default_content=`echo -e "Москва\n\n\n\n\n"`
+	res=`show_form "Данные сертификата" "Укажите данные заявки" "$form_atr" "$default_content"`
+        if [[ $? -ne 0 ]]
+	then
+		return 1
+	fi
+	
+	C="/C=RU";
+	ST="`echo -e "$res" | sed '1q;d'`"
+	if [[ -n "$ST" ]]; then ST="/ST=$ST"; else ST=""; fi
 
-        L=`$DIALOG --title 'Данные сертификата' --inputbox 'Населенный пункт:' 0 0 ''`;
-        if [[ -n "$L" ]]; then L="/L=$L"; else L=""; fi
+	L="`echo -e "$res" | sed '2q;d'`"
+	if [[ -n "$L" ]]; then L="/L=$L"; else L=""; fi
 
-        O=`$DIALOG --title 'Данные сертификата' --inputbox 'Организация:' 0 0 ''`;
-        if [[ -n "$O" ]]; then O="/O=$O"; else O=""; fi
+	O="`echo -e "$res" | sed '3q;d'`"
+	if [[ -n "$O" ]]; then O="/O=$O"; else O=""; fi
 
-        OU=`$DIALOG --title 'Данные сертификата' --inputbox 'Подразделение:' 0 0 ''`;
-        if [[ -n "$OU" ]]; then OU="/OU=$OU"; else OU=""; fi
+	OU="`echo -e "$res" | sed '4q;d'`"
+	if [[ -n "$OU" ]]; then OU="/OU=$OU"; else OU=""; fi
+	
+	CN="`echo -e "$res" | sed '5q;d'`"
+	if [[ -n "$CN" ]]; then CN="/CN=$CN"; else CN=""; fi
 
-        CN=`$DIALOG --stdout --title 'Данные сертификата' --inputbox 'Общее имя:' 0 0 ''`;
-        if [[ -n "$CN" ]]; then CN="/CN=$CN"; else CN=""; fi
-
-        email=`$DIALOG --stdout --title 'Данные сертификата' --inputbox 'Электронная почта:' 0 0 ''`;
-        if [[ -n "$email" ]]; then email="/emailAddress=$email"; else email=""; fi
-
+	email="`echo -e "$res" | sed '6q;d'`"
+	if [[ -n "$email" ]]; then email="/emailAddress=$email"; else email=""; fi
 	
 	echo "\"$C$ST$L$O$OU$CN$email\""
 	return 0
@@ -425,18 +437,28 @@ function get_cert_subj ()
 
 function create_cert_req ()
 {
-	cert_id=$1
-	
-	req_path=`$DIALOG --title "Куда сохранить заявку" --fselect "$CUR_DIR/cert.csr" 0 0`
+	key_id=$1
 	
 	subj=`get_cert_subj`
-
-	pkcs11_create_cert_req $cert_id "$subj" "$req_path" 0
-
 	if [[ $? -ne 0 ]]
 	then
-		echoerr "Не удалось создать заявку на сертификат"
-		return 1
+		return 0
+	fi
+	
+	req_path=`save_file_dialog "Сохранение заявки на сертификат" "Куда сохранить заявку" "$CUR_DIR"`
+        if [[ $? -ne 0 ]]
+        then
+                return 0
+        fi
+
+	pkcs11_create_cert_req "$token" "$cert_id" "$subj" "$req_path" 0 &
+	show_wait $! "Подождите" "Идет создание заявки"
+	res=$?
+
+	if [[ $res -ne 0 ]]
+	then
+		show_text "Ошибка" "Не удалось создать заявку на сертификат"
+		return $res
 	fi
 
 	return 0
@@ -677,7 +699,7 @@ function show_token_object ()
 		actions=`echo -e "Удалить\nПросмотр\nСохранить на диске"`
 		act=`show_list "Выберите действие" "Действия" "$actions"`
 	else
-		actions=`echo -e "Удалить\nИмпорт сертификата ключа"`
+		actions=`echo -e "Удалить\nИмпорт сертификата ключа\nСоздать заявку на сертификат"`
 		act=`show_list "Выберите действие" "Действия" "$actions"`
 	fi
 
@@ -698,6 +720,9 @@ function show_token_object ()
 		;;
 	"Импорт сертификата ключа")
 			import_cert "$token" "$id"
+		;;
+	"Создать заявку на сертификат")
+			create_cert_req "$token" "$id"
 		;;
 	"Удалить")
 		yesno "Удаление объекта" "Уверены, что хотите удалить объект?"

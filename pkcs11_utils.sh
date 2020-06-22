@@ -157,12 +157,21 @@ function pkcs11_gen_key ()
 
 function pkcs11_create_cert_req ()
 {
-	cert_id=$1
-	subj="$2"
-	req_path="$3"
-	choice=$4
+	token="$1"
+	key_id="$2"
+	subj="$3"
+	req_path="$4"
+	choice="$5"
+	key_id_ascii=`echo $key_id | xxd -r -p`
 
-        openssl_req="engine dynamic -pre SO_PATH:$PKCS11_ENGINE -pre ID:pkcs11 -pre LIST_ADD:1  -pre LOAD -pre MODULE_PATH:$LIBRTPKCS11ECP \n req -engine pkcs11 -new -key \"0:$cert_id\" -keyform engine -passin \"pass:$PIN\" -subj $subj"
+	serial=`get_token_info "$token" | grep "serial" | cut -f 2`
+	if [[ $? -ne 0 ]]
+	then
+		echoerr "Не могу получить серийный номер"
+		return 1
+	fi
+
+        openssl_req="engine dynamic -pre SO_PATH:$PKCS11_ENGINE -pre ID:pkcs11 -pre LIST_ADD:1  -pre LOAD -pre MODULE_PATH:$LIBRTPKCS11ECP \n req -engine pkcs11 -new -key \"pkcs11:serial=$serial;id=$key_id_ascii\" -keyform engine -passin \"pass:$PIN\" -subj $subj"
         if [[ choice -eq 1  ]]
         then
                 printf "$openssl_req -x509 -outform DER -out \"$req_path\""| openssl > /dev/null;
@@ -172,7 +181,7 @@ function pkcs11_create_cert_req ()
 			echoerr "Не удалось создать сертификат"
 			return 1
 		fi
-        	pkcs11-tool --module $LIBRTPKCS11ECP -l -p "$PIN" -y cert -w "$req_path" --id $cert_id > /dev/null 2> /dev/null;
+        	pkcs11-tool --module $LIBRTPKCS11ECP -l -p "$PIN" -y cert -w "$req_path" --id $key_id > /dev/null 2> /dev/null;
         else
                 printf "$openssl_req -out \"$req_path\" -outform PEM" | openssl > /dev/null;
 
