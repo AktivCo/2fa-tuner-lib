@@ -867,8 +867,7 @@ function show_wait ()
 	
 	wait $pid
 	ret_code=$?
-	pkill -P $dialog_pid
-	kill $dialog_pid
+	rkill $dialog_pid
 	return $ret_code
 }
 
@@ -917,7 +916,12 @@ function follow_token()
 			token_present=0
 		fi
 	done
-	
-	kill `pstree -p $menu_pid | sed 's/(/\n(/g' | grep '(' | sed 's/(\(.*\)).*/\1/' | tr "\n" " "`	
+
+	rkill $menu_pid	
 	return 1
+}
+
+function rkill()
+{
+	kill `pstree -p $1 | sed 's/(/\n(/g' | grep '(' | sed 's/(\(.*\)).*/\1/' | tr "\n" " "`
 }
