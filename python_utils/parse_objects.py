@@ -40,7 +40,7 @@ if __name__ == "__main__":
 
     all_attributes.discard("value")
     all_attributes.discard("params oid")
-    all_attributes=["id", "label"] + sorted(all_attributes.difference({"ID", "label"}))
+    all_attributes=["id", "label"] + sorted(all_attributes.difference({"id", "label"}))
 
     attr_name_map = {
             "id": "Идентификатор",
