@@ -274,5 +274,6 @@ if __name__ == "__main__":
     root.bind("<Escape>", lambda x: exit(255))
 
     center(root)
+    root.minsize(root.winfo_width(), root.winfo_height())
     root.mainloop()
     exit(255)
