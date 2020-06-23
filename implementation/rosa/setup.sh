@@ -1,24 +1,38 @@
 #!/bin/bash
 
+function check_pkgs ()
+{
+        pkgs=$@
+        upd_pkgs=`apt-indicator-checker`
+
+        for pkg in $pkgs
+        do
+                if [[ "`rpm -q -i $pkg 2>&1 | grep "не установлен"`" ]]
+                then
+                        return 1
+                fi
+        done
+
+        return 0
+}
+
 function _install_common_packages ()
 {
-	sudo urpmi --force ccid opensc p11-kit rpmdevtools dialog libp11-devel engine_pkcs11
+        local pkgs="ccid opensc p11-kit rpmdevtools dialog libp11-devel engine_pkcs11 tkinter3"
+        check_update="$1"
+
+        if ! [[ -z "$check_updates" ]]
+        then
+                check_pkgs $pkgs
+                return $?
+        fi
+
+	sudo urpmi --force $pkgs
 	if [[ $? -ne 0 ]]
 	then
-		echoerr "Не могу установить один из пакетов: ccid opensc p11-kit rpmdevtools dialog libp11-devel engine_pkcs11 из репозитория"
+		echoerr "Не могу установить один из пакетов: $pkgs из репозитория"
 		return 1
 	fi
-
-	if ! [[ -f $LIBRTPKCS11ECP ]]
-        then
-                wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/PKCS11Lib/Current/Linux/x64/librtpkcs11ecp.so";
-                if [[ $? -ne 0 ]]
-		then
-			echoerr "Не могу загрузить пакет librtpkcs11ecp.so"
-			return 1
-		fi
-                sudo cp librtpkcs11ecp.so $LIBRTPKCS11ECP;
-        fi
 
 	sudo systemctl restart pcscd
 
@@ -27,11 +41,20 @@ function _install_common_packages ()
 
 function _install_packages_for_local_auth ()
 {
-        sudo urpmi --force pam_pkcs11 pam_pkcs11-tools
+        local pkgs="pam_pkcs11 pam_pkcs11-tools"
+        check_update="$1"
+	
+	if ! [[ -z "$check_updates" ]]
+        then
+                check_pkgs $pkgs
+                return $?
+        fi
+	
+	sudo urpmi --force $pkgs
 
         if [[ $? -ne 0 ]]
 	then
-		echoerr "Не могу установить один из пакетов: pam_pkcs11 pam_pkcs11-tools из репозитория"
+		echoerr "Не могу установить один из пакетов: $pkgs из репозитория"
 		return 1
 	fi
 
