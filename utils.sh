@@ -73,6 +73,7 @@ function init()
 	then
 		LIBRTPKCS11ECP="$GUESS_LIBRTPKCS11ECP"
 	fi
+	RTENGINE="`dirname "$PKCS11_ENGINE"`/librtengine.so"
 
 	case $XDG_CURRENT_DESKTOP in
 	"MATE")
@@ -130,6 +131,27 @@ function install_common_packages ()
 {
 	check_updates=$1
 	rtadmin_path=/usr/bin/rtAdmin
+
+	if ! [[ -z "$check_updates" ]]
+        then
+                if ! [[ -f $RTENGINE ]]
+		then
+			return 1
+        
+		fi
+	else
+		wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/SDK/sdk-180919-80c054.zip";
+		if [[ $? -ne 0 ]]
+        	then
+                	echoerr "Не могу загрузить rutoken SDK"
+                	return 1
+        	fi
+
+		unzip sdk-180919-80c054.zip  
+		
+		sudo cp sdk/openssl/rtengine/bin/linux_glibc-x86_64/lib/librtengine.so "$RTENGINE"
+	fi
+
 
         if ! [[ -z "$check_updates" ]]
         then
@@ -442,7 +464,9 @@ function get_cert_subj ()
 
 function create_cert_req ()
 {
-	key_id=$1
+	local token="$1"
+	local key_id="$2"
+	local type="$3"
 	
 	subj=`get_cert_subj`
 	if [[ $? -ne 0 ]]
@@ -456,7 +480,7 @@ function create_cert_req ()
                 return 0
         fi
 
-	pkcs11_create_cert_req "$token" "$cert_id" "$subj" "$req_path" 0 &
+	pkcs11_create_cert_req "$token" "$key_id" "$type" "$subj" "$req_path" 0 &
 	show_wait $! "Подождите" "Идет создание заявки"
 	res=$?
 
@@ -733,7 +757,13 @@ function show_token_object ()
 			import_cert "$token" "$id"
 		;;
 	"Создать заявку на сертификат")
-			create_cert_req "$token" "$id"
+			if [[ "`echo "$obj" | grep "GOSTR3410"`" ]]
+			then
+				type=gost
+			else
+				type=rsa
+			fi
+			create_cert_req "$token" "$id" "$type"
 		;;
 	"Удалить")
 		yesno "Удаление объекта" "Уверены, что хотите удалить объект?"

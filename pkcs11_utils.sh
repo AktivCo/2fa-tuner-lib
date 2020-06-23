@@ -164,10 +164,20 @@ function pkcs11_create_cert_req ()
 {
 	token="$1"
 	key_id="$2"
-	subj="$3"
-	req_path="$4"
-	choice="$5"
-	key_id_ascii=`echo $key_id | xxd -r -p`
+	type="$3"
+	subj="$4"
+	req_path="$5"
+	choice="$6"
+	key_id_ascii=`echo "$key_id" | xxd -r -p`
+	
+	if [[ "$type" == "rsa" ]]
+	then
+		engine_path="$PKCS11_ENGINE"
+		engine_id=pkcs11
+	else
+		engine_path="$RTENGINE"
+		engine_id=rtengine
+	fi
 
 	serial=`get_token_info "$token" | grep "serial" | cut -f 2`
 	if [[ $? -ne 0 ]]
@@ -176,8 +186,9 @@ function pkcs11_create_cert_req ()
 		return 1
 	fi
 
-        openssl_req="engine dynamic -pre SO_PATH:$PKCS11_ENGINE -pre ID:pkcs11 -pre LIST_ADD:1  -pre LOAD -pre MODULE_PATH:$LIBRTPKCS11ECP \n req -engine pkcs11 -new -key \"pkcs11:serial=$serial;id=$key_id_ascii\" -keyform engine -passin \"pass:$PIN\" -subj $subj"
-        if [[ choice -eq 1  ]]
+        openssl_req="engine dynamic -pre SO_PATH:"$engine_path" -pre ID:"$engine_id" -pre LIST_ADD:1  -pre LOAD -pre MODULE_PATH:$LIBRTPKCS11ECP \n req -engine $engine_id -new -key \"pkcs11:serial=$serial;id=$key_id_ascii\" -keyform engine -passin \"pass:$PIN\" -subj $subj"
+        echo -e "$openssl_req"
+	if [[ choice -eq 1  ]]
         then
                 printf "$openssl_req -x509 -outform DER -out \"$req_path\""| openssl > /dev/null;
 
