@@ -171,6 +171,23 @@ function install_common_packages ()
 		sudo mv rtAdmin $rtadmin_path
 		chmod +x $rtadmin_path
 	fi
+
+        if ! [[ -z "$check_updates" ]]
+        then
+                if ! [[ -f $LIBRTPKCS11ECP ]]
+                then
+                        return 1
+                fi
+	else
+        	wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/PKCS11Lib/Current/Linux/x64/librtpkcs11ecp.so";
+               	if [[ $? -ne 0 ]]
+               	then
+                       	echoerr "Не могу загрузить пакет librtpkcs11ecp.so"
+                        return 1
+                fi
+                sudo cp librtpkcs11ecp.so $LIBRTPKCS11ECP;
+	fi
+
 	
 	_install_common_packages $check_updates
 	

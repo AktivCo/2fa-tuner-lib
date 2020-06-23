@@ -20,26 +20,10 @@ function _install_common_packages ()
         if ! [[ -z "$check_updates" ]]
         then
                 check_pkgs $pkgs
-                if  [[ $? -eq 0 && -f $LIBRTPKCS11ECP ]]
-                then
-                        return 0
-                fi
-
-                return 1
+                return $?
         fi
 
         sudo yum -q -y update
-        if ! [[ -f $LIBRTPKCS11ECP ]]
-        then
-                wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/PKCS11Lib/Current/Linux/x64/librtpkcs11ecp.so";
-                if [[ $? -ne 0 ]]
-                then
-                        echoerr "Не могу скачать пакет librtpkcs11ecp.so"
-                        return 1
-                fi
-                sudo cp librtpkcs11ecp.so $LIBRTPKCS11ECP;
-        fi
-
         sudo yum -q -y install $pkgs;
         if [[ $? -ne 0 ]]
         then
