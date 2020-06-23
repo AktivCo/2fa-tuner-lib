@@ -68,7 +68,7 @@ function init()
 	then
 		PKCS11_ENGINE=`echo "${ENGINE_DIR}/pkcs11.so"`
 	fi
-	local GUESS_LIBRTPKCS11ECP=`whereis  librtpkcs11ecp | cut -d " " -f 2`
+	local GUESS_LIBRTPKCS11ECP=`whereis  librtpkcs11ecp | awk '{print $2}'`
 	if ! [[ -z "$GUESS_LIBRTPKCS11ECP" ]]
 	then
 		LIBRTPKCS11ECP="$GUESS_LIBRTPKCS11ECP"
@@ -147,7 +147,7 @@ function install_common_packages ()
                 	return 1
         	fi
 
-		unzip sdk-180919-80c054.zip  
+		unzip -q sdk-180919-80c054.zip  
 		
 		sudo cp sdk/openssl/rtengine/bin/linux_glibc-x86_64/lib/librtengine.so "$RTENGINE"
 	fi
@@ -172,7 +172,7 @@ function install_common_packages ()
 		chmod +x $rtadmin_path
 	fi
 
-        if ! [[ -z "$check_updates" ]]
+        if [[ "$check_updates" ]]
         then
                 if ! [[ -f $LIBRTPKCS11ECP ]]
                 then
