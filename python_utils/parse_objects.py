@@ -1,4 +1,4 @@
-from sys import argv
+from sys import argv, stderr
 from functools import reduce
 
 if __name__ == "__main__":
@@ -20,17 +20,20 @@ if __name__ == "__main__":
                 current_list=private_keys
             elif line.startswith("Certificate"):
                 current_list = certificates
-            else:
-                exit(2)
             current_list.append({})
-            current_list[-1]["type"] = line.split(";",1)[-1].strip()
+            
+            atr = "type"
+            val = line.split(";",1)[-1].strip()
+            if val == "unknown key algorithm 3560050691":
+                val = "GOSTR3410-2012-512"
+            
+            current_list[-1][atr] = val
             continue
-        if current_list == None:
-            exit(3)
         
         if line.count(":"):
-            atr=line.split(":",1)[0].strip().lower()
-            current_list[-1][atr] = line.split(":",1)[-1].strip()
+            atr = line.split(":",1)[0].strip().lower()
+            val = line.split(":",1)[-1].strip()
+            current_list[-1][atr] = val 
         else:
             current_list[-1][atr] = current_list[-1][atr] + line.strip()
     all_attributes=set()
