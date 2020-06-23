@@ -168,7 +168,7 @@ function pkcs11_create_cert_req ()
 	subj="$4"
 	req_path="$5"
 	choice="$6"
-	key_id_ascii=`echo "$key_id" | xxd -r -p`
+	key_id_ascii=`echo "$key_id" | sed 's/../%&/g'`
 	
 	if [[ "$type" == "rsa" ]]
 	then
@@ -187,10 +187,9 @@ function pkcs11_create_cert_req ()
 	fi
 
         openssl_req="engine dynamic -pre SO_PATH:"$engine_path" -pre ID:"$engine_id" -pre LIST_ADD:1  -pre LOAD -pre MODULE_PATH:$LIBRTPKCS11ECP \n req -engine $engine_id -new -key \"pkcs11:serial=$serial;id=$key_id_ascii\" -keyform engine -passin \"pass:$PIN\" -subj $subj"
-        echo -e "$openssl_req"
 	if [[ choice -eq 1  ]]
         then
-                printf "$openssl_req -x509 -outform DER -out \"$req_path\""| openssl > /dev/null;
+                echo -e "$openssl_req -x509 -outform DER -out \"$req_path\""| openssl > /dev/null;
 
                 if [[ $? -ne 0 ]]
 		then
@@ -199,7 +198,7 @@ function pkcs11_create_cert_req ()
 		fi
         	pkcs11-tool --module $LIBRTPKCS11ECP -l -p "$PIN" -y cert -w "$req_path" --id $key_id > /dev/null 2> /dev/null;
         else
-                printf "$openssl_req -out \"$req_path\" -outform PEM" | openssl > /dev/null;
+                echo -e "$openssl_req -out \"$req_path\" -outform PEM" | openssl > /dev/null;
 
                 if [[ $? -ne 0 ]]
 		then

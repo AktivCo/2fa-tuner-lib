@@ -308,6 +308,11 @@ function choose_key ()
 	return 0
 }
 
+random-string()
+{
+    cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w ${1:-32} | head -n 1
+}
+
 function gen_cert_id ()
 {
 	token=$1
@@ -316,7 +321,7 @@ function gen_cert_id ()
 	
 	while [[ -n "$res" ]]
 	do
-		rand=`openssl rand -base64 9 | xxd -p`
+		rand=`random-string 8 | xxd -p`
 		res=`echo $cert_ids | grep -w $rand`
 	done
 	
@@ -332,7 +337,7 @@ function gen_key_id ()
 	key_ids=`get_key_list "$token"`
 	while [[ -n "$res" ]]
 	do
-		rand=`openssl rand -base64 9 | xxd -p`
+		rand=`random-string 8 | xxd -p`
 		res=`echo $key_ids | grep -w $rand`
 	done
 
