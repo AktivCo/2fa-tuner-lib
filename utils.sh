@@ -134,7 +134,7 @@ function install_common_packages ()
 
 	if ! [[ -z "$check_updates" ]]
         then
-                if ! [[ -f $RTENGINE ]]
+                if ! [[ -f "$RTENGINE" ]]
 		then
 			return 1
         

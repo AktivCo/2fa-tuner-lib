@@ -168,8 +168,8 @@ function pkcs11_create_cert_req ()
 	subj="$4"
 	req_path="$5"
 	choice="$6"
-	key_id_ascii=`echo "$key_id" | sed 's/../%&/g'`
-	
+	key_id_ascii="`echo -e "$key_id" | sed 's/../%&/g'`"
+		
 	if [[ "$type" == "rsa" ]]
 	then
 		engine_path="$PKCS11_ENGINE"
@@ -187,6 +187,7 @@ function pkcs11_create_cert_req ()
 	fi
 
         openssl_req="engine dynamic -pre SO_PATH:"$engine_path" -pre ID:"$engine_id" -pre LIST_ADD:1  -pre LOAD -pre MODULE_PATH:$LIBRTPKCS11ECP \n req -engine $engine_id -new -key \"pkcs11:serial=$serial;id=$key_id_ascii\" -keyform engine -passin \"pass:$PIN\" -subj $subj"
+	echo -e "$openssl_req"
 	if [[ choice -eq 1  ]]
         then
                 echo -e "$openssl_req -x509 -outform DER -out \"$req_path\""| openssl > /dev/null;
@@ -198,9 +199,8 @@ function pkcs11_create_cert_req ()
 		fi
         	pkcs11-tool --module $LIBRTPKCS11ECP -l -p "$PIN" -y cert -w "$req_path" --id $key_id > /dev/null 2> /dev/null;
         else
-                echo -e "$openssl_req -out \"$req_path\" -outform PEM" | openssl > /dev/null;
-
-                if [[ $? -ne 0 ]]
+                out=`echo -e "$openssl_req -out \"$req_path\" -outform PEM" | openssl`;
+                if [[ "`echo -e "$out" | grep "error"`" ]]
 		then
 			echoerr "Не удалось создать заявку на сертификат"
 			return 1
@@ -219,7 +219,7 @@ function get_token_list ()
 function get_token_info ()
 {
 	token=$1
-        token_info=`pkcs11-tool --module $LIBRTPKCS11ECP -T | awk -v token="$token" '$0 ~ token {print; for(i=1; i<=8; i++) { getline; print}}' | awk '{$1=$1;print}' | sed -E "s/[[:space:]]*:[[:space:]]+/\t/"`
+        token_info=`pkcs11-tool --module $LIBRTPKCS11ECP -T | awk -v token="$token" '$0 ~ token {print; for(i=1; i<=8; i++) { getline; print}}' | awk '{$1=$1;print}' | sed -E "s/[[:space:]]*:[[:space:]]+/\t/" | uniq | awk '/Slot /{++n} n<2'`
         echo -e "$token_info"
 	return 0
 }
