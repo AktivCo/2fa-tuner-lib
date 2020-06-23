@@ -316,7 +316,7 @@ function gen_cert_id ()
 	
 	while [[ -n "$res" ]]
 	do
-		rand=`openssl rand -hex 16`
+		rand=`openssl rand -base64 9 | xxd -p`
 		res=`echo $cert_ids | grep -w $rand`
 	done
 	
@@ -332,7 +332,7 @@ function gen_key_id ()
 	key_ids=`get_key_list "$token"`
 	while [[ -n "$res" ]]
 	do
-		rand=`openssl rand -hex 16`
+		rand=`openssl rand -base64 9 | xxd -p`
 		res=`echo $key_ids | grep -w $rand`
 	done
 
