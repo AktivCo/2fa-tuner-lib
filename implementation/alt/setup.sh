@@ -3,18 +3,26 @@
 function check_pkgs ()
 {
         pkgs=$@
-        out=`apt-get --just-print install $pkgs`
-        if [[ -z "`echo -e "$out" | grep "NEW\|НОВЫЕ"`" ]]
-        then
-                return 0
-        fi
-        return 1
+	upd_pkgs=`apt-indicator-checker`
 
+        for pkg in $pkgs
+	do
+		if [[ "`rpm -q -i $pkg 2>&1 | grep "не установлен"`" ]]
+		then
+			return 1
+		fi
+		if [[ "`echo -e "$upd_pkgs" | grep -w $pkg`" ]]
+		then
+			return 1
+		fi
+	done
+
+        return 0
 }
 
 function _install_common_packages ()
 {
-        local pkgs="openssl-engine_pkcs11 librtpkcs11ecp opensc ccid pcsc-lite libp11 pcsc-tools python3-modules-tkinter dialog"
+        local pkgs="librtpkcs11ecp opensc pcsc-lite-ccid pcsc-lite libp11 pcsc-tools python3-modules-tkinter dialog"
         check_update="$1"
 
         if ! [[ -z "$check_updates" ]]
