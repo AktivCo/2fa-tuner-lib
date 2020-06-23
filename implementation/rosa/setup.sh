@@ -3,7 +3,6 @@
 function check_pkgs ()
 {
         pkgs=$@
-        upd_pkgs=`apt-indicator-checker`
 
         for pkg in $pkgs
         do
@@ -18,7 +17,7 @@ function check_pkgs ()
 
 function _install_common_packages ()
 {
-        local pkgs="ccid opensc p11-kit rpmdevtools dialog libp11-devel engine_pkcs11 tkinter3"
+        local pkgs="ccid opensc p11-kit rpmdevtools dialog lib64p11-devel engine_pkcs11 tkinter3"
         check_update="$1"
 
         if ! [[ -z "$check_updates" ]]
