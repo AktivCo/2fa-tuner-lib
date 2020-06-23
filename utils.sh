@@ -382,6 +382,7 @@ function import_cert ()
 	if ! [[ -z "`cat "$cert_path" | grep '\-----BEGIN CERTIFICATE-----'`" ]]
 	then
 		openssl x509 -in "$cert_path" -out cert.crt -inform PEM -outform DER;
+		cert_path=cert.crt
 	fi
 
         label=`get_string "Метка сертификата" "Укажите метку сертификата"`
