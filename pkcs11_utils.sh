@@ -179,12 +179,7 @@ function pkcs11_create_cert_req ()
 		engine_id=rtengine
 	fi
 
-	serial=`get_token_info "$token" | grep "serial" | cut -f 2`
-	if [[ $? -ne 0 ]]
-	then
-		echoerr "Не могу получить серийный номер"
-		return 1
-	fi
+	serial=`get_token_info "$token" "serial"`
 
         openssl_req="engine dynamic -pre SO_PATH:"$engine_path" -pre ID:"$engine_id" -pre LIST_ADD:1  -pre LOAD -pre MODULE_PATH:$LIBRTPKCS11ECP \n req -engine $engine_id -new -utf8 -key \"pkcs11:serial=$serial;id=$key_id_ascii\" -keyform engine -passin \"pass:$PIN\" -subj $subj"
 	echo -e "$openssl_req"
@@ -219,8 +214,16 @@ function get_token_list ()
 function get_token_info ()
 {
 	token=$1
-        token_info=`pkcs11-tool --module $LIBRTPKCS11ECP -T | awk -v token="$token" '$0 ~ token {print; for(i=1; i<=8; i++) { getline; print}}' | awk '{$1=$1;print}' | sed -E "s/[[:space:]]*:[[:space:]]+/\t/" | uniq | awk '/Slot /{++n} n<2'`
-        echo -e "$token_info"
+	atr=$2
+
+        token_info=`pkcs11-tool --module $LIBRTPKCS11ECP -T | awk -v token="$token" '$0 ~ token{y=1}y' | awk '{$1=$1;print}' | sed -E "s/[[:space:]]*:[[:space:]]+/\t/" | uniq | awk '/Slot /{++n} n<2'`
+        if [[ "$atr" ]]
+	then
+		echo -e "$token_info" | grep "$atr" | cut -f 2
+		return 0
+	fi
+	
+	echo -e "$token_info"
 	return 0
 }
 
