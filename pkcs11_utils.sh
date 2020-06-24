@@ -273,6 +273,14 @@ function pkcs11_unlock_pin ()
 {
 	local token=$1
 	local so_pin=$2
+
+	list=`get_token_list`
+        if  [[ "`echo -e "$list" | wc -l`" -ne 1 ]]
+        then
+                echoerr "Вставленно более одного токена"
+                return 2
+        fi
+	
 	$RTADMIN -z "$LIBRTPKCS11ECP" -q -P -o "$so_pin"
 	return $?
 }

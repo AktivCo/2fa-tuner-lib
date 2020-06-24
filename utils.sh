@@ -808,6 +808,13 @@ function show_token_object ()
 function format_token ()
 {
 	token="$1"
+	
+	yesno "Форматирование Рутокена" "`echo -e "Вы действительно хотите отформатировать Рутокен?\nВ результате все ключи и сертификаты будут удалены."`"
+	if [[ $? -ne 0 ]]
+	then
+		return 0
+	fi
+	
 	old_admin_pin=`get_password "Ввод текущего PIN-кода" "Введите текущий PIN-код Администратора:"`
 	if [[ $? -ne 0 ]]
         then
@@ -843,6 +850,7 @@ function format_token ()
 	if [[ $res -eq 2 ]]
 	then
 		show_text "Ошибка" "Подключено более одного Рутокена. Для форматирования оставьте только одно подключённое устройство"
+		return $res
 	fi
         
 	if [[ $res -ne 0 ]]
@@ -910,6 +918,12 @@ function unlock_pin ()
 	pkcs11_unlock_pin "$token" "$admin_pin" &
         show_wait $! "Подождите" "Подождите, идет разблокировка PIN-кода"
 	res=$?
+
+	if [[ $res -eq 2 ]]
+        then
+                show_text "Ошибка" "Подключено более одного Рутокена. Для разблокировки ПИН-кода оставьте только одно подключённое устройство"
+        	return $res
+	fi
 
 	if [[ $res -ne 0 ]]
 	then
