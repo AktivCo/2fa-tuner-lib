@@ -239,6 +239,13 @@ function pkcs11_format_token ()
 	local admin_pin="$3"
 	PIN=$user_pin
 	
+	list=`get_token_list`		
+	if  [[ "`echo -e "$list" | wc -l`" -ne 1 ]] 
+	then
+		echoerr "Вставленно более одного токена"
+		return 2
+	fi
+
 	$RTADMIN -z "$LIBRTPKCS11ECP" -f -u "$user_pin" -a "$admin_pin" -q
 	return $?
 }
