@@ -358,6 +358,7 @@ function choose_key ()
 	fi
 
 	key=`show_list "Выберите ключ" "$header" "$key_ids" "Новый ключ"`
+	echoerr "$key"
 	res=$?
 	if [[ $res -ne 0 ]]
 	then
@@ -374,6 +375,7 @@ function choose_key ()
 		fi
 	else
 		key_id=`echo "$key" | cut -f2`
+		echoerr "$key_id"
 	fi
 
 	echo "$key_id"
@@ -548,7 +550,7 @@ function create_cert_req ()
 {
 	local token="$1"
 	local key_id="$2"
-	
+	echoerr $key_id	
 	subj=`get_cert_subj`
 	if [[ $? -ne 0 ]]
 	then

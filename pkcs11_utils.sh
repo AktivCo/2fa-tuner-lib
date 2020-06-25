@@ -102,7 +102,7 @@ function pkcs11_create_cert_req ()
 	req_path="$4"
 	choice="$5"
 	key_id_ascii="`echo -e "$key_id" | sed 's/../%&/g'`"
-
+	
 	obj=`get_token_objects "$token" "privkey" "id" "$key_id"`
 	type=`get_object_attribute_value "$obj" "type"`
 	if [[ "$type" == "RSA"* ]]
@@ -120,7 +120,7 @@ function pkcs11_create_cert_req ()
 	
 	if [[ choice -eq 1  ]]
         then
-                echo -e "$openssl_req -x509 -outform DER -out \"$req_path\""| openssl > /dev/null;
+                out=`echo -e "$openssl_req -x509 -outform DER -out \"$req_path\"" | openssl 2>&1`;
 
                 if [[ $? -ne 0 ]]
 		then
@@ -134,7 +134,7 @@ function pkcs11_create_cert_req ()
                         return 1
                 fi
 	else
-                out=`echo -e "$openssl_req -out \"$req_path\" -outform PEM" | openssl`;
+                out=`echo -e "$openssl_req -out \"$req_path\" -outform PEM" | openssl 2>&1`;
                 if [[ "`echo -e "$out" | grep "error"`" ]]
 		then
 			echoerr "Не удалось создать заявку на сертификат"

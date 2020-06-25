@@ -6,14 +6,24 @@ function show_list ()
         local columns="    #  $2"
         local list="$3"
 	local extra="$4"
-	list=`echo -e "$list\n$extra"`
+	if [[ "$list" && "$extra" ]] 
+	then
+		list=`echo -e "$list\n$extra"`
+	fi
 
-	local list=`echo -e "$list" | awk '{printf("%s\t\"%s\"\n", NR, $0)}'`;
-	local id=`echo -e "$list" | xargs $DIALOG --title "$title" --no-collapse --menu "$columns" 0 0 0`;
-        res=$?
+	if [[ -z "$list" && "$extra" ]]
+	then
+		list="$extra"
+	fi
+
+	echo -e "$list" > list
+	END=`cat list | wc -l`
+        for ((i=1;i<=END;i++)); do     echo $i; done > nums
+
+	local id=`paste -d "\n" nums list | tr "\n" "\0" | xargs -0 $DIALOG --title "$title" --no-collapse --menu "$columns" 0 0 0`;
 	
-	local elem=`echo -e "$list" | sed "${id}q;d" | cut -f2 -d$'\t'`;
-	echo `echo "${elem:1:-1}"`
+	local elem=`echo -e "$list" | sed "${id}q;d"`;
+	echo -e "$elem"
 	return $res
 }
 
@@ -91,8 +101,10 @@ function save_file_dialog()
 	title="$1"
 	text="$2"
 	start_dir="$3"
-	python3 "$TWO_FA_LIB_DIR/python_utils/gui_dialog.py" SAVE_FILE --title "$title" --text "$text" --start_dir "$start_dir"
-	return $?
+	file=`$DIALOG  --title "$title" --fselect "$start_dir" 14 48`
+	res=$?
+	echo -e "$file"
+	return $res
 }
 
 function open_file_dialog()
@@ -100,7 +112,7 @@ function open_file_dialog()
         title="$1"
         text="$2"
         start_dir="$3"
-	file=`$DIALOG  --title "$title" --fselect "$start_dir"`
+	file=`$DIALOG  --title "$title" --fselect "$start_dir" 14 48`
 	res=$?
 	echo -e "$file"
 	return $res
