@@ -318,7 +318,7 @@ function choose_user ()
 	res=$?
 	if [[ $res -eq 0 ]]
 	then
-		users=`awk -F: -v UID_MIN=$UID_MIN '($3>=UID_MIN){print $1}' /etc/passwd | sort | sed "s/^/$USER\n/"  | uniq | awk '{printf("%s\t%s\n", NR, $0)}'`
+		users=`awk -F: -v UID_MIN=$UID_MIN '($3>=UID_MIN){print $1}' /etc/passwd | sort | sed "s/^/$USER\n/"  | uniq`
 	fi
 
 	if [[ -z "$users" ]]
