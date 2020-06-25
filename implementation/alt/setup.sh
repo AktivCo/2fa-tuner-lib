@@ -47,7 +47,7 @@ function _install_common_packages ()
 function _install_packages_for_local_auth ()
 {
         check_updates=$1
-	local pkgs="pam_pkcs11 pam_p11 nss-tools"
+	local pkgs="pam_pkcs11 pam_p11 nss-utils"
         if ! [[ -z "$check_updates" ]]
         then
                 check_pkgs $pkgs
