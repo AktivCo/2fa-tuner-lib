@@ -38,6 +38,7 @@ function _install_common_packages ()
 
 function _install_packages_for_local_auth ()
 {
+        check_update="$1"
 	local pkgs="p11-kit pam_pkcs11 rpmdevtools"
         if ! [[ -z "$check_updates" ]]
         then
@@ -57,6 +58,7 @@ function _install_packages_for_local_auth ()
 
 function _install_packages_for_domain_auth ()
 {
+        check_update="$1"
 	local pkgs="libsss_sudo"
         if ! [[ -z "$check_updates" ]]
         then

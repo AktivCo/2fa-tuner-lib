@@ -22,8 +22,8 @@ function check_pkgs ()
 
 function _install_common_packages ()
 {
-        local pkgs="librtpkcs11ecp opensc pcsc-lite-ccid pcsc-lite libp11 pcsc-tools python3-modules-tkinter dialog"
         check_update="$1"
+        local pkgs="librtpkcs11ecp opensc pcsc-lite-ccid pcsc-lite libp11 pcsc-tools python3-modules-tkinter dialog"
 
         if ! [[ -z "$check_updates" ]]
         then
@@ -46,7 +46,8 @@ function _install_common_packages ()
 
 function _install_packages_for_local_auth ()
 {
-        local pkgs="pam_pkcs11 pam_p11 nss-tools"
+        check_updates=$1
+	local pkgs="pam_pkcs11 pam_p11 nss-tools"
         if ! [[ -z "$check_updates" ]]
         then
                 check_pkgs $pkgs

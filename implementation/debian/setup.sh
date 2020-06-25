@@ -34,6 +34,7 @@ function _install_common_packages ()
 
 function _install_packages_for_local_auth ()
 {
+        check_update="$1"
 	local pkgs="libpam-p11 libpam-pkcs11"
 	if ! [[ -z "$check_updates" ]]
         then
