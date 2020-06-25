@@ -276,7 +276,7 @@ function setup_domain_authentication ()
 function choose_cert ()
 {
 	token=$1
-	get_cert_list "$token" > get_cert_list_res &
+	get_token_objects "$token" "cert" > get_token_objects_res &
 	show_wait $! "Подождите" "Идет получение списка сертификатов"
 	res=$?
 
@@ -286,17 +286,29 @@ function choose_cert ()
 		return $res
 	fi
 
-	cert_ids = `cat get_cert_list_res`
-	
+	cert_ids=`cat get_token_objects_res`
+	header=`echo -e "$cert_ids" | head -n 1`
+        cert_ids=`echo -e "$cert_ids" | tail -n +2`
+
 	if [[ -z "$cert_ids" ]]
 	then
 		echo "None"
 		return 0
 	fi
 
-	cert_id=`show_list "Выберите сертификат" "Сертификаты" "`echo -e "$cert_ids"`" "Новый сертификат"`
-	echo "$cert_id"
+	cert=`show_list "Выберите сертификат" "$header" "$cert_ids" "Новый сертификат"`
+	res=$?
+	if [[ $res -ne 0 ]]
+	then
+		return $res
+	fi
 
+	if ! [[ $cert == "Новый сертификат" ]]
+	then
+        	cert_id=`echo "$cert" | cut -f2`
+	fi
+
+	echo "$cert_id"
 	return 0
 }
 
@@ -308,7 +320,7 @@ function choose_user ()
 	then
 		user=`get_string "Выбор пользователя" "Введите имя настраиваемого пользователя"`;
 	else
-		user=`show_list "Выбор пользователя" "Пользователи" "`echo -e "$users"`"`;
+		user=`show_list "Выбор пользователя" "Пользователи" "$users"`;
 	fi
 	echo "$user"
 
@@ -318,7 +330,7 @@ function choose_user ()
 function choose_key ()
 {
 	token=$1
-	get_key_list "$token" > get_key_list_res &
+	get_token_objects "$token" "priv" > get_token_objects_res &
         show_wait $! "Подождите" "Идет получение списка ключей"
         res=$?
 
@@ -328,7 +340,9 @@ function choose_key ()
                 return $res
         fi
 
-        key_ids = `cat get_key_list_res`
+        key_ids=`cat get_token_objects_res`
+        header=`echo -e "$key_ids" | head -n 1`
+        key_ids=`echo -e "$key_ids" | tail -n +2`
 
 	if [[ -z "$key_ids" ]]
 	then
@@ -336,13 +350,14 @@ function choose_key ()
 		return 0
 	fi
 
-	key_id=`show_list "Выберите ключ" "Ключи" "`echo -e "$key_ids"`" "Новый ключ"`
+	key=`show_list "Выберите ключ" "$header" "$key_ids" "Новый ключ"`
+	res=$?
 	if [[ $res -ne 0 ]]
 	then
 		return 0
 	fi
 
-	if [[ "$key_id" == "Новый ключ" ]]
+	if [[ "$key" == "Новый ключ" ]]
 	then
 		key_id=`create_key "$token"`
 		res=$?
@@ -350,10 +365,11 @@ function choose_key ()
 		then
 			return $res
 		fi
+	else
+		key_id=`echo "$key" | cut -f2`
 	fi
 
 	echo "$key_id"
-
 	return 0
 }
 
@@ -679,7 +695,7 @@ function import_key_and_cert()
 function create_key_and_cert ()
 {
 	token=$1
-	key_id=`crete_key "$token"`
+	key_id=`create_key "$token"`
 	res=$?
 	if [[ "$res" -ne 0 ]]
 	then
@@ -754,7 +770,6 @@ function show_token_object ()
 	get_token_objects "$token" > get_token_object_res &
 	show_wait $! "Подождите" "Подождите, идет поиск объектов"
 	objs=`cat get_token_object_res`
-	objs=`python3 "$TWO_FA_LIB_DIR/python_utils/parse_objects.py" "$objs"`
 	header=`echo -e "$objs" | head -n 1`
 	objs=`echo -e "$objs" | tail -n +2`
 	

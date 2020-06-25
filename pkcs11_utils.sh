@@ -169,8 +169,7 @@ function pkcs11_create_cert_req ()
 	choice="$5"
 	key_id_ascii="`echo -e "$key_id" | sed 's/../%&/g'`"
 
-	objs=`get_token_objects "$token"`
-        obj=`python3 "$TWO_FA_LIB_DIR/python_utils/parse_objects.py" "$objs "priv" "id" "$key_id"`
+	obj=`get_token_objects "$token" "priv" "id" "$key_id"`
 	echoerr -e "$obj"
 	if [[ "$type" == "rsa" ]]
 	then
@@ -232,8 +231,23 @@ function get_token_info ()
 function get_token_objects ()
 {
 	token="$1"
-	token_objs=`pkcs11-tool --module $LIBRTPKCS11ECP -O -l -p "$PIN" --slot-description "$token"`
-        echo -e "$token_objs"
+	type="$2"
+	attr="$3"
+	val="$4"
+	if [[ "$type"]]
+	then
+		type="--type $type"
+	fi
+
+	objs=`pkcs11-tool --module $LIBRTPKCS11ECP -O -l -p "$PIN" $type --slot-description "$token"`
+	if [[ "$attr" ]]
+	then
+		objs=`python3 "$TWO_FA_LIB_DIR/python_utils/parse_objects.py" "$objs" "$type" "$attr" "$val"`
+	else
+		objs=`python3 "$TWO_FA_LIB_DIR/python_utils/parse_objects.py" "$objs"`
+	fi
+        
+	echo -e "$objs"
 	return 0
 }
 
