@@ -358,7 +358,6 @@ function choose_key ()
 	fi
 
 	key=`show_list "Выберите ключ" "$header" "$key_ids" "Новый ключ"`
-	echoerr "$key"
 	res=$?
 	if [[ $res -ne 0 ]]
 	then
@@ -375,7 +374,6 @@ function choose_key ()
 		fi
 	else
 		key_id=`echo "$key" | cut -f2`
-		echoerr "$key_id"
 	fi
 
 	echo "$key_id"
