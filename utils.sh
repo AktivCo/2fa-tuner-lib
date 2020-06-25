@@ -276,7 +276,7 @@ function setup_domain_authentication ()
 function choose_cert ()
 {
 	token=$1
-	get_cert_list "$token" > get_cert_list_res
+	get_cert_list "$token" > get_cert_list_res &
 	show_wait $! "Подождите" "Идет получение списка сертификатов"
 	res=$?
 
@@ -318,7 +318,7 @@ function choose_user ()
 function choose_key ()
 {
 	token=$1
-	get_key_list "$token" > get_key_list_res
+	get_key_list "$token" > get_key_list_res &
         show_wait $! "Подождите" "Идет получение списка ключей"
         res=$?
 
@@ -366,7 +366,7 @@ function gen_cert_id ()
 {
 	token=$1
 	res="1"
-	get_cert_list "$token" > get_cert_list_res
+	get_cert_list "$token" > get_cert_list_res &
 	show_wait $! "Подождите" "Идет получение списка существующих идентификаторов"
 	cert_ids=`cat get_cert_list_res`
 
@@ -385,7 +385,7 @@ function gen_key_id ()
 {
 	token=$1
 	res="1"
-	get_key_list "$token" > get_key_list_res
+	get_key_list "$token" > get_key_list_res &
 	show_wait $! "Подождите" "Идет получение списка существующих идентификаторов"
 	key_ids=`cat get_key_list_res`
 
@@ -525,7 +525,6 @@ function create_cert_req ()
 {
 	local token="$1"
 	local key_id="$2"
-	local type="$3"
 	
 	subj=`get_cert_subj`
 	if [[ $? -ne 0 ]]
@@ -539,7 +538,7 @@ function create_cert_req ()
                 return 0
         fi
 
-	pkcs11_create_cert_req "$token" "$key_id" "$type" "$subj" "$req_path" 0 &
+	pkcs11_create_cert_req "$token" "$key_id" "$subj" "$req_path" 0 &
 	show_wait $! "Подождите" "Идет создание заявки"
 	res=$?
 
@@ -832,13 +831,7 @@ function show_token_object ()
 			import_cert "$token" "$id"
 		;;
 	"Создать заявку на сертификат")
-			if [[ "`echo "$obj" | grep "GOSTR3410"`" ]]
-			then
-				type=gost
-			else
-				type=rsa
-			fi
-			create_cert_req "$token" "$id" "$type"
+			create_cert_req "$token" "$id"
 		;;
 	"Удалить")
 		yesno "Удаление объекта" "Уверены, что хотите удалить объект?"

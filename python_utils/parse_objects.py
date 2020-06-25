@@ -2,7 +2,7 @@ from sys import argv, stderr
 from functools import reduce
 
 if __name__ == "__main__":
-    if len(argv) != 2:
+    if len(argv) < 2:
         exit(1)
 
     public_keys=[]
@@ -41,6 +41,22 @@ if __name__ == "__main__":
         attributes = reduce(lambda attrs, obj: attrs.union(obj.keys()), object_list, set())
         all_attributes.update(attributes)
 
+    if len(argv) = 5:
+        type_ = argv[2]
+        arg = argv[3]
+        val = argv[4]
+        current_list=[]
+        if type_ == "pub":
+            current_list = public_keys
+        elif type_ == "priv":
+            current_list = private_keys
+        elif type_ == "cert":
+            current_list = certificates
+
+        obj=filter(lambda x: x.get(arg) == val, current_list)
+        if len(obj) > 0:
+            print(obj[0])
+        exit(0)
     all_attributes.discard("value")
     all_attributes.discard("params oid")
     all_attributes.discard("access")

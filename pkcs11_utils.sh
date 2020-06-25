@@ -164,12 +164,14 @@ function pkcs11_create_cert_req ()
 {
 	token="$1"
 	key_id="$2"
-	type="$3"
-	subj="$4"
-	req_path="$5"
-	choice="$6"
+	subj="$3"
+	req_path="$4"
+	choice="$5"
 	key_id_ascii="`echo -e "$key_id" | sed 's/../%&/g'`"
-		
+
+	objs=`get_token_objects "$token"`
+        obj=`python3 "$TWO_FA_LIB_DIR/python_utils/parse_objects.py" "$objs "priv" "id" "$key_id"`
+	echoerr -e "$obj"
 	if [[ "$type" == "rsa" ]]
 	then
 		engine_path="$PKCS11_ENGINE"
