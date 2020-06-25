@@ -227,7 +227,10 @@ function install_packages_for_domain_auth ()
 
 function setup_local_authentication ()
 {
-	_setup_local_authentication "$1" "$2"
+	local token=$1
+	local cert_id=$2
+	local user=$3
+	_setup_local_authentication "$token" "$cert_id" "$user"
 	return $?
 }
 
