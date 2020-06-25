@@ -57,10 +57,12 @@ function _install_packages_for_domain_auth ()
 
 function _setup_local_authentication ()
 {
-	user=$2
+	token=$1
+	cert_id=$2
+	user=$3
 	home=`getent passwd $user | cut -d: -f6`
-
-	pkcs11-tool --module $LIBRTPKCS11ECP -r -y cert --id $1 > cert.crt 2> /dev/null;
+	
+	export_object "$token" "cert" "$cert_id" "cert.crt"
 	if [[ $? -ne 0 ]]
 	then
 		echoerr "Не удалось экспортировать сертификат с Рутокена"
@@ -73,8 +75,9 @@ function _setup_local_authentication ()
 	chmod 0644 "$home/.eid/authorized_certificates";
 	LIBRTPKCS11ECP=$LIBRTPKCS11ECP envsubst < "$TWO_FA_LIB_DIR/common_files/p11" | sudo tee /usr/share/pam-configs/p11 > /dev/null;
 	chown $user:$user -R $home/.eid
-	read -p "ВАЖНО: Нажмите Enter и в следующем окне выберите Pam_p11"
-	sudo pam-auth-update;
+	
+	sudo pam-auth-update --enable Pam_p11;
+	return 0
 }
 
 function _setup_autolock ()
