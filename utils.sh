@@ -330,7 +330,7 @@ function choose_user ()
 function choose_key ()
 {
 	token=$1
-	get_token_objects "$token" "priv" > get_token_objects_res &
+	get_token_objects "$token" "privkey" > get_token_objects_res &
         show_wait $! "Подождите" "Идет получение списка ключей"
         res=$?
 

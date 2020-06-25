@@ -169,9 +169,9 @@ function pkcs11_create_cert_req ()
 	choice="$5"
 	key_id_ascii="`echo -e "$key_id" | sed 's/../%&/g'`"
 
-	obj=`get_token_objects "$token" "priv" "id" "$key_id"`
-	echoerr -e "$obj"
-	if [[ "$type" == "rsa" ]]
+	obj=`get_token_objects "$token" "privkey" "id" "$key_id"`
+	type=`get_object_attribute_value "$obj" "type"`
+	if [[ "$type" == "RSA"* ]]
 	then
 		engine_path="$PKCS11_ENGINE"
 		engine_id=pkcs11
@@ -234,12 +234,12 @@ function get_token_objects ()
 	type="$2"
 	attr="$3"
 	val="$4"
-	if [[ "$type"]]
+	if [[ "$type" ]]
 	then
-		type="--type $type"
+		type_arg="--type $type"
 	fi
 
-	objs=`pkcs11-tool --module $LIBRTPKCS11ECP -O -l -p "$PIN" $type --slot-description "$token"`
+	objs=`pkcs11-tool --module $LIBRTPKCS11ECP -O -l -p "$PIN" $type_arg --slot-description "$token"`
 	if [[ "$attr" ]]
 	then
 		objs=`python3 "$TWO_FA_LIB_DIR/python_utils/parse_objects.py" "$objs" "$type" "$attr" "$val"`
@@ -249,6 +249,14 @@ function get_token_objects ()
         
 	echo -e "$objs"
 	return 0
+}
+
+function get_object_attribute_value ()
+{
+	obj=$1
+	attr=$2
+	echo -e "$obj" | python3 -c "import json,sys; obj=json.load(sys.stdin); print(obj[\"$attr\"])"
+	return $?
 }
 
 function pkcs11_format_token ()
