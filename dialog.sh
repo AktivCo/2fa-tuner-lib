@@ -1,16 +1,20 @@
+DIALOG="dialog --keep-tite --stdout"
+
 function show_list ()
 {
         local title="$1"
         local columns="    #  $2"
         local list="$3"
-	extra=$1
+	local extra="$4"
+	list=`echo -e "$list\n$extra"`
 
 	local list=`echo -e "$list" | awk '{printf("%s\t\"%s\"\n", NR, $0)}'`;
 	local id=`echo -e "$list" | xargs $DIALOG --title "$title" --no-collapse --menu "$columns" 0 0 0`;
         res=$?
+	
 	local elem=`echo -e "$list" | sed "${id}q;d" | cut -f2 -d$'\t'`;
 	echo `echo "${elem:1:-1}"`
-	return $?
+	return $res
 }
 
 function get_password ()
@@ -53,7 +57,7 @@ function get_string ()
         title="$1"
         msg="$2"
 	default="$3"
-        $string=`$DIALOG --title "$title"  --inputbox "$msg" 0 0 "$default"`;
+        string=`$DIALOG --title "$title"  --inputbox "$msg" 0 0 "$default"`;
         ret=$?
 	echo -e "$string"
 	return $ret
@@ -65,7 +69,18 @@ function show_form ()
         msg="$2"
 	asks="$3"
 	default="$4"
-        form=`python3 "$TWO_FA_LIB_DIR/python_utils/gui_dialog.py" SHOW_FORM --title "$title" --text "$msg" --asks "$asks" --default="$default"`;
+
+	echo -e "$asks" > asks
+	echo -e "$default" > defaults
+	
+	END=`cat asks | wc -l`
+	
+	for ((i=1;i<=END;i++)); do     echo $i; done > nums
+	for ((i=1;i<=END;i++)); do     echo 1; done > ones
+	for ((i=1;i<=END;i++)); do     echo 2; done > twoes
+	for ((i=1;i<=END;i++)); do     echo 30; done > lens
+	paste asks nums ones defaults nums lens lens lens | tr '\n\t' '\0\0' | xargs -0 $DIALOG --title "$title" --form "$msg" 0 0 0
+
         ret=$?
 	echo -e "$form"
         return $ret
@@ -93,6 +108,6 @@ function open_file_dialog()
 
 function dialog_manager_enabeled()
 {
-	dialog --help
+	dialog --help > /dev/null
 	return $?
 }

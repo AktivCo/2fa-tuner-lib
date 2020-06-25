@@ -6,7 +6,6 @@ TWO_FA_LIB_DIR=`cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd`
 NUMBER_REGEXP='^[0123456789abcdefABCDEF]+$'
 CUR_DIR=`pwd`
 DIALOG="dialog --keep-tite --stdout"
-YAD="yad --center --width=400 --height=400"
 SIMPLE_YAD="yad --center "
 RTADMIN=rtAdmin
 
@@ -383,17 +382,17 @@ function choose_key ()
 
 random-string()
 {
-    cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w ${1:-32} | head -n 1
+    head /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w ${1:-32} | head -n 1
 }
 
 function gen_cert_id ()
 {
 	token=$1
-	res="1"
 	get_cert_list "$token" > get_cert_list_res &
 	show_wait $! "Подождите" "Идет получение списка существующих идентификаторов"
 	cert_ids=`cat get_cert_list_res`
 
+	local res=1
 	while [[ -n "$res" ]]
 	do
 		rand=`random-string 8 | xxd -p`
@@ -408,15 +407,15 @@ function gen_cert_id ()
 function gen_key_id ()
 {
 	token=$1
-	res="1"
 	get_key_list "$token" > get_key_list_res &
 	show_wait $! "Подождите" "Идет получение списка существующих идентификаторов"
 	key_ids=`cat get_key_list_res`
-
+	
+	local res=1
 	while [[ -n "$res" ]]
 	do
 		rand=`random-string 8 | xxd -p`
-		res=`echo $key_ids | grep -w $rand`
+		res=`echo "$key_ids" | grep -w "$rand"`
 	done
 
 	echo "$rand"
@@ -718,46 +717,6 @@ function import_key_and_cert()
 	rm encrypted.key cert.pem cert.crt key.der publickey.der
 	return $res
 		
-}
-
-function create_key_and_cert ()
-{
-	token=$1
-	key_id=`create_key "$token"`
-	res=$?
-	if [[ "$res" -ne 0 ]]
-	then
-		return $res
-	fi
-
-	if [[ -z "$key_id" ]]
-	then
-		return 0
-	fi
-	
-	create_cert_req $token "$key"
-        cert_id=`gen_cert_id`
-        out=`pkcs11_gen_key $cert_id` RSA-2048
-        if [[ $? -ne 0 ]]
-	then
-		echoerr "Не удалось создать ключевую пару: $out"
-		return 1
-	fi
-
-        choice=`$DIALOG --stdout --title "Создание сертификата" --menu "Укажите опцию" 0 0 0 1 "Создать самоподписанный сертификат" 2 "Создать заявку на сертификат"`
-        
-	subj=`get_cert_subj`
-	
-	pkcs11_create_cert_req $cert_id "$subj" "$req_path" $choice
-	
-        if [[ $? -ne 0 ]]
-	then
-		echoerr "Не удалось записать сертификат на Рутокен"
-		return 1
-	fi
-        
-	echo $cert_id
-	return 0
 }
 
 function choose_token ()
