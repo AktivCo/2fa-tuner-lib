@@ -275,17 +275,26 @@ function setup_domain_authentication ()
 
 function choose_cert ()
 {
-	cert_ids=`get_cert_list`
+	token=$1
+	get_cert_list "$token" > get_cert_list_res
+	show_wait $! "Подождите" "Идет получение списка сертификатов"
+	res=$?
+
+	if [[ $res -ne 0 ]]
+	then
+		show_text "Ошибка" "Не могу получить список сертификатов"
+		return $res
+	fi
+
+	cert_ids = `cat get_cert_list_res`
+	
 	if [[ -z "$cert_ids" ]]
 	then
 		echo "None"
 		return 0
 	fi
 
-	cert_ids=`echo -e "$cert_ids\n\"Новый сертификат\""`;
-	cert_ids=`echo "$cert_ids" | awk '{printf("%s\t%s\n", NR, $0)}'`;
-	cert_id=`echo $cert_ids | xargs $DIALOG --title "Выбор сертификата" --menu "Выбeрите сертификат" 0 0 0`;
-	cert_id=`echo "$cert_ids" | sed "${cert_id}q;d" | cut -f2 -d$'\t'`;
+	cert_id=`show_list "Выберите сертификат" "Сертификаты" "`echo -e "$cert_ids"`" "Новый сертификат"`
 	echo "$cert_id"
 
 	return 0
@@ -297,10 +306,9 @@ function choose_user ()
 	users=`awk -F: -v UID_MIN=$UID_MIN '($3>=UID_MIN){print $1}' /etc/passwd | sort | sed "s/^/$USER\n/"  | uniq | awk '{printf("%s\t%s\n", NR, $0)}'`
 	if [[ -z "$users" ]]
 	then
-		user=`$DIALOG --title 'Введите имя настраиваемого пользователя' --inputbox 'Пользователь:' 0 0 ''`;
+		user=`get_string "Выбор пользователя" "Введите имя настраиваемого пользователя"`;
 	else
-		user=`echo $users | xargs $DIALOG --title "Выбор пользователя" --menu "Выбeрите пользователя" 0 0 0`;
-		user=`echo "$users" | sed "${user}q;d" | cut -f2 -d$'\t'`;
+		user=`show_list "Выбор пользователя" "Пользователи" "`echo -e "$users"`"`;
 	fi
 	echo "$user"
 
@@ -309,17 +317,41 @@ function choose_user ()
 
 function choose_key ()
 {
-	key_ids=`get_key_list`
+	token=$1
+	get_key_list "$token" > get_key_list_res
+        show_wait $! "Подождите" "Идет получение списка ключей"
+        res=$?
+
+	if [[ $res -ne 0 ]]
+        then
+                show_text "Ошибка" "Не могу получить список ключей"
+                return $res
+        fi
+
+        key_ids = `cat get_key_list_res`
+
 	if [[ -z "$key_ids" ]]
 	then
-		echo "Нет ключей"
+		echo "None"
 		return 0
 	fi
 
-	key_ids=`echo -e "$key_ids\n\"Новый ключ\""`;
-	key_ids=`echo "$key_ids" | awk '{printf("%s\t%s\n", NR, $0)}'`;
-	key_id=`echo $key_ids | xargs $DIALOG --title "Выбор ключа" --menu "Выберите ключ" 0 0 0`;
-	key_id=`echo "$key_ids" | sed "${key_id}q;d" | cut -f2 -d$'\t'`;
+	key_id=`show_list "Выберите ключ" "Ключи" "`echo -e "$key_ids"`" "Новый ключ"`
+	if [[ $res -ne 0 ]]
+	then
+		return 0
+	fi
+
+	if [[ "$key_id" == "Новый ключ" ]]
+	then
+		key_id=`create_key "$token"`
+		res=$?
+		if [[ $res -ne 0 ]]
+		then
+			return $res
+		fi
+	fi
+
 	echo "$key_id"
 
 	return 0
@@ -334,8 +366,10 @@ function gen_cert_id ()
 {
 	token=$1
 	res="1"
-	cert_ids=`get_cert_list "$token"`
-	
+	get_cert_list "$token" > get_cert_list_res
+	show_wait $! "Подождите" "Идет получение списка существующих идентификаторов"
+	cert_ids=`cat get_cert_list_res`
+
 	while [[ -n "$res" ]]
 	do
 		rand=`random-string 8 | xxd -p`
@@ -351,7 +385,10 @@ function gen_key_id ()
 {
 	token=$1
 	res="1"
-	key_ids=`get_key_list "$token"`
+	get_key_list "$token" > get_key_list_res
+	show_wait $! "Подождите" "Идет получение списка существующих идентификаторов"
+	key_ids=`cat get_key_list_res`
+
 	while [[ -n "$res" ]]
 	do
 		rand=`random-string 8 | xxd -p`
@@ -391,7 +428,6 @@ function import_cert ()
                 return 0
         fi
 
-	
 	import_obj_on_token "$token" "cert" "$cert_path" "$label" "$key_id" &
 	show_wait $! "Подождите" "Идет импорт сертификата"
         res=$?
@@ -562,6 +598,8 @@ function create_key ()
 		return $res
 	fi
 
+	echo "$key_id"
+
 	return 0
 }
 
@@ -641,6 +679,20 @@ function import_key_and_cert()
 
 function create_key_and_cert ()
 {
+	token=$1
+	key_id=`crete_key "$token"`
+	res=$?
+	if [[ "$res" -ne 0 ]]
+	then
+		return $res
+	fi
+
+	if [[ -z "$key_id" ]]
+	then
+		return 0
+	fi
+	
+	create_cert_req $token "$key"
         cert_id=`gen_cert_id`
         out=`pkcs11_gen_key $cert_id` RSA-2048
         if [[ $? -ne 0 ]]
@@ -719,7 +771,7 @@ function show_token_object ()
 	case "$obj" in
 	"Генерация ключевой пары")
 		extra=1
-		create_key "$token"
+		key_id=`create_key "$token"`
 		;;
 	"Импорт ключевой пары и сертификата")
 		extra=1
