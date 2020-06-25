@@ -183,7 +183,7 @@ function pkcs11_create_cert_req ()
 	serial=`get_token_info "$token" "serial"`
 
         openssl_req="engine dynamic -pre SO_PATH:"$engine_path" -pre ID:"$engine_id" -pre LIST_ADD:1  -pre LOAD -pre MODULE_PATH:$LIBRTPKCS11ECP \n req -engine $engine_id -new -utf8 -key \"pkcs11:serial=$serial;id=$key_id_ascii\" -keyform engine -passin \"pass:$PIN\" -subj $subj"
-	echo -e "$openssl_req"
+	
 	if [[ choice -eq 1  ]]
         then
                 echo -e "$openssl_req -x509 -outform DER -out \"$req_path\""| openssl > /dev/null;
@@ -193,8 +193,13 @@ function pkcs11_create_cert_req ()
 			echoerr "Не удалось создать сертификат"
 			return 1
 		fi
-        	pkcs11-tool --module $LIBRTPKCS11ECP -l -p "$PIN" -y cert -w "$req_path" --id $key_id > /dev/null 2> /dev/null;
-        else
+		pkcs11-tool --module $LIBRTPKCS11ECP -l -p "$PIN" -y cert -w "$req_path" --id $key_id > /dev/null 2> /dev/null;
+        	if [[ $? -ne 0 ]]
+                then
+                        echoerr "Не удалось загрузить сертификат на токен"
+                        return 1
+                fi
+	else
                 out=`echo -e "$openssl_req -out \"$req_path\" -outform PEM" | openssl`;
                 if [[ "`echo -e "$out" | grep "error"`" ]]
 		then

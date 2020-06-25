@@ -315,10 +315,15 @@ function choose_cert ()
 function choose_user ()
 {
 	UID_MIN=$(awk '/^UID_MIN/ {print $2}' /etc/login.defs)
-	users=`awk -F: -v UID_MIN=$UID_MIN '($3>=UID_MIN){print $1}' /etc/passwd | sort | sed "s/^/$USER\n/"  | uniq | awk '{printf("%s\t%s\n", NR, $0)}'`
+	res=$?
+	if [[ $res -eq 0 ]]
+	then
+		users=`awk -F: -v UID_MIN=$UID_MIN '($3>=UID_MIN){print $1}' /etc/passwd | sort | sed "s/^/$USER\n/"  | uniq | awk '{printf("%s\t%s\n", NR, $0)}'`
+	fi
+
 	if [[ -z "$users" ]]
 	then
-		user=`get_string "Выбор пользователя" "Введите имя настраиваемого пользователя"`;
+		user=`get_string "Выбор пользователя" "Введите имя настраиваемого пользователя" "$USER"`;
 	else
 		user=`show_list "Выбор пользователя" "Пользователи" "$users"`;
 	fi
@@ -547,14 +552,27 @@ function create_cert_req ()
 	then
 		return 0
 	fi
-	
-	req_path=`save_file_dialog "Сохранение заявки на сертификат" "Куда сохранить заявку" "$CUR_DIR"`
-        if [[ $? -ne 0 ]]
-        then
-                return 0
-        fi
 
-	pkcs11_create_cert_req "$token" "$key_id" "$subj" "$req_path" 0 &
+	yesno "Издатель сертификата" "Создать самоподписанный сертификат?"
+	res=$?
+	if [[ $res -eq 0 ]]
+	then
+		self_signed=1
+		req_path=cert.crt
+	elif [[ $res -eq 1 ]]
+	then
+		self_signed=0
+		req_path=`save_file_dialog "Сохранение заявки на сертификат" "Куда сохранить заявку" "$CUR_DIR"`
+        	if [[ $? -ne 0 ]]
+        	then
+                	return 0
+        	fi
+	else
+		return 0
+	fi
+	
+
+	pkcs11_create_cert_req "$token" "$key_id" "$subj" "$req_path" $self_signed &
 	show_wait $! "Подождите" "Идет создание заявки"
 	res=$?
 
@@ -562,6 +580,13 @@ function create_cert_req ()
 	then
 		show_text "Ошибка" "Не удалось создать заявку на сертификат"
 		return $res
+	fi
+
+	if [[ $self_signed -eq 1 ]]
+	then
+		echo -e "$key_id"
+	else
+		echo -e "Создана заявка"
 	fi
 
 	return 0

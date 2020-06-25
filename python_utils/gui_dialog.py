@@ -83,12 +83,15 @@ def show_form(root, text, asks, default):
     cancelButton.pack(side=tk.RIGHT, padx=10)
     buttonFrame.pack(fill='x', side=tk.BOTTOM)
 
-def get_str(root, text, hide=False):
+def get_str(root, text, default="", hide=False):
     text = ttk.Label(root, text=text)
     if hide:
         guess = ttk.Entry(root, show="*") 
     else:
         guess = ttk.Entry(root) 
+
+    if default:
+        guess.insert(tk.END, default)
     
     buttonFrame= ttk.Frame(root)
     cancelButton = ttk.Button(buttonFrame, text="Cancel", command= lambda: exit(255))
@@ -246,7 +249,7 @@ if __name__ == "__main__":
     if args.cmd[0] == 'GET_PASS':
         get_str(root, args.text, hide=True)
     if args.cmd[0] == 'GET_STRING':
-        get_str(root, args.text)
+        get_str(root, args.text, args.default)
     if args.cmd[0] == 'SHOW_TEXT':
         show_msg(root, args.text)
     if args.cmd[0] == "SHOW_FORM":

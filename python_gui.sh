@@ -22,7 +22,9 @@ function get_string ()
 {
         title="$1"
         msg="$2"
-        string=`python3 "$TWO_FA_LIB_DIR/python_utils/gui_dialog.py" GET_STRING --title "$title" --text "$msg"`;
+	default="$3"
+        
+	string=`python3 "$TWO_FA_LIB_DIR/python_utils/gui_dialog.py" GET_STRING --title "$title" --text "$msg" --default "$default"`;
         ret=$?
 	echo -e "$string"
 	return $ret
