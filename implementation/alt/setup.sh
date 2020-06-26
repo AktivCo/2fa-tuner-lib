@@ -77,14 +77,14 @@ function _setup_local_authentication ()
 	user=$3
 	DB=$PAM_PKCS11_DIR/nssdb
 	
-	sudo mkdir $DB 2> /dev/null;
-	if ! [ "$(ls -A $DB)" ]
+	sudo mkdir "$DB" 2> /dev/null;
+	if ! [ "$`ls -A $DB`" ]
 	then
-		sudo chmod 0644 $DB
-		sudo certutil -d $DB -N --empty-password
+		sudo chmod 0644 "$DB"
+		sudo certutil -d "$DB" -N --empty-password
 	fi
 	
-	echo -e "\n" | sudo modutil -dbdir $DB -add p11-kit-trust -libfile /usr/lib64/pkcs11/p11-kit-trust.so 2> /dev/null
+	echo -e "\n" | sudo modutil -dbdir "$DB" -add p11-kit-trust -libfile /usr/lib64/pkcs11/p11-kit-trust.so 2> /dev/null
 	
 	export_object "$token" "cert" "$cert_id" "cert${cert_id}.crt"
 
@@ -92,12 +92,12 @@ function _setup_local_authentication ()
 	sudo update-ca-trust force-enable
 	sudo update-ca-trust extract
 
-	sudo mv $PAM_PKCS11_DIR/pam_pkcs11.conf $PAM_PKCS11_DIR/pam_pkcs11.conf.default 2> /dev/null;
-	sudo mkdir $PAM_PKCS11_DIR/cacerts $PAM_PKCS11_DIR/crls 2> /dev/null;
-	sudo mkdir $PAM_PKCS11_DIR 2> /dev/null
-	LIBRTPKCS11ECP=$LIBRTPKCS11ECP PAM_PKCS11_DIR=$PAM_PKCS11_DIR envsubst < "$TWO_FA_LIB_DIR/common_files/pam_pkcs11.conf" | sudo tee $PAM_PKCS11_DIR/pam_pkcs11.conf > /dev/null
+	sudo mv "$PAM_PKCS11_DIR/pam_pkcs11.conf" "$PAM_PKCS11_DIR/pam_pkcs11.conf.default" 2> /dev/null;
+	sudo mkdir "$PAM_PKCS11_DIR/cacerts" "$PAM_PKCS11_DIR/crls" 2> /dev/null;
+	sudo mkdir "$PAM_PKCS11_DIR" 2> /dev/null
+	LIBRTPKCS11ECP="$LIBRTPKCS11ECP" PAM_PKCS11_DIR="$PAM_PKCS11_DIR" envsubst < "$TWO_FA_LIB_DIR/common_files/pam_pkcs11.conf" | sudo tee "$PAM_PKCS11_DIR/pam_pkcs11.conf" > /dev/null
 
-	openssl dgst -sha1 "cert${cert_id}.crt" | cut -d" " -f2- | awk '{ print toupper($0) }' | sed 's/../&:/g;s/:$//' | sed "s/.*/\0 -> $user/" | sudo tee $PAM_PKCS11_DIR/digest_mapping -a  > /dev/null 
+	openssl dgst -sha1 "cert${cert_id}.crt" | cut -d" " -f2- | awk '{ print toupper($0) }' | sed 's/../&:/g;s/:$//' | sed "s/.*/\0 -> $user/" | sudo tee "$PAM_PKCS11_DIR/digest_mapping" -a  > /dev/null 
 
 	pam_pkcs11_insert="NR == 2 {print \"auth sufficient pam_pkcs11.so pkcs11_module=$LIBRTPKCS11ECP\" } {print}"
 	

@@ -78,29 +78,31 @@ function _install_packages_for_domain_auth ()
 
 function _setup_local_authentication ()
 {
-	user=$2
+	token=$1
+	cert_id=$2
+	user=$3
 
 	DB=$PAM_PKCS11_DIR/nssdb
-	sudo mkdir $DB 2> /dev/null;
-	if ! [ "$(ls -A $DB)" ]
+	sudo mkdir "$DB" 2> /dev/null;
+	if ! [ "`ls -A "$DB"`" ]
 	then
-		sudo chmod 0644 $DB
-		sudo certutil -d $DB -N
+		sudo chmod 0644 "$DB"
+		sudo certutil -d "$DB" -N --empty-password
 	fi
 	
-	sudo modutil -dbdir $DB -add p11-kit-trust -libfile /usr/lib64/pkcs11/p11-kit-trust.so 2> /dev/null
+	sudo modutil -dbdir "$DB" -add p11-kit-trust -libfile /usr/lib64/pkcs11/p11-kit-trust.so 2> /dev/null
 	
-	pkcs11-tool --module $LIBRTPKCS11ECP -l -r -y cert -d $1 -o cert$1.crt
-	sudo cp cert$1.crt /etc/pki/ca-trust/source/anchors/
+	export_object "$token" "cert" "$cert_id" "cert${cert_id}.crt"
+	sudo cp "cert${cert_id}.crt" /etc/pki/ca-trust/source/anchors/
 	sudo update-ca-trust force-enable
 	sudo update-ca-trust extract
 
-	sudo mv $PAM_PKCS11_DIR/pam_pkcs11.conf $PAM_PKCS11_DIR/pam_pkcs11.conf.default 2> /dev/null;
-	sudo mkdir $PAM_PKCS11_DIR/cacerts $PAM_PKCS11_DIR/crls 2> /dev/null;
-	sudo mkdir $PAM_PKCS11_DIR 2> /dev/null
-	LIBRTPKCS11ECP=$LIBRTPKCS11ECP PAM_PKCS11_DIR=$PAM_PKCS11_DIR envsubst < "$TWO_FA_LIB_DIR/common_files/pam_pkcs11.conf" | sudo tee $PAM_PKCS11_DIR/pam_pkcs11.conf > /dev/null
+	sudo mv "$PAM_PKCS11_DIR/pam_pkcs11.conf" "$PAM_PKCS11_DIR/pam_pkcs11.conf.default" 2> /dev/null;
+	sudo mkdir "$PAM_PKCS11_DIR/cacerts" "$PAM_PKCS11_DIR/crls" 2> /dev/null;
+	sudo mkdir "$PAM_PKCS11_DIR" 2> /dev/null
+	LIBRTPKCS11ECP="$LIBRTPKCS11ECP" PAM_PKCS11_DIR="$PAM_PKCS11_DIR" envsubst < "$TWO_FA_LIB_DIR/common_files/pam_pkcs11.conf" | sudo tee "$PAM_PKCS11_DIR/pam_pkcs11.conf" > /dev/null
 
-	openssl dgst -sha1 cert$1.crt | cut -d" " -f2- | awk '{ print toupper($0) }' | sed 's/../&:/g;s/:$//' | sed "s/.*/\0 -> $user/" | sudo tee $PAM_PKCS11_DIR/digest_mapping -a  > /dev/null 
+	openssl dgst -sha1 "cert${cert_id}.crt" | cut -d" " -f2- | awk '{ print toupper($0) }' | sed 's/../&:/g;s/:$//' | sed "s/.*/\0 -> $user/" | sudo tee "$PAM_PKCS11_DIR/digest_mapping" -a  > /dev/null 
 
 	pam_pkcs11_insert="/pam_unix/ && x==0 {print \"auth sufficient pam_pkcs11.so pkcs11_module=$LIBRTPKCS11ECP\"; x=1} 1"
 	
