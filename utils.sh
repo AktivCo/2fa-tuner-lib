@@ -548,7 +548,6 @@ function create_cert_req ()
 {
 	local token="$1"
 	local key_id="$2"
-	echoerr $key_id	
 	subj=`get_cert_subj`
 	if [[ $? -ne 0 ]]
 	then
