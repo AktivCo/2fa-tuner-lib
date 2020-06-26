@@ -224,6 +224,11 @@ function install_packages_for_domain_auth ()
 
 function setup_local_authentication ()
 {
+	if [[ "$UID" -ne "0" ]]
+	then
+		sudo_cmd setup_local_authentication "$@"
+	fi
+
 	local token=$1
 	local cert_id=$2
 	user=`choose_user`
@@ -232,7 +237,16 @@ function setup_local_authentication ()
 		return 0
 	fi
 
-	_setup_local_authentication "$token" "$cert_id" "$user"
+	_setup_local_authentication "$token" "$cert_id" "$user" &
+	show_wait $! "Подождите" "Идет настройка"
+	
+	res=$?
+	if [[ $res -ne 0 ]]
+	then
+		return $res
+	fi
+
+	setup_autolock
 	return $?
 }
 
@@ -246,22 +260,28 @@ function setup_autolock ()
 
 function setup_domain_authentication ()
 {
+	if [[ "$UID" -ne "0" ]]
+        then
+                sudo_cmd setup_domain_authentication "$@"
+        fi
+
+	token=$1
 	sssd_conf=/etc/sssd/sssd.conf
-	sudo mkdir $IPA_NSSDB_DIR 2> /dev/null;
-	if ! [ "$(ls -A $IPA_NSSDB_DIR)" ]
+	sudo mkdir "$IPA_NSSDB_DIR" 2> /dev/null;
+	if ! [ "$(ls -A "$IPA_NSSDB_DIR")" ]
 	then
-		sudo certutil -N -d "$IPA_NSSDB_DIR"
+		sudo certutil -N -d "$IPA_NSSDB_DIR" --empty-password
 	fi
 
-	CA_path=`$DIALOG --title "Укажите путь до корневого сертификата" --fselect "$HOME" 0 0`;
+	CA_path=`open_file_dialog "Корневой сертификат" "Укажите путь до корневого сертификата" "$HOME"`;
 	if ! [ -f "$CA_path" ]
 	then 
 		echoerr "$CA_path doesn't exist"
 		return 1
 	fi
 
-	sudo certutil -A -d $IPA_NSSDB_DIR -n 'IPA CA' -t CT,C,C -a -i "$CA_path"
-	sudo modutil -dbdir "$IPA_NSSDB_DIR" -add "My PKCS#11 module" -libfile librtpkcs11ecp.so 2> /dev/null;
+	sudo certutil -A -d "$IPA_NSSDB_DIR" -n 'IPA CA' -t CT,C,C -a -i "$CA_path"
+	sudo modutil -dbdir "$IPA_NSSDB_DIR" -add "My PKCS#11 module" -libfile "$LIBRTPKCS11ECP" 2> /dev/null;
 	if ! [ "$(sudo cat "$sssd_conf" | grep 'pam_cert_auth=True')" ]
 	then
 		sudo sed -i '/^\[pam\]/a pam_cert_auth=True' "$sssd_conf"
@@ -815,10 +835,10 @@ function show_token_object ()
 
 	if  [[ $type == "cert" ]]
 	then
-		actions=`echo -e "Удалить\nПросмотр\nСохранить на диске"`
+		actions=`echo -e "Удалить\nПросмотр\nСохранить на диске\nНастроить локальную аутентификацию по данному сертификату"`
 		act=`show_list "Выберите действие" "Действия" "$actions"`
 	else
-		actions=`echo -e "Удалить\nИмпорт сертификата ключа\nСоздать заявку на сертификат\nНастроить локальную аутентификацию по данному сертификату"`
+		actions=`echo -e "Удалить\nИмпорт сертификата ключа\nСоздать заявку на сертификат"`
 		act=`show_list "Выберите действие" "Действия" "$actions"`
 	fi
 
@@ -1082,7 +1102,7 @@ function sudo_cmd()
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]
 then
 	init
-	exec_cmd "$@"
+	"$@"
 	res=$?
 	cleanup
 	return $res
