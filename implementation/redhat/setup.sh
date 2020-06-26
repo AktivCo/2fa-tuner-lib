@@ -90,7 +90,7 @@ function _setup_local_authentication ()
 		sudo certutil -d "$DB" -N --empty-password
 	fi
 
-	sudo modutil -dbdir "$DB" -add p11-kit-trust -libfile /usr/lib64/pkcs11/p11-kit-trust.so 2> /dev/null
+	echo -e "\n" | sudo modutil -dbdir "$DB" -add p11-kit-trust -libfile /usr/lib64/pkcs11/p11-kit-trust.so 2> /dev/null
 	export_object "$token" "cert" "$cert_id" "cert${cert_id}.crt"	
 	sudo cp "cert${cert_id}.crt" /etc/pki/ca-trust/source/anchors/
 	sudo update-ca-trust force-enable
