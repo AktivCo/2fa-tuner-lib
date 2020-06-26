@@ -91,6 +91,8 @@ function init()
 		;;
 	esac
 
+	init_gui_manager
+
 	SCRIPT=`realpath -s "$0"`
 	SCRIPT_DIR=`dirname "$SCRIPT"`
 
@@ -100,20 +102,18 @@ function init()
 	return 0
 }
 
-function set_dialog_manager ()
+function init_gui_manager ()
 {
-	echo
-	manager=$1
-	case $manager in 
-	"yad")
-		. "$TWO_FA_LIB_DIR/yad.sh"
+	case "$GUI_MANAGER" in 
+	"dialog")
+		. "$TWO_FA_LIB_DIR/dialog.sh"
 		;;
 	"python")
                 . "$TWO_FA_LIB_DIR/python_gui.sh"
                 ;;
 
 	*)
-		. "$TWO_FA_LIB_DIR/dialog.sh"
+		. "$TWO_FA_LIB_DIR/python_gui.sh"
 		;;
 	esac
 
@@ -226,7 +226,12 @@ function setup_local_authentication ()
 {
 	local token=$1
 	local cert_id=$2
-	local user=$3
+	user=`choose_user`
+	if [[ $? -ne 0 ]]
+	then
+		return 0
+	fi
+
 	_setup_local_authentication "$token" "$cert_id" "$user"
 	return $?
 }
@@ -813,7 +818,7 @@ function show_token_object ()
 		actions=`echo -e "Удалить\nПросмотр\nСохранить на диске"`
 		act=`show_list "Выберите действие" "Действия" "$actions"`
 	else
-		actions=`echo -e "Удалить\nИмпорт сертификата ключа\nСоздать заявку на сертификат"`
+		actions=`echo -e "Удалить\nИмпорт сертификата ключа\nСоздать заявку на сертификат\nНастроить локальную аутентификацию по данному сертификату"`
 		act=`show_list "Выберите действие" "Действия" "$actions"`
 	fi
 
@@ -837,6 +842,9 @@ function show_token_object ()
 		;;
 	"Создать заявку на сертификат")
 			create_cert_req "$token" "$id"
+		;;
+	"Настроить локальную аутентификацию по данному сертификату")
+			sudo_cmd setup_local_authentication "$token" "$cert_id"
 		;;
 	"Удалить")
 		yesno "Удаление объекта" "Уверены, что хотите удалить объект?"
@@ -1065,3 +1073,17 @@ function rkill()
 {
 	kill `pstree -p $1 | sed 's/(/\n(/g' | grep '(' | sed 's/(\(.*\)).*/\1/' | tr "\n" " "`
 }
+
+function sudo_cmd()
+{
+	pkexec env DISPLAY="$DISPLAY" XAUTHORITY="$XAUTHORITY" PIN="$PIN" GUI_MANAGER="$GUI_MANAGER" "${BASH_SOURCE[0]}" "$@"
+}
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]
+then
+	init
+	exec_cmd "$@"
+	res=$?
+	cleanup
+	return $res
+fi
