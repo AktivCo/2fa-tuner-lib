@@ -209,10 +209,10 @@ function install_packages_for_local_auth ()
 function install_packages_for_domain_auth ()
 {
 	check_updates=$1
-	install_common_packages  $check_updates
+	install_packages_for_local_auth  $check_updates
 	if [[ $? -eq 1 ]]
         then
-		echoerr "can't install common packages"
+		echoerr "can't install packages for local auth"
                 return 1
         fi
 
@@ -243,11 +243,19 @@ function setup_local_authentication ()
 	res=$?
 	if [[ $res -ne 0 ]]
 	then
+		show_text "Ошибка" "Во время настройки локальной аутентификации произошла ошибка"
 		return $res
 	fi
 
 	setup_autolock
-	return $?
+	res=$?
+	if [[ $res -eq 0 ]]
+        then
+                show_text "Успех" "Локальная аутентификация настроена"
+	else
+		show_text "Ошибка" "Во время настройки автоблокировки произошла ошибка"
+	fi
+	return $res
 }
 
 function setup_autolock ()
@@ -263,7 +271,8 @@ function setup_domain_authentication ()
 	if [[ "$UID" -ne "0" ]]
         then
                 sudo_cmd setup_domain_authentication "$@"
-        fi
+        	return $?
+	fi
 
 	token=$1
 	sssd_conf=/etc/sssd/sssd.conf
@@ -274,6 +283,10 @@ function setup_domain_authentication ()
 	fi
 
 	CA_path=`open_file_dialog "Корневой сертификат" "Укажите путь до корневого сертификата" "$HOME"`;
+	if [[ $? -ne 0 ]]
+	then
+		return 0
+	fi
 	if ! [ -f "$CA_path" ]
 	then 
 		echoerr "$CA_path doesn't exist"
@@ -281,11 +294,12 @@ function setup_domain_authentication ()
 	fi
 
 	sudo certutil -A -d "$IPA_NSSDB_DIR" -n 'IPA CA' -t CT,C,C -a -i "$CA_path"
-	sudo modutil -dbdir "$IPA_NSSDB_DIR" -add "My PKCS#11 module" -libfile "$LIBRTPKCS11ECP" 2> /dev/null;
+	echo -e "\n" | sudo modutil -dbdir "$IPA_NSSDB_DIR" -add "My PKCS#11 module" -libfile librtpkcs11ecp.so 2> /dev/null;
+	
 	if ! [ "$(sudo cat "$sssd_conf" | grep 'pam_cert_auth=True')" ]
 	then
 		sudo sed -i '/^\[pam\]/a pam_cert_auth=True' "$sssd_conf"
-		if ! [[ -z "$SCREENSAVER_NAME" ]]
+		if [[ "$SCREENSAVER_NAME" ]]
 		then
 			sudo sed -i "/^\[pam\]/a pam_p11_allowed_services = +$SCREENSAVER_NAME" "$sssd_conf"
 		fi
@@ -1096,7 +1110,7 @@ function rkill()
 
 function sudo_cmd()
 {
-	pkexec env DISPLAY="$DISPLAY" XAUTHORITY="$XAUTHORITY" PIN="$PIN" GUI_MANAGER="$GUI_MANAGER" "${BASH_SOURCE[0]}" "$@"
+	pkexec env DISPLAY="$DISPLAY" XAUTHORITY="$XAUTHORITY" PIN="$PIN" GUI_MANAGER="$GUI_MANAGER" XDG_CURRENT_DESKTOP="$XDG_CURRENT_DESKTOP" "${BASH_SOURCE[0]}" "$@"
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]
@@ -1105,5 +1119,5 @@ then
 	"$@"
 	res=$?
 	cleanup
-	return $res
+	exit $res
 fi
