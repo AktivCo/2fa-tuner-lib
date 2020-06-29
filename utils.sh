@@ -878,7 +878,7 @@ function show_token_object ()
 			create_cert_req "$token" "$id"
 		;;
 	"Настроить локальную аутентификацию по данному сертификату")
-			sudo_cmd setup_local_authentication "$token" "$cert_id"
+			sudo_cmd setup_local_authentication "$token" "$id"
 		;;
 	"Удалить")
 		yesno "Удаление объекта" "Уверены, что хотите удалить объект?"
