@@ -26,7 +26,7 @@ function install_pkgs ()
 			echo -e "\n" >> cmds
 		fi
 		last_line=$line
-	done < <(script -c "(apt-get install -y $pkgs && apt-get -f -y install)< <(tail --retry -f cmds 2> /dev/null )" -f)
+	done < <(script -c "(apt-get install -y $pkgs; apt-get -f -y install)< <(tail --retry -f cmds 2> /dev/null )" -f)
 
 	res=$?
 	return $res
@@ -35,7 +35,7 @@ function install_pkgs ()
 
 function _install_common_packages ()
 {
-	local pkgs="libengine-pkcs11-openssl1.1 opensc libccid pcscd libp11-2 libpam-p11 libpam-pkcs11 pcsc-tools python3-pip dialog"
+	local pkgs="libengine-pkcs11-openssl1.1 opensc libccid pcscd libp11-2 libpam-p11 libpam-pkcs11 pcsc-tools python3-tk dialog"
         check_update="$1"
 
         if [[ "$check_updates" ]]
