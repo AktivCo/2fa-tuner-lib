@@ -4,17 +4,38 @@ function check_pkgs ()
 {
         pkgs=$@
 	out=`apt-get --just-print install $pkgs`
-        if [[ -z "`echo -e "$out" | grep "NEW\|НОВЫЕ"`" ]]
+        if [[ "`echo -e "$out" | grep "NEW\|НОВЫЕ"`" ]]
         then
-                return 0
+                return 1
         fi
-        return 1
+        return 0
 
+}
+
+function install_pkgs ()
+{
+	local pkgs="$@"
+	local last_line=""
+	
+	while read line
+	do
+		echoerr $line
+		if [[ "$last_line" == "Смена носителя: вставьте диск с меткой" ]]
+		then 
+			show_text "Поменяйте диск" "Сменитель носитель на носитель с меткой $line"
+		fi
+		last_line=$line
+		echo -e "\n" >> cmds
+	done < <(tail -f --retry cmds 2> /dev/null | sudo apt-get install -y $pkgs)
+
+	res=$?
+	return $res
+	
 }
 
 function _install_common_packages ()
 {
-	local pkgs="libengine-pkcs11-openssl1.1 opensc libccid pcscd libp11-2 pcsc-tools python3-tk dialog"
+	local pkgs="libengine-pkcs11-openssl1.1 opensc libccid pcscd libp11-2 libpam-p11 libpam-pkcs11 pcsc-tools python3-pip dialog"
         check_update="$1"
 
         if [[ "$check_updates" ]]
@@ -23,8 +44,9 @@ function _install_common_packages ()
                 return $?
         fi
 
-	sudo apt-get -qq update
-	sudo apt-get -qq install $pkgs;
+	echoerr "install"
+	install_pkgs $pkgs;
+	echoerr "install end"
 	if [[ $? -ne 0 ]]
 	then
 		echoerr "Не могу установить один из пакетов: $pkgs из репозитория"
@@ -36,21 +58,6 @@ function _install_common_packages ()
 
 function _install_packages_for_local_auth ()
 {
-        check_update="$1"
-        local pkgs="libpam-p11 libpam-pkcs11"
-        if ! [[ -z "$check_updates" ]]
-        then
-                check_pkgs $pkgs
-                return $?
-        fi
-
-        sudo apt-get -qq install $pkgs;
-        if [[ $? -ne 0 ]]
-	then
-		echoerr "Не могу установить один из пакетов: $pkgs из репозитория"
-		return 1
-	fi
-
 	return 0
 }
 

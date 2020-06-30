@@ -129,7 +129,7 @@ function install_common_packages ()
 	check_updates=$1
 	rtadmin_path=/usr/bin/rtAdmin
 
-	if ! [[ -z "$check_updates" ]]
+	if [[ "$check_updates" ]]
         then
                 if ! [[ -f "$RTENGINE" ]]
 		then
@@ -150,7 +150,7 @@ function install_common_packages ()
 	fi
 
 
-        if ! [[ -z "$check_updates" ]]
+        if [[ "$check_updates" ]]
         then
                 if ! [[ -f $rtadmin_path ]]
 		then
@@ -197,7 +197,6 @@ function install_packages_for_local_auth ()
 	install_common_packages $check_updates
 	if [[ $? -eq 1 ]]
 	then
-		echoerr "can't install common packages"
 		return 1
 	fi
 
@@ -212,7 +211,6 @@ function install_packages_for_domain_auth ()
 	install_packages_for_local_auth  $check_updates
 	if [[ $? -eq 1 ]]
         then
-		echoerr "can't install packages for local auth"
                 return 1
         fi
 
