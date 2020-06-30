@@ -19,7 +19,6 @@ function install_pkgs ()
 	
 	while read line
 	do
-		echoerr "$line"
 		if [[ "$last_line" == *"Смена носителя: вставьте диск с меткой"* ]]
 		then
 			show_text "Поменяйте диск" "Сменитель носитель на носитель с меткой $line"
@@ -44,9 +43,7 @@ function _install_common_packages ()
                 return $?
         fi
 
-	echoerr "install"
 	install_pkgs $pkgs;
-	echoerr "install end"
 	if [[ $? -ne 0 ]]
 	then
 		echoerr "Не могу установить один из пакетов: $pkgs из репозитория"
