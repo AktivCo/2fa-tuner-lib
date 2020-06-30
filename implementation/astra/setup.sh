@@ -26,7 +26,7 @@ function install_pkgs ()
 			echo -e "\n" >> cmds
 		fi
 		last_line=$line
-	done < <(tail -f --retry cmds 2> /dev/null | sudo script -c "apt-get install -y $pkgs" -f 2>&1)
+	done < <(script -c "tail -f --retry cmds 2> /dev/null | apt-get install -y $pkgs" -f)
 
 	res=$?
 	return $res
