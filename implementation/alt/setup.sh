@@ -99,12 +99,14 @@ function _setup_local_authentication ()
 
 	openssl dgst -sha1 "cert${cert_id}.crt" | cut -d" " -f2- | awk '{ print toupper($0) }' | sed 's/../&:/g;s/:$//' | sed "s/.*/\0 -> $user/" | tee "$PAM_PKCS11_DIR/digest_mapping" -a  > /dev/null 
 
-	pam_pkcs11_insert="NR == 2 {print \"auth sufficient pam_pkcs11.so pkcs11_module=$LIBRTPKCS11ECP\" } {print}"
 	
 	sys_auth="/etc/pam.d/system-auth"
-	if [[ -z "`cat $sys_auth | grep 'pam_pkcs11.so'`" ]]
+	if [[ -z "`cat $sys_auth | grep "pkcs11_module=$LIBRTPKCS11ECP"`" ]]
 	then
-		awk "$pam_pkcs11_insert" $sys_auth > $sys_auth
+		cp "$sys_auth" "${sys_auth}.old"
+		rm /etc/pam.d/system-auth
+		sed -i "/^.*pam_pkcs11.*$/ s/$/ pkcs11_module=${LIBRTPKCS11ECP//\//\\/}/" ${sys_auth}-pkcs11
+		ln -s "${sys_auth}-pkcs11"  "$sys_auth"
 	fi
 
 	return 0
