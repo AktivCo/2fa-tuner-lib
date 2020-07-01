@@ -52,7 +52,7 @@ function get_password ()
         return $ret
 }
 
-function show_text ()
+function show_text_dialog ()
 {
 	title="$1"
 	text="$2"

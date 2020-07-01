@@ -1037,7 +1037,7 @@ function show_wait ()
 			zenity --info --text="$text" --title="$title" &
 			dialog_pid=$!
 		else
-			xmessage -center "Please wait" &
+			fly-dialog --title "$title" --msgbox "$text" &
 			dialog_pid=$!
 		fi
 	else
@@ -1049,6 +1049,31 @@ function show_wait ()
 	ret_code=$?
 	rkill $dialog_pid
 	return $ret_code
+}
+
+function show_text ()
+{
+	title="$1"
+	text="$2"
+
+	dialog_manager_enabeled
+	if [[ $? -ne 0 ]]
+	then
+		zenity_enable
+		if [[ $? -eq 0 ]]
+		then
+			zenity --info --text="$text" --title="$title"
+			ret=$?
+		else
+			fly-dialog --title "$title" --msgbox "$text"
+			ret=$?
+		fi
+	else
+		show_text_dialog "$title" "$text"
+		ret=$?
+	fi
+
+	return $ret
 }
 
 function show_menu ()
