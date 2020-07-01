@@ -102,9 +102,9 @@ function _setup_local_authentication ()
 	pam_pkcs11_insert="NR == 2 {print \"auth sufficient pam_pkcs11.so pkcs11_module=$LIBRTPKCS11ECP\" } {print}"
 	
 	sys_auth="/etc/pam.d/system-auth"
-	if ! [ "$(cat $sys_auth | grep 'pam_pkcs11.so')" ]
+	if [[ -z "`cat $sys_auth | grep 'pam_pkcs11.so'`" ]]
 	then
-		awk "$pam_pkcs11_insert" $sys_auth | tee $sys_auth  > /dev/null  
+		awk "$pam_pkcs11_insert" $sys_auth > $sys_auth
 	fi
 
 	return 0
