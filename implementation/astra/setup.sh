@@ -25,7 +25,7 @@ function install_pkgs ()
 			echo -e "\n" >> cmds
 		fi
 		last_line=$line
-	done < <(script -c "(apt-get install -y $pkgs; apt-get -f -y install)< <(tail --retry -f cmds 2> /dev/null )" -f)
+	done < <(script -c "(apt-get install -y $pkgs; apt-get -f -y install; apt-get install -y $pkgs)< <(tail --retry -f cmds 2> /dev/null )" -f)
 
 	res=$?
 	return $res
