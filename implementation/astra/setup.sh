@@ -16,7 +16,7 @@ function install_pkgs ()
 {
 	local pkgs="$@"
 	local last_line=""
-	
+		
 	while read line
 	do
 		if [[ "$last_line" == *"Смена носителя: вставьте диск с меткой"* ]]
@@ -28,6 +28,7 @@ function install_pkgs ()
 	done < <(script -c "(apt-get install -y $pkgs; apt-get -f -y install; apt-get install -y $pkgs)< <(tail --retry -f cmds 2> /dev/null )" -f)
 
 	res=$?
+	rm cmds
 	return $res
 	
 }
