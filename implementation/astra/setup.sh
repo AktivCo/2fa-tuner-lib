@@ -19,14 +19,14 @@ function install_pkgs ()
 	
 	while read line
 	do
-		echoerr $line
-		if [[ "$last_line" == "Смена носителя: вставьте диск с меткой" ]]
-		then 
+		echoerr "$line"
+		if [[ "$last_line" == *"Смена носителя: вставьте диск с меткой"* ]]
+		then
 			show_text "Поменяйте диск" "Сменитель носитель на носитель с меткой $line"
+			echo -e "\n" >> cmds
 		fi
 		last_line=$line
-		echo -e "\n" >> cmds
-	done < <(tail -f --retry cmds 2> /dev/null | sudo apt-get install -y $pkgs)
+	done < <(tail -f --retry cmds 2> /dev/null | sudo script -c "apt-get install -y $pkgs" -f 2>&1)
 
 	res=$?
 	return $res
