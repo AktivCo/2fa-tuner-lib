@@ -1134,14 +1134,14 @@ function rkill()
 function sudo_cmd()
 {
 	xhost_out=`xhost`
-	if [[ "`echo -e \"$xhost_out\" | grep root`" && $UID -ne 0 ]]
+	if [[ -z "`echo -e \"$xhost_out\" | grep root`" && $UID -ne 0 ]]
 	then
 		xhost +SI:localuser:root
 	fi
 
 	pkexec env DISPLAY="$DISPLAY" XAUTHORITY="$XAUTHORITY" PIN="$PIN" GUI_MANAGER="$GUI_MANAGER" XDG_CURRENT_DESKTOP="$XDG_CURRENT_DESKTOP" "${BASH_SOURCE[0]}" "$@"
 	
-	if [[ "`echo -e \"$xhost_out\" | grep root`" && $UID -ne 0 ]]
+	if [[ -z "`echo -e \"$xhost_out\" | grep root`" && $UID -ne 0 ]]
 	then
 		xhost -SI:localuser:root
 	fi
