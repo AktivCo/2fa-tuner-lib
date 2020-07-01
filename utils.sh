@@ -146,7 +146,7 @@ function install_common_packages ()
 
 		unzip -q sdk-180919-80c054.zip  
 		
-		sudo cp sdk/openssl/rtengine/bin/linux_glibc-x86_64/lib/librtengine.so "$RTENGINE"
+		cp sdk/openssl/rtengine/bin/linux_glibc-x86_64/lib/librtengine.so "$RTENGINE"
 	fi
 
 
@@ -165,7 +165,7 @@ function install_common_packages ()
                 	return 1
         	fi
 		
-		sudo mv rtAdmin $rtadmin_path
+		mv rtAdmin $rtadmin_path
 		chmod +x $rtadmin_path
 	fi
 
@@ -182,7 +182,7 @@ function install_common_packages ()
                        	echoerr "Не могу загрузить пакет librtpkcs11ecp.so"
                         return 1
                 fi
-                sudo cp librtpkcs11ecp.so $LIBRTPKCS11ECP;
+                cp librtpkcs11ecp.so $LIBRTPKCS11ECP;
 	fi
 
 	
@@ -258,9 +258,9 @@ function setup_local_authentication ()
 
 function setup_autolock ()
 {
-	LIBRTPKCS11ECP="$LIBRTPKCS11ECP" LOCK_SCREEN_CMD="$LOCK_SCREEN_CMD" envsubst < "$TWO_FA_LIB_DIR/common_files/pkcs11_eventmgr.conf" | sudo tee "$PAM_PKCS11_DIR/pkcs11_eventmgr.conf" > /dev/null
+	LIBRTPKCS11ECP="$LIBRTPKCS11ECP" LOCK_SCREEN_CMD="$LOCK_SCREEN_CMD" envsubst < "$TWO_FA_LIB_DIR/common_files/pkcs11_eventmgr.conf" | tee "$PAM_PKCS11_DIR/pkcs11_eventmgr.conf" > /dev/null
 	_setup_autolock
-	sudo systemctl daemon-reload
+	systemctl daemon-reload
 	return $?
 }
 
@@ -274,10 +274,10 @@ function setup_domain_authentication ()
 
 	token=$1
 	sssd_conf=/etc/sssd/sssd.conf
-	sudo mkdir "$IPA_NSSDB_DIR" 2> /dev/null;
+	mkdir "$IPA_NSSDB_DIR" 2> /dev/null;
 	if ! [ "$(ls -A "$IPA_NSSDB_DIR")" ]
 	then
-		sudo certutil -N -d "$IPA_NSSDB_DIR" --empty-password
+		certutil -N -d "$IPA_NSSDB_DIR" --empty-password
 	fi
 
 	CA_path=`open_file_dialog "Корневой сертификат" "Укажите путь до корневого сертификата" "$HOME"`;
@@ -291,21 +291,21 @@ function setup_domain_authentication ()
 		return 1
 	fi
 
-	sudo certutil -A -d "$IPA_NSSDB_DIR" -n 'IPA CA' -t CT,C,C -a -i "$CA_path"
-	echo -e "\n" | sudo modutil -dbdir "$IPA_NSSDB_DIR" -add "My PKCS#11 module" -libfile librtpkcs11ecp.so 2> /dev/null;
+	certutil -A -d "$IPA_NSSDB_DIR" -n 'IPA CA' -t CT,C,C -a -i "$CA_path"
+	echo -e "\n" | modutil -dbdir "$IPA_NSSDB_DIR" -add "My PKCS#11 module" -libfile librtpkcs11ecp.so 2> /dev/null;
 	
-	if ! [ "$(sudo cat "$sssd_conf" | grep 'pam_cert_auth=True')" ]
+	if ! [ "$(cat "$sssd_conf" | grep 'pam_cert_auth=True')" ]
 	then
-		sudo sed -i '/^\[pam\]/a pam_cert_auth=True' "$sssd_conf"
+		sed -i '/^\[pam\]/a pam_cert_auth=True' "$sssd_conf"
 		if [[ "$SCREENSAVER_NAME" ]]
 		then
-			sudo sed -i "/^\[pam\]/a pam_p11_allowed_services = +$SCREENSAVER_NAME" "$sssd_conf"
+			sed -i "/^\[pam\]/a pam_p11_allowed_services = +$SCREENSAVER_NAME" "$sssd_conf"
 		fi
 	fi
 	
 	_setup_domain_authentication
 
-	sudo systemctl restart sssd
+	systemctl restart sssd
 	
 	return 0
 }
