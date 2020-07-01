@@ -101,11 +101,11 @@ function _setup_local_authentication ()
 
 	
 	sys_auth="/etc/pam.d/system-auth"
-	if [[ -z "`cat $sys_auth | grep "pkcs11_module=$LIBRTPKCS11ECP"`" ]]
+	if [[ -z "`cat "${sys_auth}-pkcs11" | grep "pkcs11_module=$LIBRTPKCS11ECP"`" ]]
 	then
 		cp "$sys_auth" "${sys_auth}.old"
 		rm /etc/pam.d/system-auth
-		sed -i "/^.*pam_pkcs11.*$/ s/$/ pkcs11_module=${LIBRTPKCS11ECP//\//\\/}/" ${sys_auth}-pkcs11
+		sed -i "/^.*pam_pkcs11.*$/ s/$/ pkcs11_module=${LIBRTPKCS11ECP//\//\\/}/" "${sys_auth}-pkcs11"
 		ln -s "${sys_auth}-pkcs11"  "$sys_auth"
 	fi
 
