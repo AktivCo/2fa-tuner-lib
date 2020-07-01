@@ -85,7 +85,7 @@ function _setup_local_authentication ()
         LIBRTPKCS11ECP=$LIBRTPKCS11ECP envsubst < "$TWO_FA_LIB_DIR/common_files/p11" | sudo tee /usr/share/pam-configs/p11 > /dev/null;
         chown $user:$user -R $home/.eid
 
-        sudo pam-auth-update --package --enable Pam_p11;
+        sudo pam-auth-update --force --package --enable Pam_p11;
 
 	return 0
 }
