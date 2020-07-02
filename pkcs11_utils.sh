@@ -156,7 +156,7 @@ function get_token_info ()
 	token=$1
 	atr=$2
 
-        token_info=`pkcs11-tool --module $LIBRTPKCS11ECP -T | awk -v token="$token" '$0 ~ token{y=1}y' | awk '{$1=$1;print}' | sed -E "s/[[:space:]]*:[[:space:]]+/\t/" | uniq | awk '/Slot /{++n} n<2'`
+        token_info=`pkcs11-tool --module $LIBRTPKCS11ECP -T | sed -n "/^.*$token.*$/ { :a; n; p; ba; }" | awk '{$1=$1;print}' | sed -E "s/[[:space:]]*:[[:space:]]+/\t/" | uniq | awk '/Slot /{++n} n<2'`
         if [[ "$atr" ]]
 	then
 		echo -e "$token_info" | grep "$atr" | cut -f 2
