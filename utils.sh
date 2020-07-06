@@ -137,14 +137,14 @@ function install_common_packages ()
         
 		fi
 	else
-		wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/SDK/sdk-180919-80c054.zip";
+		wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/SDK/rutoken-sdk-latest.zip";
 		if [[ $? -ne 0 ]]
         	then
                 	echoerr "Не могу загрузить rutoken SDK"
                 	return 1
         	fi
 
-		unzip -q sdk-180919-80c054.zip  
+		unzip -q rutoken-sdk-latest.zip
 		
 		cp sdk/openssl/rtengine/bin/linux_glibc-x86_64/lib/librtengine.so "$RTENGINE"
 	fi
