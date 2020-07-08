@@ -385,19 +385,19 @@ function setup_ad_domain_authentication ()
 	then
 		sed -i "/^\[libdefaults\]/a default_realm = ${domain_name^^}" "$krb5_conf"
 	fi
-	sed -i "s/default_realm.*/default_realm = ${domain_name^^}" "$krb5_conf"
+	sed -i "s/default_realm.*/default_realm = ${domain_name^^}/g" "$krb5_conf"
 
 	if [[ -z "`cat "$krb5_conf" | grep pkinit_identities`" ]]
 	then
 		sed -i "/^\[libdefaults\]/a pkinit_identities = PKCS11:librtpkcs11ecp.so" "$krb5_conf"
 	fi
-	sed -i "s/pkinit_identities.*/pkinit_identities = PKCS11:librtpkcs11ecp.so" "$krb5_conf"
+	sed -i "s/pkinit_identities.*/pkinit_identities = PKCS11:librtpkcs11ecp.so/g" "$krb5_conf"
 
 	if [[ -z "`cat "$krb5_conf" | grep canonicalize`" ]]
 	then
 		sed -i "/^\[libdefaults\]/a canonicalize = True" "$krb5_conf"
 	fi
-	sed -i "s/canonicalize.*/canonicalize = True" "$krb5_conf"
+	sed -i "s/canonicalize.*/canonicalize = True/g" "$krb5_conf"
 
 	_setup_ad_domain_authentication
 
