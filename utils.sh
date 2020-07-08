@@ -310,6 +310,102 @@ function setup_freeipa_domain_authentication ()
 	return 0
 }
 
+function setup_ad_domain_authentication ()
+{
+	if [[ "$UID" -ne "0" ]]
+        then
+                sudo_cmd setup_ad_domain_authentication "$@"
+        	return $?
+	fi
+
+	token=$1
+	sssd_conf=/etc/sssd/sssd.conf
+	krb5_conf=/etc/krb5.conf
+	domain_name=`dnsdomainname`
+	server_name=`dig "_kerberos._udp.${domain_name}" SRV | grep ^_kerberos | rev | cut  -d " " -f 1 | cut -c2- | rev`
+
+	mkdir "$IPA_NSSDB_DIR" 2> /dev/null;
+	if ! [ "$(ls -A "$IPA_NSSDB_DIR")" ]
+	then
+		certutil -N -d "$IPA_NSSDB_DIR" --empty-password
+	fi
+
+	CA_path=`open_file_dialog "Корневой сертификат" "Укажите путь до корневого сертификата" "$HOME"`;
+	if [[ $? -ne 0 ]]
+	then
+		return 0
+	fi
+	if ! [ -f "$CA_path" ]
+	then 
+		echoerr "$CA_path doesn't exist"
+		return 1
+	fi
+
+	cp "$CA_path" /etc/pki/tls/certs/
+
+	certutil -A -d "$IPA_NSSDB_DIR" -n 'IPA CA' -t CT,C,C -a -i "$CA_path"
+	echo -e "\n" | modutil -dbdir "$IPA_NSSDB_DIR" -add "My PKCS#11 module" -libfile librtpkcs11ecp.so 2> /dev/null;
+	
+	sudo sed -i 's/use_fully_qualified_names.*/use_fully_qualified_names = True/g' "$sssd_conf"
+
+	if ! [ "$(cat "$sssd_conf" | grep 'pam_cert_auth = True')" ]
+	then
+		sed -i '/^\[pam\]/a pam_cert_auth = True' "$sssd_conf"
+		if [[ "$SCREENSAVER_NAME" ]]
+		then
+			sed -i "/^\[pam\]/a pam_p11_allowed_services = +$SCREENSAVER_NAME" "$sssd_conf"
+		fi
+	fi
+
+	if [[ -z "`cat "$krb5_conf" | grep pkinit_anchors`" ]]
+	then
+		sed -i  "/^\[libdefaults\]/a pkinit_anchors = DIR:\/etc\/pki\/tls/certs\/" "$krb5_conf"
+	fi
+	sed -i "s/pkinit_anchors.*/pkinit_anchors = DIR:\/etc\/pki\/tls\/certs\//g" "$krb5_conf"
+
+	if [[ -z "`cat "$krb5_conf" | grep pkinit_kdc_hostname`" ]]
+	then
+		sed -i "/^\[libdefaults\]/a pkinit_kdc_hostname = $server_name" "$krb5_conf"
+	fi
+	sed -i "s/pkinit_kdc_hostname.*/pkinit_kdc_hostname = $server_name/g" "$krb5_conf"
+	
+	if [[ -z "`cat "$krb5_conf" | grep pkinit_eku_checking`" ]]
+	then
+		sed -i "/^\[libdefaults\]/a pkinit_eku_checking = kpServerAuth" "$krb5_conf"
+	fi
+	sed -i "s/pkinit_eku_checking.*/pkinit_eku_checking = kpServerAuth/g" "$krb5_conf"
+
+	if [[ -z "`cat "$krb5_conf" | grep default_ccache_name`" ]]
+	then
+		sed -i "/^\[libdefaults\]/a default_ccache_name = KEYRING:persistent:%{uid}" "$krb5_conf"
+	fi
+	sed -i "s/default_ccache_name.*/default_ccache_name = KEYRING:persistent:%{uid}/g" "$krb5_conf"
+
+	if [[ -z "`cat "$krb5_conf" | grep default_realm`" ]]
+	then
+		sed -i "/^\[libdefaults\]/a default_realm = ${domain_name^^}" "$krb5_conf"
+	fi
+	sed -i "s/default_realm.*/default_realm = ${domain_name^^}" "$krb5_conf"
+
+	if [[ -z "`cat "$krb5_conf" | grep pkinit_identities`" ]]
+	then
+		sed -i "/^\[libdefaults\]/a pkinit_identities = PKCS11:librtpkcs11ecp.so" "$krb5_conf"
+	fi
+	sed -i "s/pkinit_identities.*/pkinit_identities = PKCS11:librtpkcs11ecp.so" "$krb5_conf"
+
+	if [[ -z "`cat "$krb5_conf" | grep canonicalize`" ]]
+	then
+		sed -i "/^\[libdefaults\]/a canonicalize = True" "$krb5_conf"
+	fi
+	sed -i "s/canonicalize.*/canonicalize = True" "$krb5_conf"
+
+	_setup_ad_domain_authentication
+
+	systemctl restart sssd
+	
+	return 0
+}
+
 function zenity_enable ()
 {
 	zenity --help > /dev/null

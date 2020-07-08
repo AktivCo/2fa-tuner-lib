@@ -131,3 +131,9 @@ function _setup_freeipa_domain_authentication ()
 {
 	return 0
 }
+
+function _setup_ad_domain_authentication ()
+{
+        return 0
+}
+
