@@ -348,13 +348,24 @@ function setup_ad_domain_authentication ()
 	
 	sudo sed -i 's/use_fully_qualified_names.*/use_fully_qualified_names = False/g' "$sssd_conf"
 
-	if ! [ "$(cat "$sssd_conf" | grep 'pam_cert_auth = True')" ]
+	if [[ -z "$(cat "$sssd_conf" | grep '\[pam\]')" ]]
+	then
+		echo -e "\n[pam]" >> "$sssd_conf"
+	fi
+
+	if [[ -z "$(cat "$sssd_conf" | grep 'pam_cert_auth')" ]]
 	then
 		sed -i '/^\[pam\]/a pam_cert_auth = True' "$sssd_conf"
-		if [[ "$SCREENSAVER_NAME" ]]
+	fi
+	sed -i "s/.*pam_cert_auth.*/pam_cert_auth = True/g" "$sssd_conf"
+
+	if [[ "$SCREENSAVER_NAME" ]]
+	then
+		if [[ -z "$(cat "$sssd_conf" | grep 'pam_p11_allowed_services')" ]]
 		then
 			sed -i "/^\[pam\]/a pam_p11_allowed_services = +$SCREENSAVER_NAME" "$sssd_conf"
 		fi
+		sed -i "s/.*pam_p11_allowed_services.*/pam_p11_allowed_services = +$SCREENSAVER_NAME/g" "$sssd_conf"
 	fi
 
 	if [[ -z "`cat "$krb5_conf" | grep pkinit_anchors`" ]]
