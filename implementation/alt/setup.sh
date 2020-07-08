@@ -118,7 +118,7 @@ function _setup_autolock ()
 	return 0
 }
 
-function _setup_domain_authentication ()
+function _setup_freeipa_domain_authentication ()
 {
         return 0
 }

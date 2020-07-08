@@ -264,11 +264,11 @@ function setup_autolock ()
 	return $?
 }
 
-function setup_domain_authentication ()
+function setup_freeipa_domain_authentication ()
 {
 	if [[ "$UID" -ne "0" ]]
         then
-                sudo_cmd setup_domain_authentication "$@"
+                sudo_cmd setup_freeipa_domain_authentication "$@"
         	return $?
 	fi
 
@@ -303,7 +303,7 @@ function setup_domain_authentication ()
 		fi
 	fi
 	
-	_setup_domain_authentication
+	_setup_freeipa_domain_authentication
 
 	systemctl restart sssd
 	

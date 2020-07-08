@@ -86,7 +86,7 @@ function _setup_autolock ()
 	sudo systemctl daemon-reload
 }
 
-function _setup_domain_authentication ()
+function _setup_freeipa_domain_authentication ()
 {
 	sudo sed -i -e "s/^auth.*success=2.*pam_unix.*$/auth    \[success=2 default=ignore\]    pam_sss.so forward_pass/g" -e "s/^auth.*success=1.*pam_sss.*$/auth    \[success=1 default=ignore\]    pam_unix.so nullok_secure try_first_pass/g" /etc/pam.d/common-auth
 }
