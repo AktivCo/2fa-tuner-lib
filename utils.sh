@@ -361,43 +361,43 @@ function setup_ad_domain_authentication ()
 	then
 		sed -i  "/^\[libdefaults\]/a pkinit_anchors = DIR:\/etc\/pki\/tls/certs\/" "$krb5_conf"
 	fi
-	sed -i "s/pkinit_anchors.*/pkinit_anchors = DIR:\/etc\/pki\/tls\/certs\//g" "$krb5_conf"
+	sed -i "s/.*pkinit_anchors.*/pkinit_anchors = DIR:\/etc\/pki\/tls\/certs\//g" "$krb5_conf"
 
 	if [[ -z "`cat "$krb5_conf" | grep pkinit_kdc_hostname`" ]]
 	then
 		sed -i "/^\[libdefaults\]/a pkinit_kdc_hostname = $server_name" "$krb5_conf"
 	fi
-	sed -i "s/pkinit_kdc_hostname.*/pkinit_kdc_hostname = $server_name/g" "$krb5_conf"
+	sed -i "s/.*pkinit_kdc_hostname.*/pkinit_kdc_hostname = $server_name/g" "$krb5_conf"
 	
 	if [[ -z "`cat "$krb5_conf" | grep pkinit_eku_checking`" ]]
 	then
 		sed -i "/^\[libdefaults\]/a pkinit_eku_checking = kpServerAuth" "$krb5_conf"
 	fi
-	sed -i "s/pkinit_eku_checking.*/pkinit_eku_checking = kpServerAuth/g" "$krb5_conf"
+	sed -i "s/.*pkinit_eku_checking.*/pkinit_eku_checking = kpServerAuth/g" "$krb5_conf"
 
 	if [[ -z "`cat "$krb5_conf" | grep default_ccache_name`" ]]
 	then
 		sed -i "/^\[libdefaults\]/a default_ccache_name = KEYRING:persistent:%{uid}" "$krb5_conf"
 	fi
-	sed -i "s/default_ccache_name.*/default_ccache_name = KEYRING:persistent:%{uid}/g" "$krb5_conf"
+	sed -i "s/.*default_ccache_name.*/default_ccache_name = KEYRING:persistent:%{uid}/g" "$krb5_conf"
 
 	if [[ -z "`cat "$krb5_conf" | grep default_realm`" ]]
 	then
 		sed -i "/^\[libdefaults\]/a default_realm = ${domain_name^^}" "$krb5_conf"
 	fi
-	sed -i "s/default_realm.*/default_realm = ${domain_name^^}/g" "$krb5_conf"
+	sed -i "s/.*default_realm.*/default_realm = ${domain_name^^}/g" "$krb5_conf"
 
 	if [[ -z "`cat "$krb5_conf" | grep pkinit_identities`" ]]
 	then
 		sed -i "/^\[libdefaults\]/a pkinit_identities = PKCS11:librtpkcs11ecp.so" "$krb5_conf"
 	fi
-	sed -i "s/pkinit_identities.*/pkinit_identities = PKCS11:librtpkcs11ecp.so/g" "$krb5_conf"
+	sed -i "s/.*pkinit_identities.*/pkinit_identities = PKCS11:librtpkcs11ecp.so/g" "$krb5_conf"
 
 	if [[ -z "`cat "$krb5_conf" | grep canonicalize`" ]]
 	then
 		sed -i "/^\[libdefaults\]/a canonicalize = True" "$krb5_conf"
 	fi
-	sed -i "s/canonicalize.*/canonicalize = True/g" "$krb5_conf"
+	sed -i "s/.*canonicalize.*/canonicalize = True/g" "$krb5_conf"
 
 	_setup_ad_domain_authentication
 
