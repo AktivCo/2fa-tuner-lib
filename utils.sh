@@ -346,7 +346,7 @@ function setup_ad_domain_authentication ()
 	certutil -A -d "$IPA_NSSDB_DIR" -n 'IPA CA' -t CT,C,C -a -i "$CA_path"
 	echo -e "\n" | modutil -dbdir "$IPA_NSSDB_DIR" -add "My PKCS#11 module" -libfile librtpkcs11ecp.so 2> /dev/null;
 	
-	sudo sed -i 's/use_fully_qualified_names.*/use_fully_qualified_names = True/g' "$sssd_conf"
+	sudo sed -i 's/use_fully_qualified_names.*/use_fully_qualified_names = False/g' "$sssd_conf"
 
 	if ! [ "$(cat "$sssd_conf" | grep 'pam_cert_auth = True')" ]
 	then
