@@ -35,7 +35,7 @@ function _install_common_packages ()
 function _install_packages_for_local_auth ()
 {
         check_update="$1"
-	local pkgs="libpam-p11 libpam-pkcs11"
+	local pkgs="libpam-p11 libpam-pkcs11 libnss3-tools"
 	if ! [[ -z "$check_updates" ]]
         then
 		check_pkgs $pkgs

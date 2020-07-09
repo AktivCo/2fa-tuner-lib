@@ -340,7 +340,8 @@ function setup_ad_domain_authentication ()
 		echoerr "$CA_path doesn't exist"
 		return 1
 	fi
-
+	
+	mkdir -p /etc/pki/tls/certs/
 	cp "$CA_path" /etc/pki/tls/certs/
 
 	certutil -A -d "$IPA_NSSDB_DIR" -n 'IPA CA' -t CT,C,C -a -i "$CA_path"
