@@ -14,7 +14,7 @@ function check_pkgs ()
 
 function _install_common_packages ()
 {
-        local pkgs="ccid opensc gdm-plugin-smartcard pcsc-tools libp11 engine_pkcs11 python3-tkinter dialog"
+        local pkgs="ccid opensc gdm-plugin-smartcard pcsc-tools nss-tools libp11 engine_pkcs11 python3-tkinter dialog"
         check_update="$1"
 
         if ! [[ -z "$check_updates" ]]
