@@ -329,7 +329,7 @@ function setup_ad_domain_authentication ()
 
 	server_name=`dig "_kerberos._udp.${domain_name}" SRV | grep ^_kerberos | rev | cut  -d " " -f 1 | cut -c2- | rev`
 
-	mkdir "$IPA_NSSDB_DIR" 2> /dev/null;
+	mkdir -p "$IPA_NSSDB_DIR" 2> /dev/null;
 	if ! [ "$(ls -A "$IPA_NSSDB_DIR")" ]
 	then
 		certutil -N -d "$IPA_NSSDB_DIR" --empty-password
