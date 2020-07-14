@@ -106,6 +106,12 @@ function _setup_freeipa_domain_authentication ()
 function _setup_ad_domain_authentication ()
 {
 	sudo sed -i -e "s/^auth.*success=2.*pam_unix.*$/auth    \[success=2 default=ignore\]    pam_sss.so forward_pass/g" -e "s/^auth.*success=1.*pam_sss.*$/auth    \[success=1 default=ignore\]    pam_unix.so nullok_secure try_first_pass/g" /etc/pam.d/common-auth
+
+	if [[ -z "$(cat "$sssd_conf" | grep 'ad_gpo_access_control')" ]]
+	then
+		sed -i '/^\[domain.*\]/a ad_gpo_access_control = permissive' "$sssd_conf"
+	fi
+	sed -i "s/.*ad_gpo_access_control.*/ad_gpo_access_control = permissive/g" "$sssd_conf"
         return 0
 }
 
