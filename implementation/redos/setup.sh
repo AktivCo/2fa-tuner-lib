@@ -59,7 +59,7 @@ function _install_packages_for_local_auth ()
 function _install_packages_for_domain_auth ()
 {
         check_update="$1"
-	local pkgs="libsss_sudo"
+	local pkgs="libsss_sudo krb5-pkinit"
         if ! [[ -z "$check_updates" ]]
         then
                 check_pkgs $pkgs
