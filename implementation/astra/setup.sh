@@ -35,7 +35,7 @@ function install_pkgs ()
 
 function _install_common_packages ()
 {
-	local pkgs="libengine-pkcs11-openssl1.1 opensc libccid pcscd libp11-2 libpam-p11 libpam-pkcs11 pcsc-tools libnss3-tools dnsutils python3-tk dialog"
+	local pkgs="libengine-pkcs11-openssl1.1 krb5-pkinit libengine-pkcs11-openssl opensc libccid pcscd libp11-2 libpam-p11 libpam-pkcs11 pcsc-tools libnss3-tools dnsutils python3-tk dialog"
         check_update="$1"
 
         if [[ "$check_updates" ]]
