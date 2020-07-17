@@ -5,14 +5,21 @@ TWO_FA_LIB_DIR=`cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd`
 
 NUMBER_REGEXP='^[0123456789abcdefABCDEF]+$'
 CUR_DIR=`pwd`
+LOG_FILE="$CUR_DIR/log.txt"
 RTADMIN=rtAdmin
+
+echolog() { echo -e "$@" > "$LOG_FILE" }
 
 function init() 
 { 
+	echolog "init"
+
 	source /etc/os-release
 	OS_NAME=$NAME
-	
+	echolog "OS: $OS_NAME"
+
 	if [ -f "/etc/debian_version" ]; then
+		echolog "set env for debian impl"
 		LIBRTPKCS11ECP=/usr/lib/librtpkcs11ecp.so
                 PKCS11_ENGINE=/usr/lib/x86_64-linux-gnu/engines-1.1/pkcs11.so
                 PAM_PKCS11_DIR=/etc/pam_pkcs11
@@ -21,6 +28,7 @@ function init()
 	fi
 
 	if [ -f "/etc/redhat-release" ]; then
+		echolog "set env for redhat impl"
         	LIBRTPKCS11ECP=/usr/lib64/librtpkcs11ecp.so
                 PKCS11_ENGINE=/usr/lib64/engines-1.1/pkcs11.so
                 PAM_PKCS11_DIR=/etc/pam_pkcs11
@@ -30,6 +38,7 @@ function init()
 
 	case $OS_NAME in
         "RED OS") 
+		echolog "set env for red os impl"
 		LIBRTPKCS11ECP=/usr/lib64/librtpkcs11ecp.so
 		PKCS11_ENGINE=/usr/lib64/engines-1.1/pkcs11.so
 		PAM_PKCS11_DIR=/etc/pam_pkcs11
@@ -37,6 +46,7 @@ function init()
 		IMPL_DIR="$TWO_FA_LIB_DIR/implementation/redos/"
 		;;
         "Astra Linux"*)
+		echolog "set env for astra impl"
 		LIBRTPKCS11ECP=/usr/lib/librtpkcs11ecp.so
 		PKCS11_ENGINE=/usr/lib/x86_64-linux-gnu/engines-1.1/pkcs11.so
 		PAM_PKCS11_DIR=/etc/pam_pkcs11
@@ -44,6 +54,7 @@ function init()
 		IMPL_DIR="$TWO_FA_LIB_DIR/implementation/astra"
 		;;
 	*"ALT"*)
+		echolog "set env for alt impl"
 		LIBRTPKCS11ECP=/usr/lib64/librtpkcs11ecp.so
 		PKCS11_ENGINE=/usr/lib64/openssl/engines-1.1/pkcs11.so
 		PAM_PKCS11_DIR=/etc/security/pam_pkcs11
@@ -51,6 +62,7 @@ function init()
 		IMPL_DIR="$TWO_FA_LIB_DIR/implementation/alt"
 		;;
 	*"ROSA"*)
+		echolog "set env for rosa impl"
 		LIBRTPKCS11ECP=/usr/lib64/librtpkcs11ecp.so
                 PKCS11_ENGINE=/usr/lib64/openssl-1.0.0/engines//pkcs11.so
                 PAM_PKCS11_DIR=/etc/pam_pkcs11
@@ -58,42 +70,52 @@ function init()
 		IMPL_DIR="$TWO_FA_LIB_DIR/implementation/rosa"
 		;;
 	esac
+	echolog "setup impl"
 	. "$IMPL_DIR/setup.sh"
 	
 	ENGINE_DIR=`openssl version -a | grep "ENGINESDIR" | tail -1 | cut -d ":" -f 2 | tr -d '"' | awk '{$1=$1};1'`
+	echolog "auto setup engine dir: $ENGINE_DIR"
 	if ! [[ -z "$ENGINE_DIR" ]]
 	then
 		PKCS11_ENGINE=`echo "${ENGINE_DIR}/pkcs11.so"`
 	fi
+	
 	local GUESS_LIBRTPKCS11ECP=`whereis  librtpkcs11ecp | awk '{print $2}'`
 	if ! [[ -z "$GUESS_LIBRTPKCS11ECP" ]]
 	then
+		echolog "auto setup pkcs11 lib: $GUESS_LIBRTPKCS11ECP"
 		LIBRTPKCS11ECP="$GUESS_LIBRTPKCS11ECP"
 	fi
 	RTENGINE="`dirname "$PKCS11_ENGINE"`/librtengine.so"
 
 	case $XDG_CURRENT_DESKTOP in
 	"MATE")
+		echolog "set env for mate"
 		SCREENSAVER_NAME="mate-screensaver"
 		LOCK_SCREEN_CMD="mate-screensaver-command --lock"
 		;;
 	"X-Cinnamon")
+		echolog "set env for cinnamon"
 		SCREENSAVER_NAME="cinnamon-screensaver"
 		LOCK_SCREEN_CMD="cinnamon-screensaver-command --lock"
 		;;
 	"fly")
+		echolog "set env for fly"
 		SCREENSAVER_NAME=""
 		LOCK_SCREEN_CMD="fly-wmfunc FLYWM_LOCK"
 		;;
 	"KDE")
+		echolog "set env for kde"
 		SCREENSAVER_NAME="kde"
 		LOCK_SCREEN_CMD="qdbus org.freedesktop.ScreenSaver /ScreenSaver Lock"
 		;;
 	esac
 
+	echolog "init gui manager"
 	init_gui_manager
 
 	SCRIPT=`realpath -s "$0"`
+	echolog "script path: $SCRIPT"
 	SCRIPT_DIR=`dirname "$SCRIPT"`
 
 	cd $(mktemp -d);
@@ -104,15 +126,20 @@ function init()
 
 function init_gui_manager ()
 {
+	echolog "init gui manager"
+
 	case "$GUI_MANAGER" in 
 	"dialog")
+		echolog "setup impl: dialog gui"
 		. "$TWO_FA_LIB_DIR/dialog.sh"
 		;;
 	"python")
+		echolog "setup impl: pathon gui"
                 . "$TWO_FA_LIB_DIR/python_gui.sh"
                 ;;
 
 	*)
+		echolog "setup impl: default(python)"
 		. "$TWO_FA_LIB_DIR/python_gui.sh"
 		;;
 	esac
@@ -120,9 +147,20 @@ function init_gui_manager ()
 	return 0
 }
 
-function cleanup() { rm -rf $TMP_DIR; cd "$CUR_DIR"; return 0; }
+function cleanup()
+{
+	echolog "cleanup"
+	rm -rf $TMP_DIR
+	cd "$CUR_DIR"
+	return 0
+}
 
-echoerr() { echo -e "Ошибка: $@" 1>&2; return 0; }
+echoerr()
+{
+	echolog "error $@"
+	echo -e "Ошибка: $@" 1>&2
+	return 0
+}
 
 function install_common_packages ()
 {
@@ -130,13 +168,23 @@ function install_common_packages ()
 	rtadmin_path=/usr/bin/rtAdmin
 
 	if [[ "$check_updates" ]]
+	then
+		echolog "check updates for common packages"
+	else
+		echolog "install common packages"
+	fi
+
+	if [[ "$check_updates" ]]
         then
+		echolog "check rtengine"
                 if ! [[ -f "$RTENGINE" ]]
 		then
+			echolog "rtengine not found"
 			return 1
         
 		fi
 	else
+		echolog "download rtengine\ndownload SDK"
 		wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/SDK/rutoken-sdk-latest.zip";
 		if [[ $? -ne 0 ]]
         	then
@@ -144,20 +192,25 @@ function install_common_packages ()
                 	return 1
         	fi
 
+		echolog "unzip SDK"
 		unzip -q rutoken-sdk-latest.zip
 		
+		echolog "cp rtengine to $RTENGINE"
 		cp sdk/openssl/rtengine/bin/linux_glibc-x86_64/lib/librtengine.so "$RTENGINE"
 	fi
 
 
         if [[ "$check_updates" ]]
         then
+		echolog "check updates for rtadmin"
                 if ! [[ -f $rtadmin_path ]]
 		then
+			echolog "rtadmin not found"
 			return 1
         
 		fi
 	else
+		echolog "download rtadmin"
 		wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/Utilites/rtAdmin/1.3/linux/x86_64/rtAdmin";
 		if [[ $? -ne 0 ]]
         	then
@@ -171,11 +224,13 @@ function install_common_packages ()
 
         if [[ "$check_updates" ]]
         then
+		echolog "check updates for pkcs11 lib"
                 if ! [[ -f $LIBRTPKCS11ECP ]]
                 then
                         return 1
                 fi
 	else
+		echolog "download pkcs11 lib"
         	wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/PKCS11Lib/Current/Linux/x64/librtpkcs11ecp.so";
                	if [[ $? -ne 0 ]]
                	then
@@ -186,6 +241,7 @@ function install_common_packages ()
 	fi
 
 	
+	echolog "install common packages for specific OS"
 	_install_common_packages $check_updates
 	
 	return $?
@@ -194,13 +250,20 @@ function install_common_packages ()
 function install_packages_for_local_auth ()
 {
 	check_updates=$1
+	if [[ "$check_updates" ]]
+	then
+		echolog "check updates for local auth packages"
+	else
+		echolog "install local auth packages"
+	fi
+
 	install_common_packages $check_updates
 	if [[ $? -eq 1 ]]
 	then
 		return 1
 	fi
 
-        _install_packages_for_local_auth $check_updates
+	_install_packages_for_local_auth $check_updates
 	
 	return $?
 }
@@ -208,6 +271,14 @@ function install_packages_for_local_auth ()
 function install_packages_for_domain_auth ()
 {
 	check_updates=$1
+	
+	if [[ "$check_updates" ]]
+        then
+                echolog "check updates for domain auth packages"
+        else
+                echolog "install domain auth packages"
+        fi
+
 	install_packages_for_local_auth  $check_updates
 	if [[ $? -eq 1 ]]
         then
@@ -222,18 +293,23 @@ function install_packages_for_domain_auth ()
 
 function setup_local_authentication ()
 {
-	if [[ "$UID" -ne "0" ]]
-	then
-		sudo_cmd setup_local_authentication "$@"
-	fi
-
 	local token=$1
 	local cert_id=$2
+
+	echolog "setup_local_auth token:$token cert_id:$cert_id"
+	if [[ "$UID" -ne "0" ]]
+        then
+		echolog "setup local auth run not under root"
+                sudo_cmd setup_local_authentication "$@"
+        fi
+
 	user=`choose_user`
 	if [[ $? -ne 0 ]]
 	then
+		echolog "not user choosen"
 		return 0
 	fi
+	echolog "choosen user is $user"
 
 	_setup_local_authentication "$token" "$cert_id" "$user" &
 	show_wait $! "Подождите" "Идет настройка"
@@ -241,6 +317,7 @@ function setup_local_authentication ()
 	res=$?
 	if [[ $res -ne 0 ]]
 	then
+		echolog "Error occured while setup local auth"
 		show_text "Ошибка" "Во время настройки локальной аутентификации произошла ошибка"
 		return $res
 	fi
@@ -249,8 +326,10 @@ function setup_local_authentication ()
 	res=$?
 	if [[ $res -eq 0 ]]
         then
+		echolog "local auth setuped sucessfully"
                 show_text "Успех" "Локальная аутентификация настроена"
 	else
+		echolog "autolock settuped with error"
 		show_text "Ошибка" "Во время настройки автоблокировки произошла ошибка"
 	fi
 	return $res
@@ -258,6 +337,7 @@ function setup_local_authentication ()
 
 function setup_autolock ()
 {
+	echolog "setup auto lock"
 	LIBRTPKCS11ECP="$LIBRTPKCS11ECP" LOCK_SCREEN_CMD="$LOCK_SCREEN_CMD" envsubst < "$TWO_FA_LIB_DIR/common_files/pkcs11_eventmgr.conf" | tee "$PAM_PKCS11_DIR/pkcs11_eventmgr.conf" > /dev/null
 	_setup_autolock
 	systemctl daemon-reload
