@@ -349,21 +349,27 @@ function setup_autolock ()
 
 function setup_freeipa_domain_authentication ()
 {
+	token=$1
+	sssd_conf=/etc/sssd/sssd.conf
+	echolog "setup_freeipa_domain_authentication token:$token"
+	
 	if [[ "$UID" -ne "0" ]]
         then
+		echolog "setup freeipa domain auth run not under root"
                 sudo_cmd setup_freeipa_domain_authentication "$@"
         	return $?
 	fi
 
-	token=$1
-	sssd_conf=/etc/sssd/sssd.conf
 	mkdir "$IPA_NSSDB_DIR" 2> /dev/null;
 	if ! [ "$(ls -A "$IPA_NSSDB_DIR")" ]
 	then
+		echolog "creating database inside $IPA_NSSDB_DIR"
 		certutil -N -d "$IPA_NSSDB_DIR" --empty-password
 	fi
 
 	CA_path=`open_file_dialog "Корневой сертификат" "Укажите путь до корневого сертификата" "$HOME"`;
+	echolog "CA path is $CA_path"
+
 	if [[ $? -ne 0 ]]
 	then
 		return 0
@@ -374,14 +380,29 @@ function setup_freeipa_domain_authentication ()
 		return 1
 	fi
 
-	certutil -A -d "$IPA_NSSDB_DIR" -n 'IPA CA' -t CT,C,C -a -i "$CA_path"
-	echo -e "\n" | modutil -dbdir "$IPA_NSSDB_DIR" -add "My PKCS#11 module" -libfile librtpkcs11ecp.so 2> /dev/null;
+	echolog "add ca cert to database"
+	out=`certutil -A -d "$IPA_NSSDB_DIR" -n 'IPA CA' -t CT,C,C -a -i "$CA_path"`
+	if [[ $? -ne 0 ]]
+	then
+		echoerr "Error occured during adding ca cert to db\n$out"
+		return 1
+	fi
+
+	echolog "add token pkcs11 lib to database"
+	out=`echo -e "\n" | modutil -dbdir "$IPA_NSSDB_DIR" -add "My PKCS#11 module" -libfile librtpkcs11ecp.so`
+	if [[ $? -ne 0 ]]
+        then
+                echoerr "Error occured during adding pkcs11 lib to db\n$out"
+                return 1
+        fi
 	
 	if ! [ "$(cat "$sssd_conf" | grep 'pam_cert_auth=True')" ]
 	then
+		echolog "adding pam cert auth"
 		sed -i '/^\[pam\]/a pam_cert_auth=True' "$sssd_conf"
 		if [[ "$SCREENSAVER_NAME" ]]
 		then
+			echolog "modify trusted pam.d modules for sssd: $SCREENSAVER_NAME"
 			sed -i "/^\[pam\]/a pam_p11_allowed_services = +$SCREENSAVER_NAME" "$sssd_conf"
 		fi
 	fi
@@ -395,30 +416,39 @@ function setup_freeipa_domain_authentication ()
 
 function setup_ad_domain_authentication ()
 {
+	token=$1
+        sssd_conf=/etc/sssd/sssd.conf
+        krb5_conf=/etc/krb5.conf
+
+	echolog "setup_ad_domain_authentication token:$token"
+	
 	if [[ "$UID" -ne "0" ]]
         then
+		echolog "setup ca domain auth run not under root"
                 sudo_cmd setup_ad_domain_authentication "$@"
         	return $?
 	fi
 
-	token=$1
-	sssd_conf=/etc/sssd/sssd.conf
-	krb5_conf=/etc/krb5.conf
-	domain_name=`dnsdomainname`
+        domain_name=`dnsdomainname`
 	if [[ -z "$domain_name" ]]
 	then
 		domain_name=`realm list | head -n 1`
 	fi
+	echolog "deteceted domain name: $domain_name"
 
 	server_name=`dig "_kerberos._udp.${domain_name}" SRV | grep ^_kerberos | rev | cut  -d " " -f 1 | cut -c2- | rev`
+	echolog "deteceted server name: $server_name"
 
 	mkdir -p "$IPA_NSSDB_DIR" 2> /dev/null;
 	if ! [ "$(ls -A "$IPA_NSSDB_DIR")" ]
 	then
+		echolog "creating database inside $IPA_NSSDB_DIR"
 		certutil -N -d "$IPA_NSSDB_DIR" --empty-password
 	fi
 
 	CA_path=`open_file_dialog "Корневой сертификат" "Укажите путь до корневого сертификата" "$HOME"`;
+	echolog "CA path is $CA_path"
+
 	if [[ $? -ne 0 ]]
 	then
 		return 0
@@ -432,9 +462,23 @@ function setup_ad_domain_authentication ()
 	mkdir -p /etc/pki/tls/certs/
 	cp "$CA_path" /etc/pki/tls/certs/
 
-	certutil -A -d "$IPA_NSSDB_DIR" -n 'IPA CA' -t CT,C,C -a -i "$CA_path"
-	echo -e "\n" | modutil -dbdir "$IPA_NSSDB_DIR" -add "My PKCS#11 module" -libfile librtpkcs11ecp.so 2> /dev/null;
-	
+	echolog "add ca cert to database"
+	out=`certutil -A -d "$IPA_NSSDB_DIR" -n 'AD CA' -t CT,C,C -a -i "$CA_path"`
+        if [[ $? -ne 0 ]]
+        then
+                echoerr "Error occured during adding ca cert to db\n$out"
+                return 1
+        fi
+
+	echolog "add token pkcs11 lib to database"
+	out=`echo -e "\n" | modutil -dbdir "$IPA_NSSDB_DIR" -add "My PKCS#11 module" -libfile librtpkcs11ecp.so`
+        if [[ $? -ne 0 ]]
+        then
+                echoerr "Error occured during adding pkcs11 lib to db\n$out"
+                return 1
+        fi
+
+	echolog "init sssd.conf file"
 	sed -i 's/use_fully_qualified_names.*/use_fully_qualified_names = False/g' "$sssd_conf"
 
 	if [[ -z "$(cat "$sssd_conf" | grep '\[pam\]')" ]]
@@ -456,6 +500,8 @@ function setup_ad_domain_authentication ()
 		fi
 		sed -i "s/.*pam_p11_allowed_services.*/pam_p11_allowed_services = +$SCREENSAVER_NAME/g" "$sssd_conf"
 	fi
+	
+	echolog "init krb5.conf file"	
 
 	if [[ -z "`cat "$krb5_conf" | grep pkinit_anchors`" ]]
 	then
@@ -502,14 +548,27 @@ function setup_ad_domain_authentication ()
 	_setup_ad_domain_authentication
 
 	systemctl restart sssd
-	
+	if [[ $? -ne 0 ]]
+	then
+		ehcoerr "error occured while restart sssd. Status:\n`systemctl status sssd`"
+		return 1
+	fi
+
 	return 0
 }
 
 function zenity_enable ()
 {
-	zenity --help > /dev/null
-	return $?
+	echolog "check zenity enability"
+	zenity --help 2> /dev/null
+
+	if [[ $? -ne 0 ]]
+	then
+		echolog "zenity not enabeled"
+		return 1
+	fi
+
+	return 0
 }
 
 function choose_cert ()
