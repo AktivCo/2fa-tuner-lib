@@ -245,7 +245,7 @@ function install_packages ()
 
 	
 	echolog "install common packages for specific OS"
-	_install_common_packages $check_updates
+	_install_packages $check_updates
 	
 	return $?
 }
