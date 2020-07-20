@@ -1149,9 +1149,11 @@ function choose_token ()
 function show_token_info ()
 {
         token=$1
+	echolog "show_token_info for token: $token"
         get_token_info "$token" > get_token_info_res &
 	show_wait $! "Подождите" "Подождите, идет получение информации"
 	token_info=`cat get_token_info_res`
+	echolog "Token info:\n$token_info"
 	show_list "Информация об устройстве $token" "`echo -e "Атрибут\tЗначение"`" "$token_info"
 	return 0
 }
@@ -1159,9 +1161,11 @@ function show_token_info ()
 function show_token_object ()
 {
 	token="$1"
+	echolog "show_token_obj for token $token"
 	get_token_objects "$token" > get_token_object_res &
 	show_wait $! "Подождите" "Подождите, идет поиск объектов"
 	objs=`cat get_token_object_res`
+	echolog "Objects:\n$objs"
 	header=`echo -e "$objs" | head -n 1`
 	objs=`echo -e "$objs" | tail -n +2`
 	
@@ -1172,6 +1176,7 @@ function show_token_object ()
 	then
 		return 0
 	fi
+	echolog "choosen object or function: $obj"
 
 	extra=0
 	case "$obj" in
@@ -1209,6 +1214,7 @@ function show_token_object ()
 		type=cert
                 ;;
         esac
+	echorrr "Choosen object type: $type and id: $id"
 
 	if  [[ $type == "cert" ]]
 	then
@@ -1218,12 +1224,14 @@ function show_token_object ()
 		actions=`echo -e "Удалить\nИмпорт сертификата ключа\nСоздать заявку на сертификат"`
 		act=`show_list "Выберите действие" "Действия" "$actions"`
 	fi
+	echorrr "Choosen action under object is $act"
 
 	case "$act" in
 	"Просмотр")
 		export_object "$token" "$type" "$id" "cert.crt" &
 		show_wait $! "Подождите" "Подождите, идет чтение объекта"
 		xdg-open "cert.crt"
+		echorrr "open exported obj"
 		;;
 	"Сохранить на диске")
 		export_object "$token" "$type" "$id" "cert.crt" &
@@ -1231,7 +1239,10 @@ function show_token_object ()
 		target=`save_file_dialog "Сохранение сертификата" "Укажите, куда сохранить сертификат" "$CUR_DIR"`
 		if [[ $? -eq 0 ]]
 		then
+			echolog "Object exported to $target"
 			mv cert.crt "$target"
+		else
+			echolog "user closes save file dialog"
 		fi
 		;;
 	"Импорт сертификата ключа")
@@ -1263,37 +1274,46 @@ function show_token_object ()
 function format_token ()
 {
 	token="$1"
+	echolog "Formatting token: $token"
 	
 	yesno "Форматирование Рутокена" "`echo -e "Вы действительно хотите отформатировать Рутокен?\nВ результате все ключи и сертификаты будут удалены."`"
 	if [[ $? -ne 0 ]]
 	then
+		echolog "User doesn't accept formatting"
 		return 0
 	fi
 	
+	echolog "getting old admin pin"
 	old_admin_pin=`get_password "Ввод текущего PIN-кода" "Введите текущий PIN-код Администратора:"`
 	if [[ $? -ne 0 ]]
         then
+		echolog "User closes getting old admin pin dialog"
                 return 0
         fi
-
-	user_pin=`get_password "Ввод нового PIN-кода" "Введите новый PIN-код Пользователя:"`
-        if [[ $? -ne 0 ]]
-        then
-                return 0
-        fi
-
+	
+	echolog "getting new admin pin"
 	admin_pin=`get_password "Ввод текущего PIN-кода" "Введите новый PIN-код Администратора:"`
         if [[ $? -ne 0 ]]
         then
+		echolog "User closes getting new admin pin dialog"
+                return 0
+        fi
+	echolog "getting new user pin"
+	user_pin=`get_password "Ввод нового PIN-кода" "Введите новый PIN-код Пользователя:"`
+        if [[ $? -ne 0 ]]
+        then
+		echolog "User closes getting new user pin dialog"
                 return 0
         fi
 
+	echolog "Checking old admin pin"
 	check_admin_pin "$token" "$old_admin_pin"&
 	show_wait $! "Подождите" "Идет проверка PIN-кода Администратора"
 	res=$?
 
 	if [[ $res -ne 0 ]]
 	then
+		echoerr "Checking old admin pin failed"
 		show_text "Ошибка" "Введен неправильный текущий PIN-код Администратора"
 		return $res
 	fi
@@ -1304,12 +1324,14 @@ function format_token ()
 
 	if [[ $res -eq 2 ]]
 	then
+		echoerr "More then one token inserted while formatting token."
 		show_text "Ошибка" "Подключено более одного Рутокена. Для форматирования оставьте только одно подключённое устройство"
 		return $res
 	fi
         
 	if [[ $res -ne 0 ]]
         then
+		echoerr "Can't formatting token. Unexpected error"
                 show_text "Ошибка" "Не удалось отформатировать Рутокен"
         fi
         return $res
