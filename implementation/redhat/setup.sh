@@ -20,14 +20,14 @@ function _install_packages ()
         local pkgs="ccid opensc gdm-plugin-smartcard pcsc-tools nss-tools libp11 engine_pkcs11 python3-tkinter p11-kit pam_pkcs11 rpmdevtools libsss_sudo krb5-pkinit dialog"
         check_update="$1"
 	
-        if ! [[ -z "$check_updates" ]]
+        if [[ "$check_updates" ]]
         then
 		echolog "Red Hat. check common packages"
                 check_pkgs $pkgs
                 return $?
         fi
 
-	echolog "Debain. install common packages"
+	echolog "Red Hat. install common packages"
 
         sudo yum -q -y update
         sudo yum -q -y install $pkgs;
