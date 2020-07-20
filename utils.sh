@@ -1340,9 +1340,11 @@ function format_token ()
 function change_user_pin ()
 {
 	token="$1"
+	echolog "Getting new user pin"
         new_user_pin=`get_password "Ввод нового PIN-кода" "Введите новый PIN-код Пользователя:"`
         if [[ $? -ne 0 ]]
         then
+		echolog "User closes getting new user pin dialog"
                 return 0
         fi
 
@@ -1352,6 +1354,7 @@ function change_user_pin ()
 
         if [[ $res -ne 0 ]]
         then
+		echoerr "Unknown error occured while change user pin dialog"
                 show_text "Ошибка" "Не удалось сменить PIN-код Пользователя"
         fi
         return $res
@@ -1360,15 +1363,20 @@ function change_user_pin ()
 function change_admin_pin ()
 {
 	token="$1"
+	echolog "change_admin_pin token:$token"
+	echolog "Getting old admin pin"
 	old_admin_pin=`get_password "Ввод текущего PIN-кода" "Введите текущий PIN-код Администратора:"`
         if [[ $? -ne 0 ]]
         then
-                return 0
+                echolog "User closes getting old admin pin dialog"
+		return 0
         fi
 
+	echolog "Getting new admin pin"
 	local admin_pin=`get_password "Ввод нового PIN-кода" "Введите новый PIN-код Администратора:"`
         if [[ $? -ne 0 ]]
         then
+		echolog "User closes getting new admin pin dialog"
                 return 0
         fi
 
@@ -1378,6 +1386,7 @@ function change_admin_pin ()
 
         if [[ $res -ne 0 ]]
         then
+		echoerr "Unknown error occured while change admin pin dialog"
                 show_text "Ошибка" "Не удалось изменить PIN-код Администратора"
         fi
         return $res
@@ -1386,9 +1395,12 @@ function change_admin_pin ()
 function unlock_pin ()
 {
 	token="$1"
+	echolog "unlock_pin token:$token"
+	echolog "Getting admin pin"
         admin_pin=`get_password "Ввод PIN-кода" "Введите PIN-код Администратора:"`
 	if [[ $? -ne 0 ]]
 	then
+		echolog "User closes getting admin pin dialog"
 		return 0
 	fi
 
@@ -1398,12 +1410,14 @@ function unlock_pin ()
 
 	if [[ $res -eq 2 ]]
         then
+		echoerr "More then one token inserted while unblock pin"
                 show_text "Ошибка" "Подключено более одного Рутокена. Для разблокировки ПИН-кода оставьте только одно подключённое устройство"
         	return $res
 	fi
 
 	if [[ $res -ne 0 ]]
 	then
+		echoerr "Unknown error occured while unlock user pin"
 		show_text "Ошибка" "Не удалось разблокировать PIN-код Пользователя"
 	fi
 	return $res
@@ -1468,17 +1482,21 @@ function show_menu ()
         token="$1"
         menu_list="$2"
         cmd_list="$3"
+	echolog "show_menu token:$token menu_list:$menu_list cmd_list:$cmd_list"
 
 	choice=`show_list "Меню" "Выберите действие" "$menu_list"`
 	
 	if [[ -z "$choice" ]]	
 	then
+		echolog "Menu closed"
 		return 1
 	fi
+	echolog "choosen menu name: $choice"
 
 	choice_id=`echo -e "$menu_list" | sed -n "/$choice/=" `
 	
 	cmd=`echo -e "$cmd_list" | sed "${choice_id}q;d"`
+	echolog `choosen cmd: $cmd`
 	$cmd "$token"
 	
 	return 0
@@ -1488,6 +1506,7 @@ function follow_token()
 {
 	menu_pid=$1
 	token="$2"
+	echolog "follow token: $token with menu_pid: $menu_pid"
 
 	token_present=1
 	while  [[ "$token_present" -eq 1 ]]
@@ -1500,16 +1519,18 @@ function follow_token()
 
 		if ! ps -p $menu_pid > /dev/null
 		then
+			echolog "menu closed. token following is stoped"
    			return 0
 		fi
 
 		if [[ -z "`cat pcsc_scan_res | grep \"$token\"`" ]]
 		then
+			echolog "token is not present now"
 			token_present=0
 		fi
 	done
 
-	rkill $menu_pid	
+	rkill $menu_pid
 	return 1
 }
 
@@ -1523,13 +1544,16 @@ function sudo_cmd()
 	xhost_out=`xhost`
 	if [[ -z "`echo -e \"$xhost_out\" | grep root`" && $UID -ne 0 ]]
 	then
+		echolog "Adding root to allowed x11 user"
 		xhost +SI:localuser:root
 	fi
-
+	
+	echolog "execute cmd $@ from sudo"
 	pkexec env DISPLAY="$DISPLAY" XAUTHORITY="$XAUTHORITY" PIN="$PIN" GUI_MANAGER="$GUI_MANAGER" XDG_CURRENT_DESKTOP="$XDG_CURRENT_DESKTOP" "${BASH_SOURCE[0]}" "$@"
 	
 	if [[ -z "`echo -e \"$xhost_out\" | grep root`" && $UID -ne 0 ]]
 	then
+		echolog "remove root from allowed x11 user"
 		xhost -SI:localuser:root
 	fi
 }
