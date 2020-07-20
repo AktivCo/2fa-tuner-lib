@@ -143,9 +143,13 @@ function pkcs11_create_cert_req ()
 	key_id_ascii="`echo -e "$key_id" | sed 's/../%&/g'`"
 	echolog "key_id in ascii encoding is $key_id_ascii"
 	
-	obj=`get_token_objects "$token" "privkey" "id" "$key_id"`
+	obj=`get_token_objects "$token" "privkey" "id" "$key_id"
+	echolog "privkey for cert: $obj"`
 
 	type=`get_object_attribute_value "$obj" "type"`
+	echolog "privatekey type is $type"
+	
+	echolog "init pkcs11 engine for work"
 	if [[ "$type" == "RSA"* ]]
 	then
 		engine_path="$PKCS11_ENGINE"
@@ -154,8 +158,10 @@ function pkcs11_create_cert_req ()
 		engine_path="$RTENGINE"
 		engine_id=rtengine
 	fi
+	echolog "engine_path is $engine_path and engine_id is $engine_id"
 
 	serial=`get_token_info "$token" "serial"`
+	echolog "Token serial is $serial"
 
         openssl_req="engine dynamic -pre SO_PATH:"$engine_path" -pre ID:"$engine_id" -pre LIST_ADD:1  -pre LOAD -pre MODULE_PATH:$LIBRTPKCS11ECP \n req -engine $engine_id -new -utf8 -key \"pkcs11:serial=$serial;id=$key_id_ascii\" -keyform engine -passin \"pass:$PIN\" -subj $subj"
 	
@@ -165,20 +171,21 @@ function pkcs11_create_cert_req ()
 
                 if [[ $? -ne 0 ]]
 		then
-			echoerr "Не удалось создать сертификат"
+			echoerr "Can't create self signed cert:\n$out"
 			return 1
 		fi
-		pkcs11-tool --module $LIBRTPKCS11ECP -l -p "$PIN" -y cert -w "$req_path" --id $key_id > /dev/null 2> /dev/null;
+
+		out=`pkcs11-tool --module $LIBRTPKCS11ECP -l -p "$PIN" -y cert -w "$req_path" --id $key_id 2>&1`;
         	if [[ $? -ne 0 ]]
                 then
-                        echoerr "Не удалось загрузить сертификат на токен"
+                        echoerr "Can't move cert on token:\n$out"
                         return 1
                 fi
 	else
                 out=`echo -e "$openssl_req -out \"$req_path\" -outform PEM" | openssl 2>&1`;
                 if [[ "`echo -e "$out" | grep "error"`" ]]
 		then
-			echoerr "Не удалось создать заявку на сертификат"
+			echoerr "can't create cert req:\n$out"
 			return 1
 		fi
         fi
@@ -188,7 +195,18 @@ function pkcs11_create_cert_req ()
 
 function get_token_list () 
 {
-	echo -e "`pkcs11-tool --module $LIBRTPKCS11ECP -T 2> /dev/null | grep "Slot *" | cut -d ":" -f2- | awk '$1=$1'`"
+	echolog "get_token_lsit"
+	out=`pkcs11-tool --module $LIBRTPKCS11ECP -T 2>&1`
+	if [[ $? -ne 0 ]]
+	then
+		echoerr "Can't get token list:\n$out"
+		return 1
+	fi
+
+	token_list=`echo -e "$out" | grep "Slot *" | cut -d ":" -f2- | awk '$1=$1'`
+	echolog "Token list:\n$token_list"
+
+	echo -e "$token_list"
 	return 0
 }
 
@@ -196,11 +214,23 @@ function get_token_info ()
 {
 	token=$1
 	atr=$2
+	echolog "get_token_info token: $token atr: $atr"
 
-        token_info="`pkcs11-tool --module $LIBRTPKCS11ECP -T | sed -n "/^.*$token.*$/,$ p" | awk '{$1=$1;print}' | sed -E "s/[[:space:]]*:[[:space:]]+/\t/" | uniq | awk '/Slot /{++n} n<2'`"
-        if [[ "$atr" ]]
+	out=`pkcs11-tool --module $LIBRTPKCS11ECP -T 2>&1`
+	if [[ $? -ne 0 ]]
+        then
+                echoerr "Can't get token info:\n$out"
+                return 1
+        fi
+
+        token_info="`echo -e "$out" | sed -n "/^.*$token.*$/,$ p" | awk '{$1=$1;print}' | sed -E "s/[[:space:]]*:[[:space:]]+/\t/" | uniq | awk '/Slot /{++n} n<2'`"
+        echolog "Token info:\n $token_info"
+
+	if [[ "$atr" ]]
 	then
-		echo -e "$token_info" | grep "$atr" | cut -f 2
+		atr_val=`echo -e "$token_info" | grep "$atr" | cut -f 2`
+		echolog "Atr: $atr frrom token info for token: $token is $atr_val"
+		echoe -e "$atr_val"
 		return 0
 	fi
 	
@@ -214,17 +244,30 @@ function get_token_objects ()
 	type="$2"
 	attr="$3"
 	val="$4"
+
+	echolog "get_token_objects from token $token of type: $type with atr: $attr value: $val"
+
 	if [[ "$type" ]]
 	then
 		type_arg="--type $type"
 	fi
 
 	objs=`pkcs11-tool --module $LIBRTPKCS11ECP -O -l -p "$PIN" $type_arg --slot-description "$token"`
+	if [[ $? -ne 0 ]]
+	then
+		echoerr "Error while getting objects from token:\n$out"
+		return 1
+	fi
+
+	echolog "Object list:\n$objs"
+
 	if [[ "$attr" ]]
 	then
 		objs=`python3 "$TWO_FA_LIB_DIR/python_utils/parse_objects.py" "$objs" "$type" "$attr" "$val"`
+		echolog "formated filtered objects:\n$objs"
 	else
 		objs=`python3 "$TWO_FA_LIB_DIR/python_utils/parse_objects.py" "$objs"`
+		echolog "formated objects:\n$objs"
 	fi
         
 	echo -e "$objs"
@@ -235,7 +278,18 @@ function get_object_attribute_value ()
 {
 	obj=$1
 	attr=$2
-	echo -e "$obj" | python3 -c "import json,sys; obj=json.load(sys.stdin); print(obj[\"$attr\"])"
+	echolog "get object: $obj attribute: $attr"
+
+	out=`echo -e "$obj" | python3 -c "import json,sys; obj=json.load(sys.stdin); print(obj[\"$attr\"])" 2>&1`
+
+	if [[ $? -ne 0 ]]
+	then
+		echoerr "error occured while getting attr $attr of object $obj:\n$out"
+	fi
+
+	echolog "Attr $attr value is $out"
+	echo -e "$out"
+	
 	return $?
 }
 
