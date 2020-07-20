@@ -368,12 +368,14 @@ function setup_freeipa_domain_authentication ()
 	fi
 
 	CA_path=`open_file_dialog "Корневой сертификат" "Укажите путь до корневого сертификата" "$HOME"`;
-	echolog "CA path is $CA_path"
 
 	if [[ $? -ne 0 ]]
 	then
+		echolog "CA path choosen dialog was closed"
 		return 0
 	fi
+
+	echolog "CA path is $CA_path"
 	if ! [ -f "$CA_path" ]
 	then 
 		echoerr "$CA_path doesn't exist"
@@ -447,12 +449,14 @@ function setup_ad_domain_authentication ()
 	fi
 
 	CA_path=`open_file_dialog "Корневой сертификат" "Укажите путь до корневого сертификата" "$HOME"`;
-	echolog "CA path is $CA_path"
 
 	if [[ $? -ne 0 ]]
 	then
+		echolog "CA path choosen dialog was closed"
 		return 0
 	fi
+	
+	echolog "CA path is $CA_path"
 	if ! [ -f "$CA_path" ]
 	then 
 		echoerr "$CA_path doesn't exist"
@@ -571,6 +575,7 @@ function zenity_enable ()
 	return 0
 }
 
+#currently unused function
 function choose_cert ()
 {
 	token=$1
@@ -612,24 +617,31 @@ function choose_cert ()
 
 function choose_user ()
 {
+	echolog "choose_user"
 	UID_MIN=$(awk '/^UID_MIN/ {print $2}' /etc/login.defs)
 	res=$?
+	echolog "UID_MIN: $UID_MIN"
+	
 	if [[ $res -eq 0 ]]
 	then
 		users=`awk -F: -v UID_MIN=$UID_MIN '($3>=UID_MIN){print $1}' /etc/passwd | sort | sed "s/^/$USER\n/"  | uniq`
+		echolog "user list:\nusers"
 	fi
 
 	if [[ -z "$users" ]]
 	then
+		echolog "can't get user list. Get user from get string func"
 		user=`get_string "Выбор пользователя" "Введите имя настраиваемого пользователя" "$USER"`;
 	else
 		user=`show_list "Выбор пользователя" "Пользователи" "$users"`;
 	fi
+	echolog "chosed user is $user"
 	echo "$user"
 
 	return 0
 }
 
+#currently unused function
 function choose_key ()
 {
 	token=$1
@@ -684,6 +696,7 @@ random-string()
 function gen_cert_id ()
 {
 	token=$1
+	echolog "gen new cert id for token: $token" 
 	get_cert_list "$token" > get_cert_list_res &
 	show_wait $! "Подождите" "Идет получение списка существующих идентификаторов"
 	cert_ids=`cat get_cert_list_res`
@@ -703,6 +716,7 @@ function gen_cert_id ()
 function gen_key_id ()
 {
 	token=$1
+	echolog "gen new cert id for token: $token"
 	get_key_list "$token" > get_key_list_res &
 	show_wait $! "Подождите" "Идет получение списка существующих идентификаторов"
 	key_ids=`cat get_key_list_res`
@@ -723,35 +737,50 @@ function import_cert ()
 {
 	token=$1
 	key_id=$2
+
+	echolog "import cert for token: $token with key_id: $key_id"
 	
 	if [[ -z $key_id ]]
 	then
 		key_id=`gen_key_id "$token"`
+		echolog "key_id not specifed. Generated is $key_id"
 	fi
 
 	cert_path=`open_file_dialog "Путь до сертификата" "Укажите путь до сертификата" "$HOME"`;
+
 	if [[ $? -ne 0 ]]
 	then
+		echolog "cert path choosen dialog was closed"
 		return 0
-	fi	
+	fi
 
 	if ! [[ -z "`cat "$cert_path" | grep '\-----BEGIN CERTIFICATE-----'`" ]]
 	then
-		openssl x509 -in "$cert_path" -out cert.crt -inform PEM -outform DER;
+		echolog "convert cert from PEM to DER format"
+		out=`openssl x509 -in "$cert_path" -out cert.crt -inform PEM -outform DER`;
+		if [[ $? -ne 0 ]]
+		then
+			echoerr "Error occured while convert cert from PEM to DER format:\n$out"
+		fi
+
+		echolog "cert path changed to cert.crt"
 		cert_path=cert.crt
 	fi
 
         label=`get_string "Метка сертификата" "Укажите метку сертификата"`
         if [[ $? -ne 0 ]]
         then
+		echolog "choose label dialog was closed"
                 return 0
         fi
+	echolog "choosen cert label is: $label"
 
 	import_obj_on_token "$token" "cert" "$cert_path" "$label" "$key_id" &
 	show_wait $! "Подождите" "Идет импорт сертификата"
         res=$?
 	if [[ $res -ne 0 ]]
         then
+		echoerr "Не удалось импортировать сертификат на токен"
                 show_text "Ошибка" "Не удалось импортировать сертификат на токен"
                 return $res
         fi
@@ -763,6 +792,7 @@ function import_cert ()
 function get_token_password ()
 {
 	token=$1
+	echolog "get_token_password for token: $token"
 	res=1
 	while [[ $res -ne 0 ]]
 	do
@@ -771,6 +801,7 @@ function get_token_password ()
 		
 		if [[ $res -ne 0 ]]
 		then
+			echolog "get token PIN dialog was closed"
 			return $res 
 		fi
 
@@ -780,19 +811,28 @@ function get_token_password ()
 
 		if [[ $res -eq 2 ]]
 		then
+			echolog "User PIN was blocked"
 			yesno "PIN-код заблокирован" "`echo -e \"PIN-код Пользователя заблокирован.\nРазблокировать его с помощью PIN-кода Администратора?\"`"
 
 			res=$?
 			if [[ $res -ne 0 ]]
 			then
+				echolog "User decides to not unlock pin"
 				return $res
 			fi
 
 			unlock_pin "$token"
 			res=$?
+			if [[ $res -eq 0 ]]
+			then
+				echolog "User Pin was unlocked"
+			else
+				echolog "User Pin is still locked"
+			fi
 		else
 			if [[ $res -ne 0 ]]
 			then
+				echoerr "Uncorrect pin"
 				show_text "Ошибка" "Неправильный PIN-код"
 			fi
 		fi
@@ -804,6 +844,7 @@ function get_token_password ()
 
 function get_cert_subj ()
 {
+	echolog "get_cert_cubj"
 	form_atr="Регион
 Населенный пункт
 Организация
@@ -814,6 +855,7 @@ function get_cert_subj ()
 	res=`show_form "Данные сертификата" "Укажите данные заявки" "$form_atr" "$default_content"`
         if [[ $? -ne 0 ]]
 	then
+		echolog "User close get form dialog"
 		return 1
 	fi
 	
@@ -835,8 +877,11 @@ function get_cert_subj ()
 
 	email="`echo -e "$res" | sed '6q;d'`"
 	if [[ -n "$email" ]]; then email="/emailAddress=$email"; else email=""; fi
+
+	local subj="\"$C$ST$L$O$OU$CN$email\""
 	
-	echo "\"$C$ST$L$O$OU$CN$email\""
+	echolog "Cert subj is $subj"
+	echo "$subj"
 	return 0
 }
 
@@ -844,9 +889,12 @@ function create_cert_req ()
 {
 	local token="$1"
 	local key_id="$2"
+	echolog "create_cert_req for key: $key_id on token: $token"
+	
 	subj=`get_cert_subj`
 	if [[ $? -ne 0 ]]
 	then
+		echolog "subj is not specified"
 		return 0
 	fi
 
@@ -854,36 +902,42 @@ function create_cert_req ()
 	res=$?
 	if [[ $res -eq 0 ]]
 	then
+		echolog "cert will be self signed"
 		self_signed=1
 		req_path=cert.crt
 	elif [[ $res -eq 1 ]]
 	then
+		echolog "cert will be not self signed"
 		self_signed=0
 		req_path=`save_file_dialog "Сохранение заявки на сертификат" "Куда сохранить заявку" "$CUR_DIR"`
         	if [[ $? -ne 0 ]]
         	then
+			echolog "User closes choose req path dialog"
                 	return 0
         	fi
 	else
+		echolog "Users close choose self signed path dialog"
 		return 0
 	fi
-	
 
+	echolog "Cert req will be saved inside $req_path"
+	
 	pkcs11_create_cert_req "$token" "$key_id" "$subj" "$req_path" $self_signed &
 	show_wait $! "Подождите" "Идет создание заявки"
 	res=$?
 
 	if [[ $res -ne 0 ]]
 	then
+		echoerr "Error occured whhile creating cert request"
 		show_text "Ошибка" "Не удалось создать заявку на сертификат"
 		return $res
 	fi
 
 	if [[ $self_signed -eq 1 ]]
 	then
-		echo -e "$key_id"
+		ehcolog "Self signed cert will be imported on token with id: $kei_id"
 	else
-		echo -e "Создана заявка"
+		echolog "Cert request will be created"
 	fi
 
 	return 0
@@ -893,10 +947,12 @@ function create_key ()
 {
 	token="$1"
 	key_id="$2"
+	echolog "Create key with id: $key_id on token: $token"
 
 	if [[ -z "$key_id" ]]
 	then
 		key_id=`gen_key_id "$token"`
+		echolog "Key id is not specified. Generated is $key_id"
 	fi
 	
 	local types=`echo -e "RSA-2048\nГОСТ-2012 256\nГОСТ-2012 512"`
@@ -904,8 +960,10 @@ function create_key ()
 	
 	if [[ $? -ne 0 ]]
 	then
+		echolog "User closes choose key alg dialog"
 		return 0
 	fi
+	ehcolog "Choosen key alg is $type"
 
 	case $type in
 	"RSA-2048") type=rsa:2048;;
@@ -916,8 +974,11 @@ function create_key ()
 	label=`get_string "Метка ключевой пары" "Укажите метку ключевой пары"`
         if [[ $? -ne 0 ]]
         then
+		echolog "User closes chooke key label dialog" 
                 return 0
         fi
+
+	echolog "Choosen key label is $label"
 
 	pkcs11_gen_key "$token" "$key_id" "$type" "$label" &
 	show_wait $! "Подождите" "Идет генерация ключевой пары"
@@ -925,12 +986,14 @@ function create_key ()
 
 	if [[ $res -eq 2 ]]
 	then
+		echoerr "Choosen key alg currently not supported inside your system"
 		show_text "Ошибка" "Такой тип ключа пока не поддерживается в системе"
 		return $res
 	fi
 	
 	if [[ $res -ne 0 ]]
 	then
+		echoerr "Unknown error occured during creating key"
 		show_text "Ошибка" "Во время генерации ключа произошла ошибка"
 		return $res
 	fi
@@ -944,33 +1007,73 @@ function import_key_and_cert()
 {
 	token=$1
 	key_id=$2
+	echoerr "import_key_and_cert with id: $key_id on token:$token"
 	
 	if [[ -z "$key_id" ]]
         then
                 key_id=`gen_key_id "$token"`
+		echoerr "Key_id is not specified. Generated is $key_id"
         fi
 
 	pfx_path=`open_file_dialog "Путь до pdx файла" "Укажите путь до pfx файла" "$HOME"`;
-	
+	if [[ $? -ne 0 ]]
+        then
+                echolog "User closes choose pfx file path dialog"
+                return 0
+        fi
+	ecilog "Choosen pfx file is $pfx_path"
+
 	pass=`get_password "Пароль" "Введите пароль от pfx контейнера"`
         if [[ $? -ne 0 ]]
         then
+		echolog "User closes getting pfx container password dialog"
                 return 0
         fi
 
-	
+	echolog "Getting key from pfx file"
 	openssl pkcs12 -in "$pfx_path" -nocerts -out encrypted.key -passin "pass:$pass" -passout "pass:$pass"
 	if [[ $? -ne 0 ]]
         then
-		show_text "Ошибка" "Ошибка во время чтения ключа"
+		echorrr "Error occured during getting key from pfx file"
+		show_text "Ошибка" "Ошибка во время чтения закрытого ключа"
         	return 1
 	fi
 
+	echolog "Getting cert from pfx file"
 	openssl pkcs12 -in "$pfx_path" -nokeys -out cert.pem -passin "pass:$pass"
+	if [[ $? -ne 0 ]]
+        then
+                echorrr "Error occured during getting cert from pfx file"
+                show_text "Ошибка" "Ошибка во время чтения сертификата"
+                return 1
+        fi
 	
+	echolog "Convert cert to DER format"
 	openssl x509 -in cert.pem -out cert.crt -outform DER
+	if [[ $? -ne 0 ]]
+        then
+                echorrr "Error occured during converting cert to DER format"
+                show_text "Ошибка" "Ошибка во время конвертации сертфиката"
+                return 1
+        fi
+
+	echolog "Getting public key from cert"
 	openssl x509 -in cert.pem -pubkey -noout | openssl enc -base64 -d > publickey.der
+	if [[ $? -ne 0 ]]
+        then
+                echorrr "Error occured during getting public key from cert"
+                show_text "Ошибка" "Ошибка во время получения публичноо ключа из сертификата"
+                return 1
+        fi
+
+	echolog "Converting key to DER format"
 	openssl rsa -in encrypted.key -out key.der -outform DER -passin "pass:$pass"
+	if [[ $? -ne 0 ]]
+        then
+                echorrr "Error occured during converting key to DER format"
+                show_text "Ошибка" "Ошибка во время конвертации открытого ключа"
+                return 1
+        fi
 
 	label=`get_string "Метка ключевой пары" "Укажите метку ключевой пары"`
         if [[ $? -ne 0 ]]
@@ -983,6 +1086,7 @@ function import_key_and_cert()
         res=$?
 	if [[ $res -ne 0 ]]
 	then
+		echoerr "Error occured during import private key on token"
 		show_text "Ошибка" "Не удалось импортировать закрытый ключ на токен"
 		rm encrypted.key cert.pem cert.crt key.der publickey.der
 		return $res
@@ -993,6 +1097,7 @@ function import_key_and_cert()
         res=$?
         if [[ $res -ne 0 ]]
         then
+		echoerr "Error occured during import public key on token"
 		show_text "Ошибка" "Не удалось импортировать закрытый ключ на токен"
                 rm encrypted.key cert.pem cert.crt key.der publickey.der
                 return $res
@@ -1003,11 +1108,11 @@ function import_key_and_cert()
 	res=$?
         if [[ $res -ne 0 ]]
         then
+		echoerr "Error occured during import cert on token"
                 show_text "Ошибка" "Не удалось импортировать сертификат на токен"
                 rm encrypted.key cert.pem cert.crt key.der publickey.der
                 return $res
         fi
-
 
 	rm encrypted.key cert.pem cert.crt key.der publickey.der
 	return $res
@@ -1016,21 +1121,26 @@ function import_key_and_cert()
 
 function choose_token ()
 {
+	echolog "choose_token"
         get_token_list > get_token_list_res &
 	show_wait $! "Подождите" "Подождите, идет получение списка Рутокенов"
         token_list=`cat get_token_list_res`
+	echolog "Token_list: $token_list"
 	choice=`show_list "Выберите Рутокен" "Подключенные устройства" "$token_list" "Обновить список"`
         
 	if [ $? -ne 0 ]
         then
+		echolog "User closes choose token dialog"
                 return 1
         fi
 
         if [ "$choice" == "Обновить список" ] || [ -z "$choice" ]
         then
-                choose_token
+		echolog "User requests update token list"
+                choice=`choose_token`
                 return $?
         fi
+	echolog "User choise token: $choice"
 
         echo "$choice"
         return 0
