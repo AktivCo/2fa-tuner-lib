@@ -1,27 +1,28 @@
 #!/bin/bash
 
-function token_present ()
-{
-	cnt=`lsusb | grep "0a89:0030" | wc -l`
-	if [[ cnt -eq 0 ]]
-		then echoerr "Устройство семейства Рутокен ЭЦП не найдено"
-		return 1
-	fi
-
-	return 0
-}
-
 function check_pin()
 {
 	token=$1
 	pin=$2
+	echolog "check user pin for $token"
+	
 	out=`pkcs11-tool --module "$LIBRTPKCS11ECP" -l -p "$pin" --show-info --slot-description "$token" 2>&1`
 	res=$?
+
 	out=`echo -e "$out" | grep "CKR_PIN_LOCKED"`
 	if ! [[ -z "$out" ]]
 	then
+		echoerr "pin locked"
 		return 2
-	fi	
+	fi
+
+	if [[ $res -ne 0 ]]
+	then
+		echorr "incorrect pin\n$out"
+	else
+		echolog "correct pin"
+	fi
+
 	return $res
 }
 
@@ -29,21 +30,25 @@ function check_admin_pin()
 {
         token=$1
         pin=$2
+	echolog "check user pin for $token"
+
         out=`pkcs11-tool --module "$LIBRTPKCS11ECP" -l --so-pin "$pin" --login-type so --show-info --slot-description "$token" 2>&1`
         res=$?
         out=`echo -e "$out" | grep "CKR_PIN_LOCKED"`
         if ! [[ -z "$out" ]]
         then
+		echoerr "pin locked"
                 return 2
         fi
-        return $res
-}
 
-function get_cert_list ()
-{
-	cert_ids=`pkcs11-tool --module $LIBRTPKCS11ECP -O --type cert 2> /dev/null | grep -Eo "ID:.*" |  awk '{print $2}'`;
-	echo "$cert_ids";
-	return 0
+	if [[ $res -ne 0 ]]
+        then
+                echorr "incorrect pin\n$out"
+        else
+                echolog "correct pin"
+        fi
+
+        return $res
 }
 
 function import_obj_on_token ()
@@ -53,11 +58,12 @@ function import_obj_on_token ()
 	path_to_obj=$3
 	label=$4
 	key_id=$5
+	echolog "import object located by $path_to_obj with type: $type, id: $key_id, label:$label on token: $token "
 	
-	pkcs11-tool --module "$LIBRTPKCS11ECP" -l -p "$PIN" -y "$type" -w "$path_to_obj" --id "$key_id" --label "$label" --slot-description "$token" > /dev/null 2> /dev/null;
+	out=`pkcs11-tool --module "$LIBRTPKCS11ECP" -l -p "$PIN" -y "$type" -w "$path_to_obj" --id "$key_id" --label "$label" --slot-description "$token" 2>&1`
 	if [[ $? -ne 0 ]]
 	then
-		echoerr "Не удалось импортировать объкт на Рутокен"
+		echoerr "Can't import object on token:\n$out"
 		return 1
 	fi
 
@@ -66,16 +72,35 @@ function import_obj_on_token ()
 
 function get_key_list ()
 {
-        key_ids=`pkcs11-tool --module $LIBRTPKCS11ECP -O --type pubkey --slot-description "$token" 2> /dev/null | grep -Eo "ID:.*" |  awk '{print $2}'`;
+	token="$1"
+        echolog "get_key_list from token: $token"
+	out=`pkcs11-tool --module $LIBRTPKCS11ECP -O --type pubkey --slot-description "$token" 2>&1`
+	if [[ $? -ne 0 ]]
+        then
+                echoerr "Error occured while getting key list:\n$out"
+                return 1
+        fi
+        key_ids=`echo -e "$out" | grep -Eo "ID:.*" |  awk '{print $2}'`;
+	echolog "Key list:\n$key_ids"
         echo "$key_ids";
 	return 0
 }
 
 function get_cert_list ()
 {
-        cert_ids=`pkcs11-tool --module $LIBRTPKCS11ECP -O --type cert  --slot-description "$token" 2> /dev/null | grep -Eo "ID:.*" |  awk '{print $2}'`;
+        token="$1"
+        echolog "get_cert_list from token: $token"
+        out=`pkcs11-tool --module $LIBRTPKCS11ECP -O --type cert  --slot-description "$token" 2>&1`
+        if [[ $? -ne 0 ]]
+        then
+                echoerr "Error occured while getting cert list:\n$out"
+                return 1
+        fi
+
+        cert_ids=`echo -e "$out" | grep -Eo "ID:.*" |  awk '{print $2}'`;
         echo "$cert_ids";
-	return 0
+        echolog "Cert list:\n$cert_ids"
+        return 0
 }
 
 function pkcs11_gen_key ()
@@ -85,13 +110,24 @@ function pkcs11_gen_key ()
 	type=$3
 	label=$4
 
+	echolog "pkcs11_gen_key of type: $type with id: $key_id and label: $label on token: $token"
+
 	out=`pkcs11-tool --module "$LIBRTPKCS11ECP" --keypairgen --key-type "$type" -l -p "$PIN" --id "$key_id" --label "$label" --slot-description "$token" 2>&1`
+	res=$?
 	if [[ "`echo -e "$out" | grep "Unknown key type"`" ]]
 	then
 		echoerr "Тип ключа $type не поддерживается в системе"
 		return 2
 	fi
-	return $?
+
+	if [[ $res -ne 0 ]]
+	then
+		echoerr "Error while creating key:\n$out"
+	else
+		echolog "Key is created successfully"
+	fi
+	
+	return $res
 }
 
 function pkcs11_create_cert_req ()
@@ -101,9 +137,14 @@ function pkcs11_create_cert_req ()
 	subj="$3"
 	req_path="$4"
 	choice="$5"
+
+	echolog "pkcs11_create_cert_req for key_id: $key_id with subj: $subj by path: $req_path on token: $token. Cert is self_signed: $choice"
+
 	key_id_ascii="`echo -e "$key_id" | sed 's/../%&/g'`"
+	echolog "key_id in ascii encoding is $key_id_ascii"
 	
 	obj=`get_token_objects "$token" "privkey" "id" "$key_id"`
+
 	type=`get_object_attribute_value "$obj" "type"`
 	if [[ "$type" == "RSA"* ]]
 	then
