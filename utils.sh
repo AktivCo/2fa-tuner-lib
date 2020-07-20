@@ -8,7 +8,10 @@ CUR_DIR=`pwd`
 LOG_FILE="$CUR_DIR/log.txt"
 RTADMIN=rtAdmin
 
-echolog() { echo -e "$@" > "$LOG_FILE" }
+echolog()
+{
+	echo -e "$@" >> "$LOG_FILE"
+}
 
 function init() 
 { 
