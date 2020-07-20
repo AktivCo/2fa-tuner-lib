@@ -28,9 +28,12 @@ def yesno(root, text):
 
     buttonFrame= ttk.Frame(root)
     noButton = ttk.Button(buttonFrame, text="No", command= lambda: exit(1))
+    noButton.bind("<Return>", lambda x: exit(1))
+
 
     yesButton = ttk.Button(buttonFrame, text="Yes", command= lambda: exit(0))
-
+    yesButton.bind("<Return>", lambda x: exit(0))
+    
     text.pack(expand=1, padx=10, pady=5)
     yesButton.pack(side=tk.RIGHT, padx=10, pady=10)
     yesButton.focus_set()
