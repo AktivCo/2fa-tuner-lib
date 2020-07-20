@@ -10,7 +10,7 @@ RTADMIN=rtAdmin
 
 echolog()
 {
-	echo -e "$@" >> "$LOG_FILE"
+	echo -e [`date` $USER $$] "$@" >> "$LOG_FILE"
 }
 
 function init() 
