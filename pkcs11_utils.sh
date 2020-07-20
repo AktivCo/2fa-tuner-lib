@@ -285,6 +285,7 @@ function get_object_attribute_value ()
 	if [[ $? -ne 0 ]]
 	then
 		echoerr "error occured while getting attr $attr of object $obj:\n$out"
+		return 1
 	fi
 
 	echolog "Attr $attr value is $out"
@@ -298,8 +299,7 @@ function pkcs11_format_token ()
 	local token="$1"
 	local user_pin="$2"
 	local admin_pin="$3"
-	PIN=$user_pin
-	
+	echolog "pkcs11_format_token $token"	
 	list=`get_token_list`		
 	if  [[ "`echo -e "$list" | wc -l`" -ne 1 ]] 
 	then
@@ -307,8 +307,16 @@ function pkcs11_format_token ()
 		return 2
 	fi
 
-	$RTADMIN -z "$LIBRTPKCS11ECP" -f -u "$user_pin" -a "$admin_pin" -q
-	return $?
+	out=`$RTADMIN -z "$LIBRTPKCS11ECP" -f -u "$user_pin" -a "$admin_pin" -q`
+	if [[ $? -ne 0 ]]
+	then
+		echoerr "Error occured during format token:\n$out"
+		return 1
+	fi
+	
+	echolog "Token formated"
+	PIN=$user_pin
+	return 0
 }
 
 function pkcs11_change_user_pin ()
@@ -316,9 +324,17 @@ function pkcs11_change_user_pin ()
 	token=$1
 	old_pin=$PIN
 	new_pin=$2
+	echolog "pkcs11_change_user_pin $token"
+	out=`pkcs11-tool --module "$LIBRTPKCS11ECP" --change-pin -l -p "$old_pin" --new-pin "$new_pin" --slot-description "$token" 2>&1`
+	if  [[ $? -ne 0 ]]
+	then
+		echoerr "Error occured during change user pin:\n$out"
+		return 1
+	fi
+
+	echolog "user oin changed"
 	PIN=$new_pin
-	pkcs11-tool --module "$LIBRTPKCS11ECP" --change-pin -l -p "$old_pin" --new-pin "$new_pin" --slot-description "$token"
-	return $?
+	return 0
 }
 
 function pkcs11_change_admin_pin ()
@@ -326,14 +342,23 @@ function pkcs11_change_admin_pin ()
 	local token=$1
 	local old_pin=$2
 	local new_pin=$3
-	pkcs11-tool --module "$LIBRTPKCS11ECP" -c --login-type so --so-pin "$old_pin" -l --new-pin "$new_pin"
-	return $?
+	echolog "pkcs11_change_admin_pin $token"
+	out=`pkcs11-tool --module "$LIBRTPKCS11ECP" -c --login-type so --so-pin "$old_pin" -l --new-pin "$new_pin"`
+	if  [[ $? -ne 0 ]]
+        then
+                echoerr "Error occured during change admin pin:\n$out"
+                return 1
+        fi
+
+	echolog "admin pin changed"
+	return 0
 }
 
 function pkcs11_unlock_pin ()
 {
 	local token=$1
 	local so_pin=$2
+	echolog "pkcs11_unlock_pin $token"
 
 	list=`get_token_list`
         if  [[ "`echo -e "$list" | wc -l`" -ne 1 ]]
@@ -342,8 +367,15 @@ function pkcs11_unlock_pin ()
                 return 2
         fi
 	
-	$RTADMIN -z "$LIBRTPKCS11ECP" -q -P -o "$so_pin"
-	return $?
+	out=`$RTADMIN -z "$LIBRTPKCS11ECP" -q -P -o "$so_pin"`
+	if  [[ $? -ne 0 ]]
+        then
+                echoerr "Error occured during unlock user pin:\n$out"
+                return 1
+        fi
+	echolog "User PIN unlocked"
+
+	return 0
 }
 
 function export_object ()
@@ -352,8 +384,23 @@ function export_object ()
 	local type=$2
 	local id=$3
 	local file=$4
-	pkcs11-tool --module "$LIBRTPKCS11ECP" --slot-description "$token" -r --type "$type" --id "$id" -l -p "$PIN" > "$file"
-	return $?
+	echolog "export_object of type:$type with id: $id from token:$token to file:$file"
+
+	out=`pkcs11-tool --module "$LIBRTPKCS11ECP" --slot-description "$token" -r --type "$type" --id "$id" -l -p "$PIN" 2>&1`
+	if [[ $? -ne 0 ]]
+	then
+		echoerr "Error occured while export object from token:\n$out"
+		return 1
+	fi
+
+	out=`echo -e "$out" > "$file"`
+	if [[ $? -ne 0 ]]
+        then
+                echoerr "Error occured while copy object to file:\n$out"
+                return 1
+        fi
+
+	return 0
 }
 
 function remove_object ()
@@ -361,7 +408,15 @@ function remove_object ()
         local token=$1
         local type=$2
         local id=$3
-        pkcs11-tool --module "$LIBRTPKCS11ECP" --slot-description "$token" -b --type "$type" --id "$id" -l -p "$PIN"
-        return $?
+	echolog "remove_object of type:$type with id: $id from token:$token"
+
+        out=`pkcs11-tool --module "$LIBRTPKCS11ECP" --slot-description "$token" -b --type "$type" --id "$id" -l -p "$PIN"`
+        if [[ $? -ne 0 ]]
+        then
+                echoerr "Error occured during remove object from token:\n$out"
+                return 1
+        fi
+
+	return 0
 }
 
