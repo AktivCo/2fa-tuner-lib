@@ -12,9 +12,9 @@ function check_pkgs ()
         
 }
 
-function _install_common_packages ()
+function _install_packages ()
 {
-	local pkgs="libengine-pkcs11-openssl1.1 python3-tk opensc libccid pcscd pcsc-tools libp11-3 dialog"
+	local pkgs="libengine-pkcs11-openssl1.1 python3-tk opensc libccid pcscd pcsc-tools libp11-3 libpam-p11 libpam-pkcs11 libnss3-tools dialog"
 	check_update="$1"
 	
 	if ! [[ -z "$check_updates" ]]
@@ -30,29 +30,6 @@ function _install_common_packages ()
 		echoerr "Не могу установить один из пакетов: $pkgs из репозитория"
 		return 1
 	fi
-}
-
-function _install_packages_for_local_auth ()
-{
-        check_update="$1"
-	local pkgs="libpam-p11 libpam-pkcs11 libnss3-tools"
-	if ! [[ -z "$check_updates" ]]
-        then
-		check_pkgs $pkgs
-		return $?
-	fi
-
-        sudo apt-get -qq install $pkgs;
-        if [[ $? -ne 0 ]]
-	then
-		echoerr "Не могу установить один из пакетов: $pkgs из репозитория"
-		return 1
-	fi
-}
-
-function _install_packages_for_domain_auth ()
-{
-	return 0
 }
 
 function _setup_local_authentication ()

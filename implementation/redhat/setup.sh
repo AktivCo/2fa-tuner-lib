@@ -12,9 +12,9 @@ function check_pkgs ()
 
 }
 
-function _install_common_packages ()
+function _install_packages ()
 {
-        local pkgs="ccid opensc gdm-plugin-smartcard pcsc-tools nss-tools libp11 engine_pkcs11 python3-tkinter dialog"
+        local pkgs="ccid opensc gdm-plugin-smartcard pcsc-tools nss-tools libp11 engine_pkcs11 python3-tkinter p11-kit pam_pkcs11 rpmdevtools libsss_sudo krb5-pkinit dialog"
         check_update="$1"
 
         if ! [[ -z "$check_updates" ]]
@@ -32,46 +32,6 @@ function _install_common_packages ()
         fi
 
         sudo systemctl restart pcscd
-        return 0
-}
-
-function _install_packages_for_local_auth ()
-{
-        check_update="$1"
-        local pkgs="p11-kit pam_pkcs11 rpmdevtools"
-        if ! [[ -z "$check_updates" ]]
-        then
-                check_pkgs $pkgs
-                return $?
-        fi
-
-        sudo yum -q -y install $pkgs;
-        if [[ $? -ne 0 ]]
-        then
-                echoerr "Не могу установить один из пакетов: $pkgs из репозитория"
-                return 1
-        fi
-
-        return 0
-}
-
-function _install_packages_for_domain_auth ()
-{
-        check_update="$1"
-        local pkgs="libsss_sudo krb5-pkinit"
-        if ! [[ -z "$check_updates" ]]
-        then
-                check_pkgs $pkgs
-                return $?
-        fi
-
-        sudo yum -q -y install libsss_sudo;
-        if [[ $? -ne 0 ]]
-        then
-                echoerr "Не могу установить один из пакетов: $pkgs из репозитория"
-                return 1
-        fi
-
         return 0
 }
 

@@ -15,9 +15,9 @@ function check_pkgs ()
         return 0
 }
 
-function _install_common_packages ()
+function _install_packages ()
 {
-        local pkgs="ccid opensc p11-kit rpmdevtools dialog lib64p11-devel engine_pkcs11 tkinter3"
+        local pkgs="ccid opensc p11-kit rpmdevtools dialog lib64p11-devel engine_pkcs11 pam_pkcs11 pam_pkcs11-tools tkinter3"
         check_update="$1"
 
         if ! [[ -z "$check_updates" ]]
@@ -36,34 +36,6 @@ function _install_common_packages ()
 	sudo systemctl restart pcscd
 
 	return 0
-}
-
-function _install_packages_for_local_auth ()
-{
-        local pkgs="pam_pkcs11 pam_pkcs11-tools"
-        check_update="$1"
-	
-	if ! [[ -z "$check_updates" ]]
-        then
-                check_pkgs $pkgs
-                return $?
-        fi
-	
-	sudo urpmi --force $pkgs
-
-        if [[ $? -ne 0 ]]
-	then
-		echoerr "Не могу установить один из пакетов: $pkgs из репозитория"
-		return 1
-	fi
-
-        sudo systemctl restart pcscd
-	return 0
-}
-
-function _install_packages_for_domain_auth ()
-{
-        return 0
 }
 
 function _setup_local_authentication ()

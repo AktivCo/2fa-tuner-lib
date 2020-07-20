@@ -23,7 +23,7 @@ function check_pkgs ()
         return 0
 }
 
-function _install_common_packages ()
+function _install_packages ()
 {
         check_update="$1"
         local pkgs="librtpkcs11ecp opensc pcsc-lite-ccid pcsc-lite libp11 pcsc-tools python3-modules-tkinter dialog pam_pkcs11 pam_p11 nss-utils"
@@ -46,19 +46,6 @@ function _install_common_packages ()
 	
 	systemctl restart pcscd
 	return 0
-}
-
-
-function _install_packages_for_local_auth ()
-{
-	echolog  "Alt. There is not additional local auth packages"
-	return 0
-}
-
-function _install_packages_for_domain_auth ()
-{
-	echolog  "Alt. There is not additional domain auth packages"
-        return 0
 }
 
 function _setup_local_authentication ()

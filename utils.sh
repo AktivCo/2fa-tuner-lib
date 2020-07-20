@@ -165,7 +165,7 @@ echoerr()
 	return 0
 }
 
-function install_common_packages ()
+function install_packages ()
 {
 	check_updates=$1
 	rtadmin_path=/usr/bin/rtAdmin
@@ -249,50 +249,6 @@ function install_common_packages ()
 	
 	return $?
 }
-
-function install_packages_for_local_auth ()
-{
-	check_updates=$1
-	if [[ "$check_updates" ]]
-	then
-		echolog "check updates for local auth packages"
-	else
-		echolog "install local auth packages"
-	fi
-
-	install_common_packages $check_updates
-	if [[ $? -eq 1 ]]
-	then
-		return 1
-	fi
-
-	_install_packages_for_local_auth $check_updates
-	
-	return $?
-}
-
-function install_packages_for_domain_auth ()
-{
-	check_updates=$1
-	
-	if [[ "$check_updates" ]]
-        then
-                echolog "check updates for domain auth packages"
-        else
-                echolog "install domain auth packages"
-        fi
-
-	install_packages_for_local_auth  $check_updates
-	if [[ $? -eq 1 ]]
-        then
-                return 1
-        fi
-
-        _install_packages_for_domain_auth  $check_updates
-	
-	return $?
-}
-
 
 function setup_local_authentication ()
 {
