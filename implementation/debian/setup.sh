@@ -53,12 +53,12 @@ function _setup_local_authentication ()
 	then
 		echoerr "Не удалось экспортировать сертификат с Рутокена"
 		return 1
-	fi 
+	fi
 
 	out=`openssl x509 -in cert.crt -out cert.pem -inform DER -outform PEM`
-        if [[ $? -ne 0 ]]
+	if [[ $? -ne 0 ]]
         then
-                echoerr "can't convert cert to DER format"
+                echoerr "can't convert cert to PEM format"
                 return 1
         fi
         echolog "convert cert to DER format"
@@ -67,7 +67,8 @@ function _setup_local_authentication ()
 	chmod 0755 "$home/.eid";
 	cat cert.pem >> "$home/.eid/authorized_certificates";
 	chmod 0644 "$home/.eid/authorized_certificates";
-	LIBRTPKCS11ECP=$LIBRTPKCS11ECP envsubst < "$TWO_FA_LIB_DIR/common_files/p11" | sudo tee /usr/share/pam-configs/p11 > /dev/null;
+	
+	LIBRTPKCS11ECP=$LIBRTPKCS11ECP PAM_P11=$PAM_P11 envsubst < "$TWO_FA_LIB_DIR/common_files/p11" | sudo tee /usr/share/pam-configs/p11 > /dev/null;
 	chown $user:$user -R $home/.eid
 	
 	sudo pam-auth-update --force --enable Pam_p11;

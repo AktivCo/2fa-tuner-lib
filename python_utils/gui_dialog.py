@@ -277,7 +277,8 @@ if __name__ == "__main__":
             btn.pack(side=tk.RIGHT, padx=10, fill="x", expand=1)
         extraButtonFrame.pack(fill="x")
 
-    root.bind("<Escape>", lambda x: exit(255))
+    if args.cmd[0] != 'SHOW_WAIT':
+        root.bind("<Escape>", lambda x: exit(255))
 
     center(root)
     root.minsize(root.winfo_width(), root.winfo_height())

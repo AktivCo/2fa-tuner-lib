@@ -230,7 +230,7 @@ function get_token_info ()
 	then
 		atr_val=`echo -e "$token_info" | grep "$atr" | cut -f 2`
 		echolog "Atr: $atr frrom token info for token: $token is $atr_val"
-		echoe -e "$atr_val"
+		echo -e "$atr_val"
 		return 0
 	fi
 	
@@ -386,20 +386,15 @@ function export_object ()
 	local file=$4
 	echolog "export_object of type:$type with id: $id from token:$token to file:$file"
 
-	out=`pkcs11-tool --module "$LIBRTPKCS11ECP" --slot-description "$token" -r --type "$type" --id "$id" -l -p "$PIN" 2>&1`
+	pkcs11-tool --module "$LIBRTPKCS11ECP" --slot-description "$token" -r --type "$type" --id "$id" -l -p "$PIN" > "$file"
 	if [[ $? -ne 0 ]]
 	then
+		out=`cat "$file"`
+		rm "$file"
 		echoerr "Error occured while export object from token:\n$out"
 		return 1
 	fi
-
-	out=`echo -e "$out" > "$file"`
-	if [[ $? -ne 0 ]]
-        then
-                echoerr "Error occured while copy object to file:\n$out"
-                return 1
-        fi
-
+	
 	return 0
 }
 

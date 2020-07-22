@@ -93,6 +93,18 @@ function init()
 		LIBRTPKCS11ECP="$GUESS_LIBRTPKCS11ECP"
 	fi
 	RTENGINE="`dirname "$PKCS11_ENGINE"`/librtengine.so"
+	
+	if [ -f "/etc/debian_version" ]
+	then
+		local pam_p11_ver=`dpkg -s libpam-p11 | grep "Version" | cut -f 2 -d " "`
+		dpkg --compare-versions "$pam_p11_ver" "ge" "0.2.0"
+		if [[ $? -eq 0 ]]
+		then
+			PAM_P11=pam_p11.so
+		else
+			PAM_P11=pam_p11_opensc.so
+		fi
+	fi
 
 	case $XDG_CURRENT_DESKTOP in
 	"MATE")
@@ -513,7 +525,7 @@ function setup_ad_domain_authentication ()
 	systemctl restart sssd
 	if [[ $? -ne 0 ]]
 	then
-		ehcoerr "error occured while restart sssd. Status:\n`systemctl status sssd`"
+		echoerr "error occured while restart sssd. Status:\n`systemctl status sssd`"
 		return 1
 	fi
 
@@ -767,7 +779,6 @@ function get_token_password ()
 		check_pin "$token" "$pin" &
 		show_wait $! "Подождите" "Идет проверка PIN-кода"
 		res=$?
-		echoerr "$res"
 
 		if [[ $res -eq 2 ]]
 		then
@@ -895,7 +906,7 @@ function create_cert_req ()
 
 	if [[ $self_signed -eq 1 ]]
 	then
-		ehcolog "Self signed cert will be imported on token with id: $kei_id"
+		echolog "Self signed cert will be imported on token with id: $kei_id"
 	else
 		echolog "Cert request will be created"
 	fi
@@ -923,7 +934,7 @@ function create_key ()
 		echolog "User closes choose key alg dialog"
 		return 0
 	fi
-	ehcolog "Choosen key alg is $type"
+	echolog "Choosen key alg is $type"
 
 	case $type in
 	"RSA-2048") type=rsa:2048;;
@@ -981,7 +992,7 @@ function import_key_and_cert()
                 echolog "User closes choose pfx file path dialog"
                 return 0
         fi
-	ecilog "Choosen pfx file is $pfx_path"
+	echolog "Choosen pfx file is $pfx_path"
 
 	pass=`get_password "Пароль" "Введите пароль от pfx контейнера"`
         if [[ $? -ne 0 ]]
@@ -994,7 +1005,7 @@ function import_key_and_cert()
 	openssl pkcs12 -in "$pfx_path" -nocerts -out encrypted.key -passin "pass:$pass" -passout "pass:$pass"
 	if [[ $? -ne 0 ]]
         then
-		echorrr "Error occured during getting key from pfx file"
+		echoerr "Error occured during getting key from pfx file"
 		show_text "Ошибка" "Ошибка во время чтения закрытого ключа"
         	return 1
 	fi
@@ -1003,7 +1014,7 @@ function import_key_and_cert()
 	openssl pkcs12 -in "$pfx_path" -nokeys -out cert.pem -passin "pass:$pass"
 	if [[ $? -ne 0 ]]
         then
-                echorrr "Error occured during getting cert from pfx file"
+                echoerr "Error occured during getting cert from pfx file"
                 show_text "Ошибка" "Ошибка во время чтения сертификата"
                 return 1
         fi
@@ -1012,7 +1023,7 @@ function import_key_and_cert()
 	openssl x509 -in cert.pem -out cert.crt -outform DER
 	if [[ $? -ne 0 ]]
         then
-                echorrr "Error occured during converting cert to DER format"
+                echoerr "Error occured during converting cert to DER format"
                 show_text "Ошибка" "Ошибка во время конвертации сертфиката"
                 return 1
         fi
@@ -1021,7 +1032,7 @@ function import_key_and_cert()
 	openssl x509 -in cert.pem -pubkey -noout | openssl enc -base64 -d > publickey.der
 	if [[ $? -ne 0 ]]
         then
-                echorrr "Error occured during getting public key from cert"
+                echoerr "Error occured during getting public key from cert"
                 show_text "Ошибка" "Ошибка во время получения публичноо ключа из сертификата"
                 return 1
         fi
@@ -1030,7 +1041,7 @@ function import_key_and_cert()
 	openssl rsa -in encrypted.key -out key.der -outform DER -passin "pass:$pass"
 	if [[ $? -ne 0 ]]
         then
-                echorrr "Error occured during converting key to DER format"
+                echoerr "Error occured during converting key to DER format"
                 show_text "Ошибка" "Ошибка во время конвертации открытого ключа"
                 return 1
         fi
@@ -1174,7 +1185,7 @@ function show_token_object ()
 		type=cert
                 ;;
         esac
-	echorrr "Choosen object type: $type and id: $id"
+	echolog "Choosen object type: $type and id: $id"
 
 	if  [[ $type == "cert" ]]
 	then
@@ -1184,14 +1195,14 @@ function show_token_object ()
 		actions=`echo -e "Удалить\nИмпорт сертификата ключа\nСоздать заявку на сертификат"`
 		act=`show_list "Выберите действие" "Действия" "$actions"`
 	fi
-	echorrr "Choosen action under object is $act"
+	echolog "Choosen action under object is $act"
 
 	case "$act" in
 	"Просмотр")
 		export_object "$token" "$type" "$id" "cert.crt" &
 		show_wait $! "Подождите" "Подождите, идет чтение объекта"
 		xdg-open "cert.crt"
-		echorrr "open exported obj"
+		echoerr "open exported obj"
 		;;
 	"Сохранить на диске")
 		export_object "$token" "$type" "$id" "cert.crt" &
