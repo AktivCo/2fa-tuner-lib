@@ -787,7 +787,6 @@ function get_token_password ()
 		check_pin "$token" "$pin" &
 		show_wait $! "Подождите" "Идет проверка PIN-кода"
 		res=$?
-		echoerr "$res"
 
 		if [[ $res -eq 2 ]]
 		then
