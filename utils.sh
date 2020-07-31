@@ -75,6 +75,14 @@ function init()
 		IPA_NSSDB_DIR=/etc/pki/nssdb
 		IMPL_DIR="$TWO_FA_LIB_DIR/implementation/rosa"
 		;;
+	*"MagOS"*)
+                echolog "set env for magos impl"
+                LIBRTPKCS11ECP=/usr/lib64/librtpkcs11ecp.so
+                PKCS11_ENGINE=/usr/lib64/openssl-1.0.0/engines//pkcs11.so
+                PAM_PKCS11_DIR=/etc/pam_pkcs11
+                IPA_NSSDB_DIR=/etc/pki/nssdb
+                IMPL_DIR="$TWO_FA_LIB_DIR/implementation/rosa"
+                ;;
 	esac
 	echolog "setup impl"
 	. "$IMPL_DIR/setup.sh"
