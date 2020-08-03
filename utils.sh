@@ -669,7 +669,7 @@ function choose_key ()
 
 random-string()
 {
-    head /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w ${1:-32} | head -n 1
+    head /dev/urandom | tr -dc 'a-zA-Z0-9' | head -c $1
 }
 
 function gen_cert_id ()
