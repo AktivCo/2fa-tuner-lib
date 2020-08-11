@@ -1010,7 +1010,8 @@ function import_key_and_cert()
         fi
 
 	echolog "Getting key from pfx file"
-	openssl pkcs12 -in "$pfx_path" -nocerts -out encrypted.key -passin "pass:$pass" -passout "pass:$pass"
+	local key_pass=`gen_key_id "$token"`
+	openssl pkcs12 -in "$pfx_path" -nocerts -out encrypted.key -passin "pass:$pass" -passout "pass:$key_pass"
 	if [[ $? -ne 0 ]]
         then
 		echoerr "Error occured during getting key from pfx file"
@@ -1046,7 +1047,7 @@ function import_key_and_cert()
         fi
 
 	echolog "Converting key to DER format"
-	openssl rsa -in encrypted.key -out key.der -outform DER -passin "pass:$pass"
+	openssl rsa -in encrypted.key -out key.der -outform DER -passin "pass:$key_pass"
 	if [[ $? -ne 0 ]]
         then
                 echoerr "Error occured during converting key to DER format"
