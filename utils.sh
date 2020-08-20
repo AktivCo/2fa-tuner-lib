@@ -20,8 +20,21 @@ function init()
 { 
 	echolog "init"
 
-	source /etc/os-release
-	OS_NAME=$NAME
+	if [[ -f "/etc/os-releas" ]]
+	then 
+		source /etc/os-release
+		OS_NAME=$NAME
+	else
+		OS="`uname -s`"
+		if [ "${OS}" = "Darwin" ]
+		then
+			OS_NAME="OS X"
+		fi
+		
+		realpath() {
+			[[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
+		}
+	fi
 	echolog "OS: $OS_NAME"
 
 	if [ -f "/etc/debian_version" ]; then
@@ -83,6 +96,14 @@ function init()
                 IPA_NSSDB_DIR=/etc/pki/nssdb
                 IMPL_DIR="$TWO_FA_LIB_DIR/implementation/rosa"
                 ;;
+	"OS X")
+		echolog "set env for os x impl"
+                LIBRTPKCS11ECP=/usr/local/lib/librtpkcs11ecp.so
+                PKCS11_ENGINE=/usr/local/Cellar/libp11/0.4.10/lib/engines-1.1/pkcs11.dylib
+                PAM_PKCS11_DIR=/etc/pam_pkcs11
+                IPA_NSSDB_DIR=/etc/pki/nssdb
+                IMPL_DIR="$TWO_FA_LIB_DIR/implementation/rosa"
+                ;;
 	esac
 	echolog "setup impl"
 	. "$IMPL_DIR/setup.sh"
@@ -140,7 +161,7 @@ function init()
 	echolog "init gui manager"
 	init_gui_manager
 
-	SCRIPT=`realpath -s "$0"`
+	SCRIPT=`realpath "$0"`
 	echolog "script path: $SCRIPT"
 	SCRIPT_DIR=`dirname "$SCRIPT"`
 
@@ -1492,10 +1513,17 @@ function follow_token()
 	while  [[ "$token_present" -eq 1 ]]
 	do
 		echo > pcsc_scan_res
-		pcsc_scan > pcsc_scan_res &
-		pcsc_pid=$!
+		if [[ "$OS_NAME" == "OS X" ]]
+		then	
+			pcsctest > pcsc_scan_res &
+			pcsc_pid=$!
+		else
+			pcsc_scan > pcsc_scan_res &
+                        pcsc_pid=$!
+		fi
+
 		sleep 1
-		kill $pcsc_pid
+		kill $pcsc_pid 2> /dev/null
 
 		if ! ps -p $menu_pid > /dev/null
 		then
@@ -1514,9 +1542,26 @@ function follow_token()
 	return 1
 }
 
+function killtree {
+  kill -STOP "$1"
+  ps -e -o pid= -o ppid= | while read -r pid ppid
+                           do
+                             [[ $ppid = $1 ]] || continue
+                             killtree "$pid"  || true # Skip over failures
+                           done
+  kill -CONT "$1"          
+  kill -TERM "$1"
+}
+
 function rkill()
 {
-	kill `pstree -p $1 | sed 's/(/\n(/g' | grep '(' | sed 's/(\(.*\)).*/\1/' | tr "\n" " "`
+	if [[ "$OS_NAME" == "OS X" ]]
+	then
+		
+		killtree $1
+	else
+		kill `pstree -p $1 | sed 's/(/\n(/g' | grep '(' | sed 's/(\(.*\)).*/\1/' | tr "\n" " "`
+	fi
 }
 
 function sudo_cmd()
