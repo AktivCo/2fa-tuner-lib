@@ -9,7 +9,7 @@ function check_pkgs ()
 
 function _install_packages ()
 {
-	local pkgs="libengine-pkcs11-openssl1.1 python3-tk opensc libccid pcscd pcsc-tools libp11-3 libpam-p11 libpam-pkcs11 libnss3-tools dialog"
+	local pkgs="python3 openssl libp11 opensc pstreev pcsc-lite wget pstree"
 	check_update="$1"
 	export PATH=$PATH:/usr/local/sbin
 	
@@ -19,8 +19,9 @@ function _install_packages ()
 		check_pkgs $pkgs
 		return $?
 	fi
+
+	brew install $pkgs
 	
-	echo
 	if [[ $? -ne 0 ]]
 	then
 		echoerr "Не могу установить один из пакетов: $pkgs из репозитория"

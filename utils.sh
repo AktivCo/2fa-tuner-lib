@@ -24,11 +24,13 @@ function init()
 	then 
 		source /etc/os-release
 		OS_NAME=$NAME
+		OS_ARCH="linux_glibc-x86_64"
 	else
 		OS="`uname -s`"
 		if [ "${OS}" = "Darwin" ]
 		then
 			OS_NAME="OS X"
+			OS_ARCH="macos-x86_64"
 		fi
 		
 		realpath() {
@@ -98,7 +100,7 @@ function init()
                 ;;
 	"OS X")
 		echolog "set env for os x impl"
-                LIBRTPKCS11ECP=/usr/local/lib/librtpkcs11ecp.so
+                LIBRTPKCS11ECP=/usr/local/lib/librtpkcs11ecp.dylib
                 PKCS11_ENGINE=/usr/local/Cellar/libp11/0.4.10/lib/engines-1.1/pkcs11.dylib
                 PAM_PKCS11_DIR=/etc/pam_pkcs11
                 IPA_NSSDB_DIR=/etc/pki/nssdb
@@ -212,7 +214,12 @@ echoerr()
 function install_packages ()
 {
 	check_updates=$1
-	rtadmin_path=/usr/bin/rtAdmin
+	if [[ "$OS_NAME" == "OS X" ]]
+	then
+		rtadmin_path=/usr/local/bin/rtAdmin
+	else
+		rtadmin_path=/usr/bin/rtAdmin
+	fi
 
 	if [[ "$check_updates" ]]
 	then
@@ -243,7 +250,7 @@ function install_packages ()
 		unzip -q rutoken-sdk-latest.zip
 		
 		echolog "cp rtengine to $RTENGINE"
-		cp sdk/openssl/rtengine/bin/linux_glibc-x86_64/lib/librtengine.so "$RTENGINE"
+		cp sdk/openssl/rtengine/bin/${OS_ARCH}/lib/librtengine.so "$RTENGINE"
 	fi
 
 
@@ -258,7 +265,12 @@ function install_packages ()
 		fi
 	else
 		echolog "download rtadmin"
-		wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/Utilites/rtAdmin/1.3/linux/x86_64/rtAdmin";
+		if [[ "$OS_NAME" == "OS X" ]]
+		then
+			wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/Utilites/rtAdmin/1.3/macOS//rtAdmin";
+		else
+			wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/Utilites/rtAdmin/1.3/linux/x86_64/rtAdmin";
+		fi
 		if [[ $? -ne 0 ]]
         	then
                 	echoerr "Не могу загрузить утилиту rtAdmin"
@@ -278,7 +290,13 @@ function install_packages ()
                 fi
 	else
 		echolog "download pkcs11 lib"
-        	wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/PKCS11Lib/Current/Linux/x64/librtpkcs11ecp.so";
+		if [[ "$OS_NAME" == "OS X" ]]
+		then
+        		wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/PKCS11Lib/Current/Mac/x64/librtpkcs11ecp.dylib";
+                	mv librtpkcs11ecp.dylib librtpkcs11ecp.so
+		else
+        		wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/PKCS11Lib/Current/Linux/x64/librtpkcs11ecp.so";
+                fi
                	if [[ $? -ne 0 ]]
                	then
                        	echoerr "Не могу загрузить пакет librtpkcs11ecp.so"
