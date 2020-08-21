@@ -104,7 +104,7 @@ function init()
                 PKCS11_ENGINE=/usr/local/Cellar/libp11/0.4.10/lib/engines-1.1/pkcs11.dylib
                 PAM_PKCS11_DIR=/etc/pam_pkcs11
                 IPA_NSSDB_DIR=/etc/pki/nssdb
-                IMPL_DIR="$TWO_FA_LIB_DIR/implementation/rosa"
+                IMPL_DIR="$TWO_FA_LIB_DIR/implementation/macos"
                 ;;
 	esac
 	echolog "setup impl"
@@ -231,7 +231,7 @@ function install_packages ()
 	if [[ "$check_updates" ]]
         then
 		echolog "check rtengine"
-                if ! [[ -f "$RTENGINE" ]]
+		if ! [[ -f "$RTENGINE" ]]
 		then
 			echolog "rtengine not found"
 			return 1
@@ -250,7 +250,12 @@ function install_packages ()
 		unzip -q rutoken-sdk-latest.zip
 		
 		echolog "cp rtengine to $RTENGINE"
-		cp sdk/openssl/rtengine/bin/${OS_ARCH}/lib/librtengine.so "$RTENGINE"
+		if [[ "$OS_NAME" == "OS X" ]]
+		then
+			cp sdk/openssl/rtengine/bin/macos-x86_64/rtengine.framework/rtengine "$RTENGINE"
+		else
+			cp sdk/openssl/rtengine/bin/linux_glibc-x86_64/lib/librtengine.so "$RTENGINE"
+		fi
 	fi
 
 
@@ -1584,20 +1589,26 @@ function rkill()
 
 function sudo_cmd()
 {
-	xhost_out=`xhost`
-	if [[ -z "`echo -e \"$xhost_out\" | grep root`" && $UID -ne 0 ]]
+	if [[ "$OS_NAME" == "OS X" ]]
 	then
-		echolog "Adding root to allowed x11 user"
-		xhost +SI:localuser:root
-	fi
+		echolog "execute cmd $@ from sudo"
+                osascript -e "do shell script \"env LOG_FILE='$LOG_FILE' ORIG_USER='$USER' PIN='$PIN' GUI_MANAGER='$GUI_MANAGER' '${BASH_SOURCE[0]}' '$@'\" with administrator privileges"
+	else
+		xhost_out=`xhost`
+		if [[ -z "`echo -e \"$xhost_out\" | grep root`" && $UID -ne 0 ]]
+		then
+			echolog "Adding root to allowed x11 user"
+			xhost +SI:localuser:root
+		fi
 	
-	echolog "execute cmd $@ from sudo"
-	pkexec env LOG_FILE="$LOG_FILE" DISPLAY="$DISPLAY" XAUTHORITY="$XAUTHORITY" PIN="$PIN" GUI_MANAGER="$GUI_MANAGER" XDG_CURRENT_DESKTOP="$XDG_CURRENT_DESKTOP" "${BASH_SOURCE[0]}" "$@"
+		echolog "execute cmd $@ from sudo"
+		pkexec env LOG_FILE="$LOG_FILE" DISPLAY="$DISPLAY" XAUTHORITY="$XAUTHORITY" ORIG_USER="$USER" PIN="$PIN" GUI_MANAGER="$GUI_MANAGER" XDG_CURRENT_DESKTOP="$XDG_CURRENT_DESKTOP" "${BASH_SOURCE[0]}" "$@"
 	
-	if [[ -z "`echo -e \"$xhost_out\" | grep root`" && $UID -ne 0 ]]
-	then
-		echolog "remove root from allowed x11 user"
-		xhost -SI:localuser:root
+		if [[ -z "`echo -e \"$xhost_out\" | grep root`" && $UID -ne 0 ]]
+		then
+			echolog "remove root from allowed x11 user"
+			xhost -SI:localuser:root
+		fi
 	fi
 }
 

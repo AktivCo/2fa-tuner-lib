@@ -3,13 +3,13 @@
 function check_pkgs ()
 {
 	echolog "No new packages found"
-	return 1
+	return 0
         
 }
 
 function _install_packages ()
 {
-	local pkgs="python3 openssl libp11 opensc pstreev pcsc-lite wget pstree"
+	local pkgs="python3 openssl libp11 opensc pcsc-lite wget pstree"
 	check_update="$1"
 	export PATH=$PATH:/usr/local/sbin
 	
@@ -19,8 +19,8 @@ function _install_packages ()
 		check_pkgs $pkgs
 		return $?
 	fi
-
-	brew install $pkgs
+	
+	sudo -i -u "$ORIG_USER" brew install $pkgs
 	
 	if [[ $? -ne 0 ]]
 	then
