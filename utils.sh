@@ -10,7 +10,7 @@ then
 	LOG_FILE="$CUR_DIR/log.txt"
 fi
 RTADMIN=rtAdmin
-
+OPENSSL="openssl"
 echolog()
 {
 	echo -e [`date` $USER $$] "$@" >> "$LOG_FILE"
@@ -105,14 +105,15 @@ function init()
                 PAM_PKCS11_DIR=/etc/pam_pkcs11
                 IPA_NSSDB_DIR=/etc/pki/nssdb
                 IMPL_DIR="$TWO_FA_LIB_DIR/implementation/macos"
-                ;;
+                OPENSSL=/usr/local/Cellar/openssl@1.1/1.1.1g/bin/openssl
+		;;
 	esac
 	echolog "setup impl"
 	. "$IMPL_DIR/setup.sh"
 	
-	ENGINE_DIR=`openssl version -a | grep "ENGINESDIR" | tail -1 | cut -d ":" -f 2 | tr -d '"' | awk '{$1=$1};1'`
+	ENGINE_DIR=`$OPENSSL version -a | grep "ENGINESDIR" | tail -1 | cut -d ":" -f 2 | tr -d '"' | awk '{$1=$1};1'`
 	echolog "auto setup engine dir: $ENGINE_DIR"
-	if ! [[ -z "$ENGINE_DIR" ]]
+	if [[ "$ENGINE_DIR" ]] && ! [[ "$OS_NAME" == "OS X" ]]
 	then
 		PKCS11_ENGINE=`echo "${ENGINE_DIR}/pkcs11.so"`
 	fi
@@ -328,8 +329,14 @@ function setup_local_authentication ()
 		echolog "setup local auth run not under root"
                 sudo_cmd setup_local_authentication "$@"
         fi
+	
+	if [[ "$OS_NAME" == "OS X" ]]
+	then
+		user="$ORIG_USER"
+	else	
+		user=`choose_user`
+	fi
 
-	user=`choose_user`
 	if [[ $? -ne 0 ]]
 	then
 		echolog "not user choosen"
@@ -348,16 +355,20 @@ function setup_local_authentication ()
 		return $res
 	fi
 
-	setup_autolock
-	res=$?
-	if [[ $res -eq 0 ]]
-        then
-		echolog "local auth setuped sucessfully"
-                show_text "Успех" "Локальная аутентификация настроена"
-	else
-		echolog "autolock settuped with error"
-		show_text "Ошибка" "Во время настройки автоблокировки произошла ошибка"
+	if ! [[ "$OS_NAME" == "OS X" ]]
+	then
+		setup_autolock
+		res=$?
+		if [[ $res -eq 0 ]]
+        	then
+			echolog "local auth setuped sucessfully"
+        	        show_text "Успех" "Локальная аутентификация настроена"
+		else
+			echolog "autolock settuped with error"
+			show_text "Ошибка" "Во время настройки автоблокировки произошла ошибка"
+		fi
 	fi
+
 	return $res
 }
 
@@ -713,7 +724,7 @@ function choose_key ()
 
 random-string()
 {
-    head /dev/urandom | tr -dc 'a-zA-Z0-9' | head -c $1
+    head /dev/urandom | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | head -c $1
 }
 
 function gen_cert_id ()
@@ -780,7 +791,7 @@ function import_cert ()
 	if ! [[ -z "`cat "$cert_path" | grep '\-----BEGIN CERTIFICATE-----'`" ]]
 	then
 		echolog "convert cert from PEM to DER format"
-		out=`openssl x509 -in "$cert_path" -out cert.crt -inform PEM -outform DER`;
+		out=`$OPENSSL x509 -in "$cert_path" -out cert.crt -inform PEM -outform DER`;
 		if [[ $? -ne 0 ]]
 		then
 			echoerr "Error occured while convert cert from PEM to DER format:\n$out"
@@ -1055,7 +1066,7 @@ function import_key_and_cert()
 
 	echolog "Getting key from pfx file"
 	local key_pass=`gen_key_id "$token"`
-	openssl pkcs12 -in "$pfx_path" -nocerts -out encrypted.key -passin "pass:$pass" -passout "pass:$key_pass"
+	$OPENSSL pkcs12 -in "$pfx_path" -nocerts -out encrypted.key -passin "pass:$pass" -passout "pass:$key_pass"
 	if [[ $? -ne 0 ]]
         then
 		echoerr "Error occured during getting key from pfx file"
@@ -1064,7 +1075,7 @@ function import_key_and_cert()
 	fi
 
 	echolog "Getting cert from pfx file"
-	openssl pkcs12 -in "$pfx_path" -nokeys -out cert.pem -passin "pass:$pass"
+	$OPENSSL pkcs12 -in "$pfx_path" -nokeys -out cert.pem -passin "pass:$pass"
 	if [[ $? -ne 0 ]]
         then
                 echoerr "Error occured during getting cert from pfx file"
@@ -1073,7 +1084,7 @@ function import_key_and_cert()
         fi
 	
 	echolog "Convert cert to DER format"
-	openssl x509 -in cert.pem -out cert.crt -outform DER
+	$OPENSSL x509 -in cert.pem -out cert.crt -outform DER
 	if [[ $? -ne 0 ]]
         then
                 echoerr "Error occured during converting cert to DER format"
@@ -1082,7 +1093,7 @@ function import_key_and_cert()
         fi
 
 	echolog "Getting public key from cert"
-	openssl x509 -in cert.pem -pubkey -noout | openssl enc -base64 -d > publickey.der
+	$OPENSSL x509 -in cert.pem -pubkey -noout | $OPENSSL enc -base64 -d > publickey.der
 	if [[ $? -ne 0 ]]
         then
                 echoerr "Error occured during getting public key from cert"
@@ -1091,7 +1102,7 @@ function import_key_and_cert()
         fi
 
 	echolog "Converting key to DER format"
-	openssl rsa -in encrypted.key -out key.der -outform DER -passin "pass:$key_pass"
+	$OPENSSL rsa -in encrypted.key -out key.der -outform DER -passin "pass:$key_pass"
 	if [[ $? -ne 0 ]]
         then
                 echoerr "Error occured during converting key to DER format"

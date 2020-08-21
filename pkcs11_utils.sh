@@ -136,9 +136,9 @@ function pkcs11_create_cert_req ()
 	key_id="$2"
 	subj="$3"
 	req_path="$4"
-	choice="$5"
+	selfsign="$5"
 
-	echolog "pkcs11_create_cert_req for key_id: $key_id with subj: $subj by path: $req_path on token: $token. Cert is self_signed: $choice"
+	echolog "pkcs11_create_cert_req for key_id: $key_id with subj: $subj by path: $req_path on token: $token. Cert is self_signed: $selfsign"
 
 	key_id_ascii="`echo -e "$key_id" | sed 's/../%&/g'`"
 	echolog "key_id in ascii encoding is $key_id_ascii"
@@ -165,9 +165,9 @@ function pkcs11_create_cert_req ()
 
         openssl_req="engine dynamic -pre SO_PATH:"$engine_path" -pre ID:"$engine_id" -pre LIST_ADD:1  -pre LOAD -pre MODULE_PATH:$LIBRTPKCS11ECP \n req -engine $engine_id -new -utf8 -key \"pkcs11:serial=$serial;id=$key_id_ascii\" -keyform engine -passin \"pass:$PIN\" -subj $subj"
 	
-	if [[ choice -eq 1  ]]
+	if [[ $selfsign -eq 1  ]]
         then
-                out=`echo -e "$openssl_req -x509 -outform DER -out \"$req_path\"" | openssl 2>&1`;
+                out=`echo -e "$openssl_req -x509 -outform DER -out \"$req_path\"" | $OPENSSL 2>&1`;
 
                 if [[ $? -ne 0 ]]
 		then
@@ -182,7 +182,7 @@ function pkcs11_create_cert_req ()
                         return 1
                 fi
 	else
-                out=`echo -e "$openssl_req -out \"$req_path\" -outform PEM" | openssl 2>&1`;
+                out=`echo -e "$openssl_req -out \"$req_path\" -outform PEM" | $OPENSSL 2>&1`;
                 if [[ "`echo -e "$out" | grep "error"`" ]]
 		then
 			echoerr "can't create cert req:\n$out"
@@ -223,7 +223,7 @@ function get_token_info ()
                 return 1
         fi
 
-        token_info="`echo -e "$out" | sed -n "/^.*$token.*$/,$ p" | awk '{$1=$1;print}' | sed -E "s/[[:space:]]*:[[:space:]]+/\t/" | uniq | awk '/Slot /{++n} n<2'`"
+        token_info="`echo -e "$out" | sed -n "/^.*$token.*$/,$ p" | awk '{$1=$1;print}' | sed -E "s/[[:space:]]*:[[:space:]]+/	/" | uniq | awk '/Slot /{++n} n<2'`"
         echolog "Token info:\n $token_info"
 
 	if [[ "$atr" ]]
