@@ -45,7 +45,7 @@ function _install_packages ()
 
         if [[ "$check_updates" ]]
         then
-		echolog "Astra. check common packages"
+		echolog "Astra. check packages"
                 check_pkgs $pkgs
                 return $?
         fi
