@@ -36,7 +36,9 @@ function show_form ()
         msg="$2"
 	asks="$3"
 	default="$4"
-        form=`python3 "$TWO_FA_LIB_DIR/python_utils/gui_dialog.py" SHOW_FORM --title "$title" --text "$msg" --asks "$asks" --default="$default"`;
+        checks="$5"
+	checksDefault="$6"
+	form=`python3 "$TWO_FA_LIB_DIR/python_utils/gui_dialog.py" SHOW_FORM --title "$title" --text "$msg" --asks "$asks" --default="$default" --checks="$checks" --checks-default="$checksDefault"`;
         ret=$?
 	echo -e "$form"
         return $ret

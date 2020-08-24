@@ -876,17 +876,22 @@ function get_token_password ()
 	return 0
 }
 
-function get_cert_subj ()
+function get_cert_data ()
 {
 	echolog "get_cert_cubj"
-	form_atr="Регион
+	local form_atr="Регион
 Населенный пункт
 Организация
 Подразделение
 Общее имя
 Электронная почта"
-	default_content=`echo -e "Москва\n\n\n\n\n"`
-	res=`show_form "Данные сертификата" "Укажите данные заявки" "$form_atr" "$default_content"`
+	local default_content="`echo -e "Москва\n\n\n\n\n"`"
+	local checks="Самоподписанный сертификат
+Для цифровой подписи
+Для шифрования данных
+Для шифрования ключей"
+	local checksDefault="`echo -e "True\nTrue\n\n"`"
+	res=`show_form "Данные сертификата" "Укажите данные заявки" "$form_atr" "$default_content" "$checks" "$checksDefault"`
         if [[ $? -ne 0 ]]
 	then
 		echolog "User close get form dialog"
@@ -916,6 +921,33 @@ function get_cert_subj ()
 	
 	echolog "Cert subj is $subj"
 	echo "$subj"
+
+	echolog "Cert is self-signed: `echo -e "$res" | sed -n 7p`"
+	echo "`echo -e "$res" | sed -n 7p`" # self_signed
+	
+	key_usage=""
+	if [[ "`echo -e "$res" | sed -n 8p`" -eq "1" ]]
+	then
+		key_usage="$key_usage,digitalSignature"
+	fi
+	if [[ "`echo -e "$res" | sed -n 9p`" -eq "1" ]]
+        then
+                key_usage="$key_usage,dataEncipherment"
+        fi
+	if [[ "`echo -e "$res" | sed -n 10p`" -eq "1" ]]
+        then
+                key_usage="$key_usage,keyEncipherment"
+        fi
+
+	if [[ "$key_usage" = ,* ]]
+	then
+		key_usage="${key_usage#?}" #remove first char
+	fi
+
+	echolog "Cert keyUsage is $key_usage"
+
+	echo "$key_usage"
+
 	return 0
 }
 
@@ -925,38 +957,33 @@ function create_cert_req ()
 	local key_id="$2"
 	echolog "create_cert_req for key: $key_id on token: $token"
 	
-	subj=`get_cert_subj`
+	data="`get_cert_data`"
+	subj="`echo -e "${data}" | sed -n 1p`"
+	self_signed="`echo -e "${data}" | sed -n 2p`"
+	key_usage="`echo -e "${data}" | sed -n 3p`"
 	if [[ $? -ne 0 ]]
 	then
 		echolog "subj is not specified"
 		return 0
 	fi
 
-	yesno "Издатель сертификата" "Создать самоподписанный сертификат?"
-	res=$?
-	if [[ $res -eq 0 ]]
+	if [[ "$self_signed" -eq 1 ]]
 	then
 		echolog "cert will be self signed"
-		self_signed=1
 		req_path=cert.crt
-	elif [[ $res -eq 1 ]]
-	then
+	else
 		echolog "cert will be not self signed"
-		self_signed=0
 		req_path=`save_file_dialog "Сохранение заявки на сертификат" "Куда сохранить заявку" "$CUR_DIR"`
         	if [[ $? -ne 0 ]]
         	then
 			echolog "User closes choose req path dialog"
                 	return 0
         	fi
-	else
-		echolog "Users close choose self signed path dialog"
-		return 0
 	fi
 
 	echolog "Cert req will be saved inside $req_path"
 	
-	pkcs11_create_cert_req "$token" "$key_id" "$subj" "$req_path" $self_signed &
+	pkcs11_create_cert_req "$token" "$key_id" "$subj" "$req_path" "$self_signed" "$key_usage" &
 	show_wait $! "Подождите" "Идет создание заявки"
 	res=$?
 

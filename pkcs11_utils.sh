@@ -137,6 +137,7 @@ function pkcs11_create_cert_req ()
 	subj="$3"
 	req_path="$4"
 	selfsign="$5"
+	key_usage="$6"
 
 	echolog "pkcs11_create_cert_req for key_id: $key_id with subj: $subj by path: $req_path on token: $token. Cert is self_signed: $selfsign"
 
@@ -163,7 +164,9 @@ function pkcs11_create_cert_req ()
 	serial=`get_token_info "$token" "serial"`
 	echolog "Token serial is $serial"
 
-        openssl_req="engine dynamic -pre SO_PATH:"$engine_path" -pre ID:"$engine_id" -pre LIST_ADD:1  -pre LOAD -pre MODULE_PATH:$LIBRTPKCS11ECP \n req -engine $engine_id -new -utf8 -key \"pkcs11:serial=$serial;id=$key_id_ascii\" -keyform engine -passin \"pass:$PIN\" -subj $subj"
+	keyUsage="$key_usage" envsubst < "$TWO_FA_LIB_DIR/common_files/openssl_ext.cnf" | tee openssl_ext.cnf > /dev/null
+
+        openssl_req="engine dynamic -pre SO_PATH:"$engine_path" -pre ID:"$engine_id" -pre LIST_ADD:1  -pre LOAD -pre MODULE_PATH:$LIBRTPKCS11ECP \n req -engine $engine_id -new -utf8 -key \"pkcs11:serial=$serial;id=$key_id_ascii\" -keyform engine -passin \"pass:$PIN\" -subj $subj -config openssl_ext.cnf"
 	
 	if [[ $selfsign -eq 1  ]]
         then
@@ -176,7 +179,7 @@ function pkcs11_create_cert_req ()
 		fi
 
 		out=`pkcs11-tool --module $LIBRTPKCS11ECP -l -p "$PIN" -y cert -w "$req_path" --id $key_id 2>&1`;
-        	if [[ $? -ne 0 ]]
+		if [[ $? -ne 0 ]]
                 then
                         echoerr "Can't move cert on token:\n$out"
                         return 1
