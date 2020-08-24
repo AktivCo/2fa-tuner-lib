@@ -51,11 +51,11 @@ def show_msg(root, text):
     okButton.pack(side=tk.RIGHT, padx=10, pady=10)
     buttonFrame.pack(fill='x', side=tk.BOTTOM)
 
-def show_form(root, text, asks, default, checks="", defaultChecks=""):
+def show_form(root, text, asks, default, checks, defaultChecks):
     asks=asks.split("\n")
     default=default.split("\n")
 
-    checks=checks.split("\n")
+    checks=checks.split("\n") if checks else []
     defaultChecks=defaultChecks.split("\n")
     
     default.extend([""]*(len(asks) - len(default)))
@@ -103,8 +103,10 @@ def show_form(root, text, asks, default, checks="", defaultChecks=""):
     msg.pack(pady=5, padx=10)
     formFrame.pack(fill="both", padx=10, pady=10, expand=1)
     formFrame.columnconfigure(1, weight=1)
-    checkFormFrame.pack(fill="both", padx=10, pady=10, expand=1)
-    checkFormFrame.columnconfigure(1, weight=1)
+    
+    if checks:
+        checkFormFrame.pack(fill="both", padx=10, pady=10, expand=1)
+        checkFormFrame.columnconfigure(1, weight=1)
 
     okButton.pack(side=tk.RIGHT, padx=10, pady=10)
     cancelButton.pack(side=tk.RIGHT, padx=10)
