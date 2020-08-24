@@ -51,10 +51,15 @@ def show_msg(root, text):
     okButton.pack(side=tk.RIGHT, padx=10, pady=10)
     buttonFrame.pack(fill='x', side=tk.BOTTOM)
 
-def show_form(root, text, asks, default):
+def show_form(root, text, asks, default, checks="", defaultChecks=""):
     asks=asks.split("\n")
     default=default.split("\n")
+
+    checks=checks.split("\n")
+    defaultChecks=defaultChecks.split("\n")
+    
     default.extend([""]*(len(asks) - len(default)))
+    defaultChecks.extend([""]*(len(checks) - len(defaultChecks)))
 
     msg = ttk.Label(root, text=text)
 
@@ -67,12 +72,29 @@ def show_form(root, text, asks, default):
         entry.grid(row=i, column=1, pady=3, sticky="NSEW")
         entries.append(entry)
 
+    checkFormFrame=ttk.Frame()
+    checkEntries=[]
+    checkVars=[]
+    for i, check in enumerate(checks):
+        x = tk.IntVar()
+        if defaultChecks[i]=="True":
+            x.set(True)
+        else:
+            x.set(False)
+        check = ttk.Checkbutton(checkFormFrame, text=check, variable=x)
+
+        check.grid(row=i, column=0, pady=3, sticky="NSEW")
+        checkEntries.append(check)
+        checkVars.append(x)
+    
     buttonFrame= ttk.Frame(root)
     cancelButton = ttk.Button(buttonFrame, text="Cancel", command= lambda: exit(255))
     
     def okButtonClicked(event=None, entries=entries):
         for entry in entries:
             print(entry.get())
+        for checkVar in checkVars:
+            print(checkVar.get())
         exit(0)
 
     okButton = ttk.Button(buttonFrame, text="Ok", command= okButtonClicked)
@@ -81,6 +103,8 @@ def show_form(root, text, asks, default):
     msg.pack(pady=5, padx=10)
     formFrame.pack(fill="both", padx=10, pady=10, expand=1)
     formFrame.columnconfigure(1, weight=1)
+    checkFormFrame.pack(fill="both", padx=10, pady=10, expand=1)
+    checkFormFrame.columnconfigure(1, weight=1)
 
     okButton.pack(side=tk.RIGHT, padx=10, pady=10)
     cancelButton.pack(side=tk.RIGHT, padx=10)
@@ -237,6 +261,8 @@ if __name__ == "__main__":
     parser.add_argument('--start_dir', type=str)
     parser.add_argument('--asks', type=str)
     parser.add_argument('--default', type=str)
+    parser.add_argument('--checks', type=str, default="")
+    parser.add_argument('--checks-default', type=str, default="")
 
     args = parser.parse_args(argv[1:])
 
@@ -256,7 +282,7 @@ if __name__ == "__main__":
     if args.cmd[0] == 'SHOW_TEXT':
         show_msg(root, args.text)
     if args.cmd[0] == "SHOW_FORM":
-        show_form(root, args.text, args.asks, args.default)
+        show_form(root, args.text, args.asks, args.default, args.checks, args.checks_default)
     if args.cmd[0] == 'SHOW_WAIT':
         show_wait(root, args.text)
     if args.cmd[0] == 'YESNO':
