@@ -1630,7 +1630,17 @@ function sudo_cmd()
 	if [[ "$OS_NAME" == "OS X" ]]
 	then
 		echolog "execute cmd $@ from sudo"
-                osascript -e "do shell script \"env LOG_FILE='$LOG_FILE' ORIG_USER='$USER' PIN='$PIN' GUI_MANAGER='$GUI_MANAGER' '${BASH_SOURCE[0]}' '$@'\" with administrator privileges"
+		if [[ -f `which zenity` ]]
+		then
+			echo -e "#!/bin/bash\nzenity --password --title='sudo password prompt' --timeout=10" > zenity_passphrase
+			chmod +x zenity_passphrase
+			export SUDO_ASKPASS="$PWD/zenity_passphrase"
+			sudo -A env LOG_FILE="$LOG_FILE" ORIG_USER="$USER" PIN="$PIN" GUI_MANAGER="$GUI_MANAGER" "${BASH_SOURCE[0]}" "$@"
+			unset $SUDO_ASKPASS
+		else
+			cmd=$(printf "'%s' " "$@")
+                	osascript -e "do shell script \"env LOG_FILE='$LOG_FILE' ORIG_USER='$USER' PIN='$PIN' GUI_MANAGER='$GUI_MANAGER' '${BASH_SOURCE[0]}' $cmd\" with administrator privileges"
+		fi
 	else
 		xhost_out=`xhost`
 		if [[ -z "`echo -e \"$xhost_out\" | grep root`" && $UID -ne 0 ]]

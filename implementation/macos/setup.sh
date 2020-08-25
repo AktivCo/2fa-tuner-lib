@@ -9,7 +9,7 @@ function check_pkgs ()
 
 function _install_packages ()
 {
-	local pkgs="python3 openssl libp11 opensc pcsc-lite wget pstree"
+	local pkgs="python3 openssl libp11 opensc pcsc-lite wget pstree zenity"
 	check_update="$1"
 	export PATH=$PATH:/usr/local/sbin
 	
@@ -39,9 +39,6 @@ function _setup_local_authentication ()
 	user=$3
 	echolog "Debian. setup local authentication for user: $user by cert: $cert on token: $token"
 
-	home=`getent passwd $user | cut -d: -f6`
-        echolog "user home is $home"
-	
 	export_object "$token" "cert" "$cert_id" "cert.crt"
 	if [[ $? -ne 0 ]]
 	then
@@ -49,23 +46,19 @@ function _setup_local_authentication ()
 		return 1
 	fi
 
-	out=`openssl x509 -in cert.crt -out cert.pem -inform DER -outform PEM`
+	CN="`openssl x509 -noout -subject -in cert.crt -inform DER | tr "/" $"\n" | awk '/CN=/{print $0}' | cut -c 4-`"
+	echolog "Cert CN is $CN"
+	hash="`sc_auth identities | grep -w "$CN" | cut -f1`"
+	echolog "Cert hash is $hash"
+	out="`sc_auth pair -u "$user" -h "$hash"`"
 	if [[ $? -ne 0 ]]
-        then
-                echoerr "can't convert cert to PEM format"
-                return 1
-        fi
-        echolog "convert cert to DER format"
+	then
+		echoerr "Can't pair user and this cert. Output: $out"
+		return 1
+	fi 
 	
-	mkdir "$home/.eid" 2> /dev/null;
-	chmod 0755 "$home/.eid";
-	cat cert.pem >> "$home/.eid/authorized_certificates";
-	chmod 0644 "$home/.eid/authorized_certificates";
+	launchctl asuser _securityagent pluginkit -a "/Applications/Рутокен для macOS.app/Contents/PlugIns/RutokenCTK.appex"/	
 	
-	LIBRTPKCS11ECP=$LIBRTPKCS11ECP PAM_P11=$PAM_P11 envsubst < "$TWO_FA_LIB_DIR/common_files/p11" | sudo tee /usr/share/pam-configs/p11 > /dev/null;
-	chown $user:$user -R $home/.eid
-	
-	sudo pam-auth-update --force --enable Pam_p11;
 	return 0
 }
 

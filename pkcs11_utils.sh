@@ -139,7 +139,7 @@ function pkcs11_create_cert_req ()
 	selfsign="$5"
 	key_usage="$6"
 
-	echolog "pkcs11_create_cert_req for key_id: $key_id with subj: $subj by path: $req_path on token: $token. Cert is self_signed: $selfsign"
+	echolog "pkcs11_create_cert_req for key_id: $key_id with subj: $subj by path: $req_path on token: $token. Cert is self_signed: $selfsign. keyUsage: $key_usage"
 
 	key_id_ascii="`echo -e "$key_id" | sed 's/../%&/g'`"
 	echolog "key_id in ascii encoding is $key_id_ascii"
