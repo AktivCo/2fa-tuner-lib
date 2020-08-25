@@ -163,10 +163,15 @@ function pkcs11_create_cert_req ()
 
 	serial=`get_token_info "$token" "serial"`
 	echolog "Token serial is $serial"
-
+	
 	keyUsage="$key_usage" envsubst < "$TWO_FA_LIB_DIR/common_files/openssl_ext.cnf" | tee openssl_ext.cnf > /dev/null
 
-        openssl_req="engine dynamic -pre SO_PATH:"$engine_path" -pre ID:"$engine_id" -pre LIST_ADD:1  -pre LOAD -pre MODULE_PATH:$LIBRTPKCS11ECP \n req -engine $engine_id -new -utf8 -key \"pkcs11:serial=$serial;id=$key_id_ascii\" -keyform engine -passin \"pass:$PIN\" -subj $subj -config openssl_ext.cnf"
+        openssl_req="engine dynamic -pre SO_PATH:"$engine_path" -pre ID:"$engine_id" -pre LIST_ADD:1  -pre LOAD -pre MODULE_PATH:$LIBRTPKCS11ECP \n req -engine $engine_id -new -utf8 -key \"pkcs11:serial=$serial;id=$key_id_ascii\" -keyform engine -passin \"pass:$PIN\" -subj $subj"
+
+	if [[ "$key_usage" ]]
+	then
+		openssl_req="`echo -e "$openssl_req -config openssl_ext.cnf"`"
+	fi
 	
 	if [[ $selfsign -eq 1  ]]
         then
