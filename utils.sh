@@ -20,7 +20,7 @@ function init()
 { 
 	echolog "init"
 
-	if [[ -f "/etc/os-releas" ]]
+	if [[ -f "/etc/os-release" ]]
 	then 
 		source /etc/os-release
 		OS_NAME=$NAME
@@ -66,7 +66,7 @@ function init()
 		IPA_NSSDB_DIR=/etc/pki/nssdb
 		IMPL_DIR="$TWO_FA_LIB_DIR/implementation/redos/"
 		;;
-        "Astra Linux"*)
+        *"Astra Linux"*)
 		echolog "set env for astra impl"
 		LIBRTPKCS11ECP=/usr/lib/librtpkcs11ecp.so
 		PKCS11_ENGINE=/usr/lib/x86_64-linux-gnu/engines-1.1/pkcs11.so
