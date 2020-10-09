@@ -42,7 +42,7 @@ function init()
 	if [ -f "/etc/debian_version" ]; then
 		echolog "set env for debian impl"
 		LIBRTPKCS11ECP=/usr/lib/librtpkcs11ecp.so
-                PKCS11_ENGINE=/usr/lib/x86_64-linux-gnu/engines-1.1/pkcs11.so
+                ENGINE_DIR=`ls -d /usr/lib/x86_64-linux-gnu/engines* 2> /dev/null`
                 PAM_PKCS11_DIR=/etc/pam_pkcs11
                 IPA_NSSDB_DIR=/etc/pki/nssdb
                 IMPL_DIR="$TWO_FA_LIB_DIR/implementation/debian"
@@ -51,7 +51,7 @@ function init()
 	if [ -f "/etc/redhat-release" ]; then
 		echolog "set env for redhat impl"
         	LIBRTPKCS11ECP=/usr/lib64/librtpkcs11ecp.so
-                PKCS11_ENGINE=/usr/lib64/engines-1.1/pkcs11.so
+                ENGINE_DIR=`ls -d /usr/lib64/engines* 2> /dev/null`
                 PAM_PKCS11_DIR=/etc/pam_pkcs11
                 IPA_NSSDB_DIR=/etc/pki/nssdb
                 IMPL_DIR="$TWO_FA_LIB_DIR/implementation/redhat/"
@@ -61,7 +61,7 @@ function init()
         "RED OS") 
 		echolog "set env for red os impl"
 		LIBRTPKCS11ECP=/usr/lib64/librtpkcs11ecp.so
-		PKCS11_ENGINE=/usr/lib64/engines-1.1/pkcs11.so
+		ENGINE_DIR="/usr/lib64/engines-1.1"
 		PAM_PKCS11_DIR=/etc/pam_pkcs11
 		IPA_NSSDB_DIR=/etc/pki/nssdb
 		IMPL_DIR="$TWO_FA_LIB_DIR/implementation/redos/"
@@ -69,7 +69,7 @@ function init()
         *"Astra Linux"*)
 		echolog "set env for astra impl"
 		LIBRTPKCS11ECP=/usr/lib/librtpkcs11ecp.so
-		PKCS11_ENGINE=/usr/lib/x86_64-linux-gnu/engines-1.1/pkcs11.so
+		ENGINE_DIR="/usr/lib/x86_64-linux-gnu/engines-1.1"
 		PAM_PKCS11_DIR=/etc/pam_pkcs11
 		IPA_NSSDB_DIR=/etc/pki/nssdb
 		IMPL_DIR="$TWO_FA_LIB_DIR/implementation/astra"
@@ -77,7 +77,7 @@ function init()
 	*"ALT"*)
 		echolog "set env for alt impl"
 		LIBRTPKCS11ECP=/usr/lib64/librtpkcs11ecp.so
-		PKCS11_ENGINE=/usr/lib64/openssl/engines-1.1/pkcs11.so
+		ENGINE_DIR=`ls -d /usr/lib64/openssl/engines*`
 		PAM_PKCS11_DIR=/etc/security/pam_pkcs11
 		IPA_NSSDB_DIR=/etc/pki/nssdb
 		IMPL_DIR="$TWO_FA_LIB_DIR/implementation/alt"
@@ -85,7 +85,7 @@ function init()
 	*"ROSA"*)
 		echolog "set env for rosa impl"
 		LIBRTPKCS11ECP=/usr/lib64/librtpkcs11ecp.so
-                PKCS11_ENGINE=/usr/lib64/openssl-1.0.0/engines//pkcs11.so
+		ENGINE_DIR="/usr/lib64/openssl-1.0.0/engines"
                 PAM_PKCS11_DIR=/etc/pam_pkcs11
 		IPA_NSSDB_DIR=/etc/pki/nssdb
 		IMPL_DIR="$TWO_FA_LIB_DIR/implementation/rosa"
@@ -93,7 +93,7 @@ function init()
 	*"MagOS"*)
                 echolog "set env for magos impl"
                 LIBRTPKCS11ECP=/usr/lib64/librtpkcs11ecp.so
-                PKCS11_ENGINE=/usr/lib64/openssl-1.0.0/engines//pkcs11.so
+                ENGINE_DIR="/usr/lib64/openssl-1.0.0/engines"
                 PAM_PKCS11_DIR=/etc/pam_pkcs11
                 IPA_NSSDB_DIR=/etc/pki/nssdb
                 IMPL_DIR="$TWO_FA_LIB_DIR/implementation/rosa"
@@ -101,7 +101,9 @@ function init()
 	"OS X")
 		echolog "set env for os x impl"
                 LIBRTPKCS11ECP=/usr/local/lib/librtpkcs11ecp.dylib
-                PKCS11_ENGINE=/usr/local/Cellar/libp11/0.4.10/lib/engines-1.1/pkcs11.dylib
+                ENGINE_DIR="/usr/local/Cellar/libp11/0.4.10/lib/engines-1.1"
+		PKCS11_ENGINE=`echo "${ENGINE_DIR}/pkcs11.dylib"`
+		RTENGINE=`echo "${ENGINE_DIR}/librtengine.dylib"`
                 PAM_PKCS11_DIR=/etc/pam_pkcs11
                 IPA_NSSDB_DIR=/etc/pki/nssdb
                 IMPL_DIR="$TWO_FA_LIB_DIR/implementation/macos"
@@ -111,11 +113,17 @@ function init()
 	echolog "setup impl"
 	. "$IMPL_DIR/setup.sh"
 	
-	ENGINE_DIR=`$OPENSSL version -a | grep "ENGINESDIR" | tail -1 | cut -d ":" -f 2 | tr -d '"' | awk '{$1=$1};1'`
+	ENGINE_DIR_GUESS=`$OPENSSL version -a | grep "ENGINESDIR" | tail -1 | cut -d ":" -f 2 | tr -d '"' | awk '{$1=$1};1'`
+	if [[ -f "$ENGINE_DIR_GUESS" ]]
+	then
+		ENGINE_DIR="$ENGINE_DIR_GUESS"
+	fi
+
 	echolog "auto setup engine dir: $ENGINE_DIR"
 	if [[ "$ENGINE_DIR" ]] && ! [[ "$OS_NAME" == "OS X" ]]
 	then
 		PKCS11_ENGINE=`echo "${ENGINE_DIR}/pkcs11.so"`
+		RTENGINE=`echo "${ENGINE_DIR}/librtengine.so"`
 	fi
 	
 	local GUESS_LIBRTPKCS11ECP=`whereis  librtpkcs11ecp | awk '{print $2}'`
@@ -124,7 +132,6 @@ function init()
 		echolog "auto setup pkcs11 lib: $GUESS_LIBRTPKCS11ECP"
 		LIBRTPKCS11ECP="$GUESS_LIBRTPKCS11ECP"
 	fi
-	RTENGINE="`dirname "$PKCS11_ENGINE"`/librtengine.so"
 	
 	if [ -f "/etc/debian_version" ]
 	then
