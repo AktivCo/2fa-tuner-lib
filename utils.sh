@@ -112,6 +112,11 @@ function init()
 	esac
 	echolog "setup impl"
 	. "$IMPL_DIR/setup.sh"
+
+	if ! [[ -d "$ENGINE_DIR" ]]
+	then
+		ENGINE_DIR=`find_openssl_engines_dir`
+	fi
 	
 	ENGINE_DIR_GUESS=`$OPENSSL version -a | grep "ENGINESDIR" | tail -1 | cut -d ":" -f 2 | tr -d '"' | awk '{$1=$1};1'`
 	if [[ -f "$ENGINE_DIR_GUESS" ]]
@@ -185,16 +190,15 @@ function init_gui_manager ()
 {
 	echolog "init gui manager"
 
-	case "$GUI_MANAGER" in 
+	case "$GUI_MANAGER" in
 	"dialog")
 		echolog "setup impl: dialog gui"
 		. "$TWO_FA_LIB_DIR/dialog.sh"
 		;;
 	"python")
 		echolog "setup impl: pathon gui"
-                . "$TWO_FA_LIB_DIR/python_gui.sh"
-                ;;
-
+		. "$TWO_FA_LIB_DIR/python_gui.sh"
+		;;
 	*)
 		echolog "setup impl: default(python)"
 		. "$TWO_FA_LIB_DIR/python_gui.sh"
@@ -202,6 +206,25 @@ function init_gui_manager ()
 	esac
 
 	return 0
+}
+
+
+function find_openssl_engines_dir ()
+{
+
+	if [[ -d "`ls -d /usr/lib64/openssl*/engines*`" ]]
+	then
+		echo `ls -d /usr/lib64/openssl*/engines*`
+		return 0
+	fi
+
+	if [[ -d "`ls -d /usr/lib/x86_64-linux-gnu/engines*`" ]]
+	then
+		echo "`ls -d /usr/lib/x86_64-linux-gnu/engines*`"
+		return 0
+	fi
+
+	return 1
 }
 
 function cleanup()
@@ -222,6 +245,16 @@ echoerr()
 function install_packages ()
 {
 	check_updates=$1
+	
+	echolog "install common packages for specific OS"
+        _install_packages $check_updates
+
+	if [[ $? -ne 0 ]]
+	then
+		echolog "updates of packages avaliable"
+		return 1
+	fi
+
 	if [[ "$OS_NAME" == "OS X" ]]
 	then
 		rtadmin_path=/usr/local/bin/rtAdmin
@@ -238,7 +271,7 @@ function install_packages ()
 
 	if [[ "$check_updates" ]]
         then
-		echolog "check rtengine"
+		echolog "check rtengine by path $RTENGINE"
 		if ! [[ -f "$RTENGINE" ]]
 		then
 			echolog "rtengine not found"
@@ -318,11 +351,7 @@ function install_packages ()
                 cp librtpkcs11ecp.so $LIBRTPKCS11ECP;
 	fi
 
-	
-	echolog "install common packages for specific OS"
-	_install_packages $check_updates
-	
-	return $?
+	return 0
 }
 
 function setup_local_authentication ()

@@ -7,10 +7,10 @@ function check_pkgs ()
 	out=`yum list available $pkgs`
         if [[ -z "`echo -e "$out" | grep "x86_64"`" ]]
         then
-		cholog "new packages found"
+		echolog "No new packages found"
                 return 0
         fi
-	echolog "No new packages found"
+	echolog "New packages found"
         return 1
 }
 
