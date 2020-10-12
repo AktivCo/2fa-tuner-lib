@@ -349,6 +349,7 @@ function install_packages ()
                         return 1
                 fi
                 cp librtpkcs11ecp.so $LIBRTPKCS11ECP;
+		chmod 0444 $LIBRTPKCS11ECP 2> /dev/null ;
 	fi
 
 	return 0
