@@ -7,6 +7,9 @@ import argparse
 from sys import argv, stdin
 from autoscrollbar import *
 
+import os
+import platform
+
 def style(win):
     win.style = ttk.Style()
     win.style.theme_use("clam")
@@ -310,5 +313,9 @@ if __name__ == "__main__":
 
     center(root)
     root.minsize(root.winfo_width(), root.winfo_height())
+
+    if "Darwin" in platform.system():
+        os.system('''/usr/bin/osascript -e 'tell app "Finder" to set frontmost of process "Python" to true' ''')
+
     root.mainloop()
     exit(255)
