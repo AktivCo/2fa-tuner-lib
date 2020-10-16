@@ -272,7 +272,7 @@ function install_packages ()
 	if [[ "$check_updates" ]]
         then
 		echolog "check rtengine by path $RTENGINE"
-		if ! [[ -f "$RTENGINE" ]]
+		if ! [[ -f "$RTENGINE" && "$OS_NAME" != "OS X" ]]
 		then
 			echolog "rtengine not found"
 			return 1
