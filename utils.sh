@@ -101,13 +101,13 @@ function init()
 	"OS X")
 		echolog "set env for os x impl"
                 LIBRTPKCS11ECP=/usr/local/lib/librtpkcs11ecp.dylib
-                ENGINE_DIR="/usr/local/Cellar/libp11/0.4.10/lib/engines-1.1"
+                ENGINE_DIR=`ls -d /usr/local/Cellar/libp11/*/lib/engines-*`
 		PKCS11_ENGINE=`echo "${ENGINE_DIR}/pkcs11.dylib"`
 		RTENGINE=`echo "${ENGINE_DIR}/librtengine.dylib"`
                 PAM_PKCS11_DIR=/etc/pam_pkcs11
                 IPA_NSSDB_DIR=/etc/pki/nssdb
                 IMPL_DIR="$TWO_FA_LIB_DIR/implementation/macos"
-                OPENSSL=/usr/local/Cellar/openssl@1.1/1.1.1g/bin/openssl
+                OPENSSL=`ls /usr/local/Cellar/openssl@*/*/bin/openssl`
 		;;
 	esac
 	echolog "setup impl"

@@ -37,16 +37,18 @@ function _setup_local_authentication ()
 	token=$1
 	cert_id=$2
 	user=$3
-	echolog "Debian. setup local authentication for user: $user by cert: $cert on token: $token"
+	echolog "Mac OS. setup local authentication for user: $user by cert: $cert on token: $token"
 
-	export_object "$token" "cert" "$cert_id" "cert.crt"
+	sudo security authorizationdb smartcard enable
+
+        export_object "$token" "cert" "$cert_id" "cert.crt"
 	if [[ $? -ne 0 ]]
 	then
 		echoerr "Не удалось экспортировать сертификат с Рутокена"
 		return 1
 	fi
 
-	CN="`openssl x509 -noout -subject -in cert.crt -inform DER | tr "/" $"\n" | awk '/CN=/{print $0}' | cut -c 4-`"
+	CN="`openssl x509 -noout -subject -in cert.crt -inform DER | perl -pe 's/\//\n/g' | awk '/CN=/{print $0}' | cut -c 4-`"
 	echolog "Cert CN is $CN"
 	hash="`sc_auth identities | grep -w "$CN" | cut -f1`"
 	echolog "Cert hash is $hash"
