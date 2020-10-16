@@ -16,8 +16,10 @@ echolog()
 	echo -e [`date` $USER $$] "$@" >> "$LOG_FILE"
 }
 
+INIT_CALLED=0
+
 function init() 
-{ 
+{
 	echolog "init"
 
 	if [[ -f "/etc/os-release" ]]
@@ -180,8 +182,12 @@ function init()
 	echolog "script path: $SCRIPT"
 	SCRIPT_DIR=`dirname "$SCRIPT"`
 
-	cd $(mktemp -d);
-	TMP_DIR=`pwd`
+	if [[ "$INIT_CALLED" -eq 0 ]]
+	then
+		INIT_CALLED=1
+		cd $(mktemp -d);
+		TMP_DIR=`pwd`
+	fi
 	
 	return 0
 }
@@ -272,7 +278,7 @@ function install_packages ()
 	if [[ "$check_updates" ]]
         then
 		echolog "check rtengine by path $RTENGINE"
-		if ! [[ -f "$RTENGINE" && "$OS_NAME" != "OS X" ]]
+		if ! [[ -f "$RTENGINE" || "$OS_NAME" == "OS X" ]]
 		then
 			echolog "rtengine not found"
 			return 1
