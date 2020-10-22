@@ -178,12 +178,12 @@ function init()
 	echolog "init gui manager"
 	init_gui_manager
 
-	SCRIPT=`realpath "$0"`
-	echolog "script path: $SCRIPT"
-	SCRIPT_DIR=`dirname "$SCRIPT"`
-
 	if [[ "$INIT_CALLED" -eq 0 ]]
 	then
+		SCRIPT=`realpath "$0"`
+		echolog "script path: $SCRIPT"
+		SCRIPT_DIR=`dirname "$SCRIPT"`
+
 		INIT_CALLED=1
 		cd $(mktemp -d);
 		TMP_DIR=`pwd`
