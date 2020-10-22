@@ -1427,13 +1427,6 @@ function format_token ()
 	show_wait $! "Подождите" "Подождите, идет форматирование"
         res=$?
 
-	if [[ $res -eq 2 ]]
-	then
-		echoerr "More then one token inserted while formatting token."
-		show_text "Ошибка" "Подключено более одного Рутокена. Для форматирования оставьте только одно подключённое устройство"
-		return $res
-	fi
-        
 	if [[ $res -ne 0 ]]
         then
 		echoerr "Can't formatting token. Unexpected error"
