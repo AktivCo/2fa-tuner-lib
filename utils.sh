@@ -1534,7 +1534,7 @@ function unlock_whole_parts ()
         local user=$2
         
 	get_part_info "$token" "a" > get_part_info_res &
-        show_wait $! "Подождите" "Подождите, идет получение информации о разделах на Рутокене"
+        show_wait $! "Подождите" "Подождите, идет получение информации о разделах"
 	if [[ $? -ne 0 ]]
         then
                 echoerr "Error occured during getting whole flash partition info"
@@ -1550,12 +1550,12 @@ function unlock_whole_parts ()
                 return 2
         fi
 
-	local opts="`echo -e "rw\tro"`"
-	out=`get_password "Ввод PIN-кода" "Введите PIN-код Защищенного раздела:" "Права доступа разблокированного раздела:" "$opts"`
+	local opts="`echo -e "Чтения и записи\tТолько для чтения"`"
+	out=`get_password "Ввод PIN-кода" "Введите PIN-код для доступа к защищенным разделам:" "Предоставить доступ для:" "$opts"`
         if [[ $? -ne 0 ]]
         then
                 echolog "User closes getting local user pin dialog"
-                return 0
+                return 3
         fi
         
 	local_user_pin="`echo -e "$out" | cut -d$'\n' -f1`"
@@ -1571,7 +1571,7 @@ function unlock_whole_parts ()
 		fi
 	done
 	) &
-	show_wait $! "Подождите" "Подождите, идет разблокировка разделов"	
+	show_wait $! "Подождите" "Подождите, идет разблокировка защищенных разделов"	
 
         return $?
 }
