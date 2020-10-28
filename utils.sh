@@ -1550,22 +1550,30 @@ function unlock_whole_parts ()
                 return 2
         fi
 
-        local_user_pin=`get_password "Ввод PIN-кода" "Введите PIN-код Защищенного раздела:"`
+	local opts="`echo -e "rw\tro"`"
+	out=`get_password "Ввод PIN-кода" "Введите PIN-код Защищенного раздела:" "Права доступа разблокированного раздела:" "$opts"`
         if [[ $? -ne 0 ]]
         then
                 echolog "User closes getting local user pin dialog"
                 return 0
         fi
-
-        res=0
-        for id in `echo -e "$parts_info" | cut -f 1 | tr $"\n" $"\t"`;
+        
+	local_user_pin="`echo -e "$out" | cut -d$'\n' -f1`"
+	rights="`echo -e "$out" | cut -d$'\n' -f2`"
+        
+        (
+	for id in `echo -e "$parts_info" | cut -f 1 | tr $"\n" $"\t"`;
         do
-                unlock_part "$token" "$local_user_pin" "$id" "rw" "t"
-                res=$(( res + $? ))
-        done &
+                unlock_part "$token" "$local_user_pin" "$id" "$rights" "t"
+        	if [[ $? -ne 0 ]]
+		then
+			exit 1
+		fi
+	done
+	) &
 	show_wait $! "Подождите" "Подождите, идет разблокировка разделов"	
 
-        return $res
+        return $?
 }
 
 
