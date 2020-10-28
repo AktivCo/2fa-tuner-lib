@@ -1563,7 +1563,16 @@ function unlock_whole_parts ()
         
 	local_user_pin="`echo -e "$out" | cut -d$'\n' -f1`"
 	rights="`echo -e "$out" | cut -d$'\n' -f2`"
-        
+       
+       	case $rights in
+	"Чтения и записи")
+		rights="rw";
+		;;
+	"Только для чтения")
+		rights="ro"
+		;;
+	esac
+
         (
 	for id in `echo -e "$parts_info" | cut -f 1 | tr $"\n" $"\t"`;
         do
