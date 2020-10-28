@@ -432,7 +432,7 @@ function unlock_part ()
 
         echolog "Unlock partition with id=$id to permissions=$perm of type=$type"
 
-	out=`$RTADMIN -z "$LIBRTPKCS11ECP" -q -C  $id $perm $type -c "$PIN"`
+	out="`$RTADMIN -z "$LIBRTPKCS11ECP" -q -C $id $perm $type -c "$PIN" 2>&1`"
 
         if [[ $? -ne 0 ]]
         then
@@ -446,13 +446,13 @@ function unlock_part ()
 function get_part_info ()
 {
         local token=$1
-	local id=$1
+	local id=$2
 
         echolog "Get info of partition with id=$id"
 
-        out="`$RTADMIN -z "$LIBRTPKCS11ECP" -q -c "$PIN" -i "$id" | cut -d":" -f 2 | awk '{$1=$1};1' | tr " " $"\t"`"
-
-        if [[ $? -ne 0 ]]
+	out="`$RTADMIN -z "$LIBRTPKCS11ECP" -q -c "$PIN" -i "$id" | sed '$!N;s/\n/ /' | cut -d ":" -f 2- | tr ":" $"\t" | awk '{$1=$1};1' | tr " " $"\t"`"
+        
+	if [[ $? -ne 0 ]]
         then
                 echoerr "Error occured during getting partition info:\n$out"
                 return 1
@@ -466,15 +466,21 @@ function get_part_info ()
 function unlock_whole_parts ()
 {
 	local token=$1
-	parts_info=get_part_info "$token" "a"
-	if [[ $? -eq 0 ]]
+	parts_info="`get_part_info "$token" "a"`"
+	if [[ $? -ne 0 ]]
 	then
 		echoerr "Error occured during getting whole flash partition info"
 		return 1
 	fi
 
-	for id in "`echo -e "$out" | cut -f 1`"
+	parts_info="`echo -e "$parts_info" | awk '{ if ($3 == "u") { print } }'`"
+
+	res=0
+	for id in `echo -e "$parts_info" | cut -f 1 | tr $"\n" $"\t"`;
 	do
-		unlock_part "$token" "$id" "rw" "t" 
+		unlock_part "$token" "$id" "rw" "t"	
+		res=$(( res + $? ))
 	done
+
+	return $res
 }
