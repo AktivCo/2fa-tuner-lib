@@ -426,13 +426,16 @@ function remove_object ()
 function unlock_part ()
 {
         local token=$1
-        local id=$2
-	local perm=$3
-	local type=$4
+	local local_user_pin=$2
+        local id=$3
+	local perm=$4
+	local type=$5
 
         echolog "Unlock partition with id=$id to permissions=$perm of type=$type"
 
-	out="`$RTADMIN -z "$LIBRTPKCS11ECP" -q -C $id $perm $type -c "$PIN" 2>&1`"
+	owner=`get_part_info -i $id | cut -f 3`
+
+	out="`$RTADMIN -z "$LIBRTPKCS11ECP" -q -C $id $perm $type -O $owner "$local_user_pin" 2>&1`"
 
         if [[ $? -ne 0 ]]
         then
@@ -450,7 +453,7 @@ function get_part_info ()
 
         echolog "Get info of partition with id=$id"
 
-	out="`$RTADMIN -z "$LIBRTPKCS11ECP" -q -c "$PIN" -i "$id" | sed '$!N;s/\n/ /' | cut -d ":" -f 2- | tr ":" $"\t" | awk '{$1=$1};1' | tr " " $"\t"`"
+	out="`$RTADMIN -z "$LIBRTPKCS11ECP" -q -i "$id" | sed '$!N;s/\n/ /' | cut -d ":" -f 2- | tr ":" $"\t" | awk '{$1=$1};1' | tr " " $"\t"`"
         
 	if [[ $? -ne 0 ]]
         then
@@ -461,26 +464,4 @@ function get_part_info ()
 	echo -e "$out"
 
         return 0
-}
-
-function unlock_whole_parts ()
-{
-	local token=$1
-	parts_info="`get_part_info "$token" "a"`"
-	if [[ $? -ne 0 ]]
-	then
-		echoerr "Error occured during getting whole flash partition info"
-		return 1
-	fi
-
-	parts_info="`echo -e "$parts_info" | awk '{ if ($3 == "u") { print } }'`"
-
-	res=0
-	for id in `echo -e "$parts_info" | cut -f 1 | tr $"\n" $"\t"`;
-	do
-		unlock_part "$token" "$id" "rw" "t"	
-		res=$(( res + $? ))
-	done
-
-	return $res
 }

@@ -1528,6 +1528,47 @@ function unlock_pin ()
 	return $res
 }
 
+function unlock_whole_parts ()
+{
+        local token=$1
+        local user=$2
+        
+	get_part_info "$token" "a" > get_part_info_res &
+        show_wait $! "Подождите" "Подождите, идет получение информации о разделах на Рутокене"
+	if [[ $? -ne 0 ]]
+        then
+                echoerr "Error occured during getting whole flash partition info"
+                return 1
+        fi
+
+	parts_info=`cat get_part_info_res`
+
+        parts_info="`echo -e "$parts_info" | awk -v user=$user '{ if ($3 == user && $4 == "hi") { print } }'`"
+        if [[ -z "$parts_info" ]]
+        then
+                echolog "Taken has no one hiden volume"
+                return 2
+        fi
+
+        local_user_pin=`get_password "Ввод PIN-кода" "Введите PIN-код Защищенного раздела:"`
+        if [[ $? -ne 0 ]]
+        then
+                echolog "User closes getting local user pin dialog"
+                return 0
+        fi
+
+        res=0
+        for id in `echo -e "$parts_info" | cut -f 1 | tr $"\n" $"\t"`;
+        do
+                unlock_part "$token" "$local_user_pin" "$id" "rw" "t"
+                res=$(( res + $? ))
+        done &
+	show_wait $! "Подождите" "Подождите, идет разблокировка разделов"	
+
+        return $res
+}
+
+
 function show_wait ()
 {
 	pid="$1"
