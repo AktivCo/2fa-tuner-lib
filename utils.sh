@@ -1561,8 +1561,8 @@ function unlock_whole_parts ()
                 return 3
         fi
         
-	local_user_pin="`echo -e "$out" | cut -d$'\n' -f1`"
-	rights="`echo -e "$out" | cut -d$'\n' -f2`"
+	local_user_pin="`echo -e "$out" | sed -n 1p`"
+	rights="`echo -e "$out" | sed -n 2p`"
        
        	case $rights in
 	"Чтения и записи")
