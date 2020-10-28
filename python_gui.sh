@@ -23,8 +23,10 @@ function get_string ()
         title="$1"
         msg="$2"
 	default="$3"
+	options_title="$4"
+	options="$5"
         
-	string=`python3 "$TWO_FA_LIB_DIR/python_utils/gui_dialog.py" GET_STRING --title "$title" --text "$msg" --default "$default"`;
+	string=`python3 "$TWO_FA_LIB_DIR/python_utils/gui_dialog.py" GET_STRING --title "$title" --text "$msg" --default "$default" --options-title "$options_title" --options "$options"`;
         ret=$?
 	echo -e "$string"
 	return $ret
@@ -48,7 +50,10 @@ function get_password ()
 {
         title="$1"
         msg="$2"
-        pin=`python3 "$TWO_FA_LIB_DIR/python_utils/gui_dialog.py" GET_PASS --title "$title" --text "$msg"`;
+        options_title="$3"
+        options="$4"
+
+        pin=`python3 "$TWO_FA_LIB_DIR/python_utils/gui_dialog.py" GET_PASS --title "$title" --text "$msg" --options-title "$options_title" --options "$options"`;
         ret=$?
         echo -e "$pin"
         return $ret

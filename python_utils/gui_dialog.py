@@ -115,7 +115,7 @@ def show_form(root, text, asks, default, checks, defaultChecks):
     cancelButton.pack(side=tk.RIGHT, padx=10)
     buttonFrame.pack(fill='x', side=tk.BOTTOM)
 
-def get_str(root, text, default="", hide=False, options=""):
+def get_str(root, text, default="", hide=False, options_title="", options=""):
     text = ttk.Label(root, text=text)
     if hide:
         guess = ttk.Entry(root, show="*") 
@@ -133,14 +133,19 @@ def get_str(root, text, default="", hide=False, options=""):
         print(guess.get())
 
         if options:
-            print(options.split("\n")[opt.get()])
+            print(options.split("\t")[opt.get()])
         exit(0)
 
     okButton = ttk.Button(buttonFrame, text="Ok", command= okButtonClicked)
     root.bind('<Return>', okButtonClicked)
 
     if options:
-        radio_frame=ttk.Frame(root)
+        radio_block_frame = ttk.Frame(root)
+        ttk.Label(radio_block_frame, text=options_title).pack(pady=3, padx=10, fill='both')
+        
+        radio_frame = ttk.Frame(radio_block_frame)
+        radio_frame.pack(fill='both', expand=1)
+        
         opt.set(0)
         for num, option in enumerate(options.split("\t")):
             b = ttk.Radiobutton(radio_frame, text=option,
@@ -151,7 +156,7 @@ def get_str(root, text, default="", hide=False, options=""):
     guess.pack(fill='both', expand=1, padx=10, ipady=3)
     guess.focus_set()
     if options:
-        radio_frame.pack(fill='both', expand=1, padx=10, ipady=3)
+        radio_block_frame.pack(fill='both', expand=1, padx=10, ipady=3)
     okButton.pack(side=tk.RIGHT, padx=10)
     cancelButton.pack(side=tk.RIGHT, padx=10)
     buttonFrame.pack(fill='x', padx=10, pady=3, side=tk.BOTTOM)
@@ -283,6 +288,7 @@ if __name__ == "__main__":
     parser.add_argument('--checks', type=str, default="")
     parser.add_argument('--checks-default', type=str, default="")
     parser.add_argument('--options', type=str, default="")
+    parser.add_argument('--options-title', type=str, default="")
 
     args = parser.parse_args(argv[1:])
 
@@ -296,7 +302,7 @@ if __name__ == "__main__":
     if args.cmd[0] == 'LIST':
         show_list(root, args.column.split("\t"))
     if args.cmd[0] == 'GET_PASS':
-        get_str(root, args.text, hide=True, options=args.options)
+        get_str(root, args.text, hide=True, options_title=args.options_title, options=args.options)
     if args.cmd[0] == 'GET_STRING':
         get_str(root, args.text, args.default)
     if args.cmd[0] == 'SHOW_TEXT':
