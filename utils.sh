@@ -251,9 +251,10 @@ echoerr()
 function install_packages ()
 {
 	check_updates=$1
+	light=$2
 	
 	echolog "install common packages for specific OS"
-        _install_packages $check_updates
+        _install_packages "$check_updates" "$light"
 
 	if [[ $? -ne 0 ]]
 	then
@@ -275,33 +276,35 @@ function install_packages ()
 		echolog "install common packages"
 	fi
 
-	if [[ "$check_updates" ]]
-        then
-		echolog "check rtengine by path $RTENGINE"
-		if ! [[ -f "$RTENGINE" || "$OS_NAME" == "OS X" ]]
-		then
-			echolog "rtengine not found"
-			return 1
-        
-		fi
-	else
-		echolog "download rtengine\ndownload SDK"
-		wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/SDK/rutoken-sdk-latest.zip";
-		if [[ $? -ne 0 ]]
+	if [[ -z "$light" ]]
+	then
+		if [[ "$check_updates" ]]
         	then
-                	echoerr "Не могу загрузить rutoken SDK"
-                	return 1
-        	fi
-
-		echolog "unzip SDK"
-		unzip -q rutoken-sdk-latest.zip
-		
-		echolog "cp rtengine to $RTENGINE"
-		if [[ "$OS_NAME" == "OS X" ]]
-		then
-			cp sdk/openssl/rtengine/bin/macos-x86_64/rtengine.framework/rtengine "$RTENGINE"
+			echolog "check rtengine by path $RTENGINE"
+			if ! [[ -f "$RTENGINE" || "$OS_NAME" == "OS X" ]]
+			then
+				echolog "rtengine not found"
+				return 1
+			fi
 		else
-			cp sdk/openssl/rtengine/bin/linux_glibc-x86_64/lib/librtengine.so "$RTENGINE"
+			echolog "download rtengine\ndownload SDK"
+			wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/SDK/rutoken-sdk-latest.zip";
+			if [[ $? -ne 0 ]]
+        		then
+                		echoerr "Не могу загрузить rutoken SDK"
+                		return 1
+        		fi
+
+			echolog "unzip SDK"
+			unzip -q rutoken-sdk-latest.zip
+		
+			echolog "cp rtengine to $RTENGINE"
+			if [[ "$OS_NAME" == "OS X" ]]
+			then
+				cp sdk/openssl/rtengine/bin/macos-x86_64/rtengine.framework/rtengine "$RTENGINE"
+			else
+				cp sdk/openssl/rtengine/bin/linux_glibc-x86_64/lib/librtengine.so "$RTENGINE"
+			fi
 		fi
 	fi
 
