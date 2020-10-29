@@ -151,7 +151,7 @@ function pkcs11_create_cert_req ()
 	echolog "privatekey type is $type"
 	
 	echolog "init pkcs11 engine for work"
-	if [[ "$type" == "RSA"* ]]
+	if [[ "$type" == "RSA"* || "$type" == "ECDSA"* ]]
 	then
 		engine_path="$PKCS11_ENGINE"
 		engine_id=pkcs11
