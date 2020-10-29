@@ -1089,7 +1089,7 @@ function create_key ()
 		echolog "Key id is not specified. Generated is $key_id"
 	fi
 	
-	local types=`echo -e "RSA-2048\nГОСТ-2012 256\nГОСТ-2012 512"`
+	local types=`echo -e "RSA-1024\nRSA-2048\nГОСТ-2012 256\nГОСТ-2012 512"`
 	type=`show_list "Укажите алгоритм ключевой пары" "Алгоритм" "$types"`
 	
 	if [[ $? -ne 0 ]]
@@ -1100,6 +1100,7 @@ function create_key ()
 	echolog "Choosen key alg is $type"
 
 	case $type in
+	"RSA-1024") type=rsa:1024;;
 	"RSA-2048") type=rsa:2048;;
 	"ГОСТ-2012 256") type=GOSTR3410-2012-256:B;;
 	"ГОСТ-2012 512") type=GOSTR3410-2012-512:A;;
