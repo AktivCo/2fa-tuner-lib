@@ -308,9 +308,14 @@ function pkcs11_format_token ()
 	local user_pin="$2"
 	local admin_pin="$3"
 	echolog "pkcs11_format_token $token"	
+	list=`get_token_list`		
+	if  [[ "`echo -e "$list" | wc -l`" -ne 1 ]] 
+	then
+		echoerr "Вставленно более одного токена"
+		return 2
+	fi
 
-	out="`pkcs11-tool --module "$LIBRTPKCS11ECP" --slot-description "$token" --init-token --label rutoken --so-pin "$admin_pin" -l --init-pin --new-pin "$user_pin"`"
-
+	out=`$RTADMIN -z "$LIBRTPKCS11ECP" -f -u "$user_pin" -a "$admin_pin" -q`
 	if [[ $? -ne 0 ]]
 	then
 		echoerr "Error occured during format token:\n$out"
