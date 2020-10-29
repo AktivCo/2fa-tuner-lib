@@ -44,7 +44,6 @@ function init()
 	if [ -f "/etc/debian_version" ]; then
 		echolog "set env for debian impl"
 		LIBRTPKCS11ECP=/usr/lib/librtpkcs11ecp.so
-                ENGINE_DIR=`ls -d /usr/lib/x86_64-linux-gnu/engines* 2> /dev/null`
                 PAM_PKCS11_DIR=/etc/pam_pkcs11
                 IPA_NSSDB_DIR=/etc/pki/nssdb
                 IMPL_DIR="$TWO_FA_LIB_DIR/implementation/debian"
@@ -53,7 +52,6 @@ function init()
 	if [ -f "/etc/redhat-release" ]; then
 		echolog "set env for redhat impl"
         	LIBRTPKCS11ECP=/usr/lib64/librtpkcs11ecp.so
-                ENGINE_DIR=`ls -d /usr/lib64/engines* 2> /dev/null`
                 PAM_PKCS11_DIR=/etc/pam_pkcs11
                 IPA_NSSDB_DIR=/etc/pki/nssdb
                 IMPL_DIR="$TWO_FA_LIB_DIR/implementation/redhat/"
@@ -63,7 +61,6 @@ function init()
         "RED OS") 
 		echolog "set env for red os impl"
 		LIBRTPKCS11ECP=/usr/lib64/librtpkcs11ecp.so
-		ENGINE_DIR="/usr/lib64/engines-1.1"
 		PAM_PKCS11_DIR=/etc/pam_pkcs11
 		IPA_NSSDB_DIR=/etc/pki/nssdb
 		IMPL_DIR="$TWO_FA_LIB_DIR/implementation/redos/"
@@ -71,7 +68,6 @@ function init()
         *"Astra Linux"*)
 		echolog "set env for astra impl"
 		LIBRTPKCS11ECP=/usr/lib/librtpkcs11ecp.so
-		ENGINE_DIR="/usr/lib/x86_64-linux-gnu/engines-1.1"
 		PAM_PKCS11_DIR=/etc/pam_pkcs11
 		IPA_NSSDB_DIR=/etc/pki/nssdb
 		IMPL_DIR="$TWO_FA_LIB_DIR/implementation/astra"
@@ -79,7 +75,6 @@ function init()
 	*"ALT"*)
 		echolog "set env for alt impl"
 		LIBRTPKCS11ECP=/usr/lib64/librtpkcs11ecp.so
-		ENGINE_DIR=`ls -d /usr/lib64/openssl/engines*`
 		PAM_PKCS11_DIR=/etc/security/pam_pkcs11
 		IPA_NSSDB_DIR=/etc/pki/nssdb
 		IMPL_DIR="$TWO_FA_LIB_DIR/implementation/alt"
@@ -87,7 +82,6 @@ function init()
 	*"ROSA"*)
 		echolog "set env for rosa impl"
 		LIBRTPKCS11ECP=/usr/lib64/librtpkcs11ecp.so
-		ENGINE_DIR="/usr/lib64/openssl-1.0.0/engines"
                 PAM_PKCS11_DIR=/etc/pam_pkcs11
 		IPA_NSSDB_DIR=/etc/pki/nssdb
 		IMPL_DIR="$TWO_FA_LIB_DIR/implementation/rosa"
@@ -95,7 +89,6 @@ function init()
 	*"MagOS"*)
                 echolog "set env for magos impl"
                 LIBRTPKCS11ECP=/usr/lib64/librtpkcs11ecp.so
-                ENGINE_DIR="/usr/lib64/openssl-1.0.0/engines"
                 PAM_PKCS11_DIR=/etc/pam_pkcs11
                 IPA_NSSDB_DIR=/etc/pki/nssdb
                 IMPL_DIR="$TWO_FA_LIB_DIR/implementation/rosa"
@@ -103,9 +96,6 @@ function init()
 	"OS X")
 		echolog "set env for os x impl"
                 LIBRTPKCS11ECP=/usr/local/lib/librtpkcs11ecp.dylib
-                ENGINE_DIR=`ls -d /usr/local/Cellar/libp11/*/lib/engines-*`
-		PKCS11_ENGINE=`echo "${ENGINE_DIR}/pkcs11.dylib"`
-		RTENGINE=`echo "${ENGINE_DIR}/librtengine.dylib"`
                 PAM_PKCS11_DIR=/etc/pam_pkcs11
                 IPA_NSSDB_DIR=/etc/pki/nssdb
                 IMPL_DIR="$TWO_FA_LIB_DIR/implementation/macos"
@@ -115,23 +105,8 @@ function init()
 	echolog "setup impl"
 	. "$IMPL_DIR/setup.sh"
 
-	if ! [[ -d "$ENGINE_DIR" ]]
-	then
-		ENGINE_DIR=`find_openssl_engines_dir`
-	fi
 	
-	ENGINE_DIR_GUESS=`$OPENSSL version -a | grep "ENGINESDIR" | tail -1 | cut -d ":" -f 2 | tr -d '"' | awk '{$1=$1};1'`
-	if [[ -f "$ENGINE_DIR_GUESS" ]]
-	then
-		ENGINE_DIR="$ENGINE_DIR_GUESS"
-	fi
-
-	echolog "auto setup engine dir: $ENGINE_DIR"
-	if [[ "$ENGINE_DIR" ]] && ! [[ "$OS_NAME" == "OS X" ]]
-	then
-		PKCS11_ENGINE=`echo "${ENGINE_DIR}/pkcs11.so"`
-		RTENGINE=`echo "${ENGINE_DIR}/librtengine.so"`
-	fi
+	update_openssl_engines_path
 	
 	local GUESS_LIBRTPKCS11ECP=`whereis  librtpkcs11ecp | awk '{print $2}'`
 	if ! [[ -z "$GUESS_LIBRTPKCS11ECP" ]]
@@ -215,22 +190,72 @@ function init_gui_manager ()
 }
 
 
-function find_openssl_engines_dir ()
+function update_openssl_engines_path ()
 {
-
-	if [[ -d "`ls -d /usr/lib64/openssl*/engines*`" ]]
-	then
-		echo `ls -d /usr/lib64/openssl*/engines*`
-		return 0
+	echolog "Start searching engine dir"
+	if [ -f "/etc/debian_version" ]; then
+                ENGINE_DIR=`ls -d /usr/lib/x86_64-linux-gnu/engines* 2> /dev/null`
 	fi
 
-	if [[ -d "`ls -d /usr/lib/x86_64-linux-gnu/engines*`" ]]
-	then
-		echo "`ls -d /usr/lib/x86_64-linux-gnu/engines*`"
-		return 0
+	if [ -f "/etc/redhat-release" ]; then
+                ENGINE_DIR=`ls -d /usr/lib64/engines* 2> /dev/null`
 	fi
 
-	return 1
+	case $OS_NAME in
+        "RED OS") 
+		ENGINE_DIR="/usr/lib64/engines-1.1"
+		;;
+        *"Astra Linux"*)
+		ENGINE_DIR="/usr/lib/x86_64-linux-gnu/engines-1.1"
+		;;
+	*"ALT"*)
+		ENGINE_DIR=`ls -d /usr/lib64/openssl/engines*`
+		;;
+	*"ROSA"*)
+		ENGINE_DIR="/usr/lib64/openssl-1.0.0/engines"
+		;;
+	*"MagOS"*)
+                ENGINE_DIR="/usr/lib64/openssl-1.0.0/engines"
+                ;;
+	"OS X")
+                ENGINE_DIR=`ls -d /usr/local/Cellar/libp11/*/lib/engines-*`
+		PKCS11_ENGINE=`echo "${ENGINE_DIR}/pkcs11.dylib"`
+		RTENGINE=`echo "${ENGINE_DIR}/librtengine.dylib"`
+		;;
+	esac
+
+	if ! [[ -d "$ENGINE_DIR" ]]
+	then
+		if [[ -d "`ls -d /usr/lib64//engines*`" ]]
+        	then
+                	ENGINE_DIR=`ls -d /usr/lib64/engines*`
+        	fi
+
+	        if [[ -d "`ls -d /usr/lib64/openssl*/engines*`" ]]
+        	then
+                	ENGINE_DIR=`ls -d /usr/lib64/openssl*/engines*`
+        	fi
+
+        	if [[ -d "`ls -d /usr/lib/x86_64-linux-gnu/engines*`" ]]
+        	then
+                	ENGINE_DIR=`ls -d /usr/lib/x86_64-linux-gnu/engines*`
+        	fi
+	fi
+	
+	ENGINE_DIR_GUESS=`$OPENSSL version -a | grep "ENGINESDIR" | tail -1 | cut -d ":" -f 2 | tr -d '"' | awk '{$1=$1};1'`
+	if [[ -f "$ENGINE_DIR_GUESS" ]]
+	then
+		ENGINE_DIR="$ENGINE_DIR_GUESS"
+	fi
+
+        if [[ "$ENGINE_DIR" ]] && ! [[ "$OS_NAME" == "OS X" ]]
+        then
+                PKCS11_ENGINE=`echo "${ENGINE_DIR}/pkcs11.so"`
+                RTENGINE=`echo "${ENGINE_DIR}/librtengine.so"`
+        fi
+
+	
+	echolog "found engine dir: $ENGINE_DIR"
 }
 
 function cleanup()
@@ -255,6 +280,8 @@ function install_packages ()
 	
 	echolog "install common packages for specific OS"
         _install_packages "$check_updates" "$light"
+
+	update_openssl_engines_path # Update engines path after installing new packages
 
 	if [[ $? -ne 0 ]]
 	then
