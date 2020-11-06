@@ -1456,7 +1456,7 @@ function show_menu ()
 	choice_id=`echo -e "$menu_list" | sed -n "/$choice/=" `
 	
 	cmd=`echo -e "$cmd_list" | sed "${choice_id}q;d"`
-	echolog `choosen cmd: $cmd`
+	echolog "choosen cmd: $cmd"
 	$cmd "$token"
 	
 	return 0
