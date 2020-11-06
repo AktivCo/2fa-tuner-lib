@@ -5,7 +5,10 @@ TWO_FA_LIB_DIR=`cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd`
 
 NUMBER_REGEXP='^[0123456789abcdefABCDEF]+$'
 CUR_DIR=`pwd`
-LOG_FILE="$CUR_DIR/log.txt"
+if [[ -z "$LOG_FILE" ]]
+then
+	LOG_FILE="$CUR_DIR/log.txt"
+fi
 RTADMIN=rtAdmin
 
 echolog()
@@ -764,6 +767,7 @@ function get_token_password ()
 		check_pin "$token" "$pin" &
 		show_wait $! "Подождите" "Идет проверка PIN-кода"
 		res=$?
+		echoerr "$res"
 
 		if [[ $res -eq 2 ]]
 		then
@@ -1505,7 +1509,7 @@ function sudo_cmd()
 	fi
 	
 	echolog "execute cmd $@ from sudo"
-	pkexec env DISPLAY="$DISPLAY" XAUTHORITY="$XAUTHORITY" PIN="$PIN" GUI_MANAGER="$GUI_MANAGER" XDG_CURRENT_DESKTOP="$XDG_CURRENT_DESKTOP" "${BASH_SOURCE[0]}" "$@"
+	pkexec env LOG_FILE="$LOG_FILE" DISPLAY="$DISPLAY" XAUTHORITY="$XAUTHORITY" PIN="$PIN" GUI_MANAGER="$GUI_MANAGER" XDG_CURRENT_DESKTOP="$XDG_CURRENT_DESKTOP" "${BASH_SOURCE[0]}" "$@"
 	
 	if [[ -z "`echo -e \"$xhost_out\" | grep root`" && $UID -ne 0 ]]
 	then

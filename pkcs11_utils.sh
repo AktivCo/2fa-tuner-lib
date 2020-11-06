@@ -4,13 +4,13 @@ function check_pin()
 {
 	token=$1
 	pin=$2
-	echolog "check user pin for $token"
+	echolog "check user pin for token:$token"
 	
 	out=`pkcs11-tool --module "$LIBRTPKCS11ECP" -l -p "$pin" --show-info --slot-description "$token" 2>&1`
 	res=$?
 
 	out=`echo -e "$out" | grep "CKR_PIN_LOCKED"`
-	if ! [[ -z "$out" ]]
+	if [[ "$out" ]]
 	then
 		echoerr "pin locked"
 		return 2
@@ -18,7 +18,7 @@ function check_pin()
 
 	if [[ $res -ne 0 ]]
 	then
-		echorr "incorrect pin\n$out"
+		echoerr "incorrect pin\n$out"
 	else
 		echolog "correct pin"
 	fi
@@ -30,7 +30,7 @@ function check_admin_pin()
 {
         token=$1
         pin=$2
-	echolog "check user pin for $token"
+	echolog "check admin pin for token:$token"
 
         out=`pkcs11-tool --module "$LIBRTPKCS11ECP" -l --so-pin "$pin" --login-type so --show-info --slot-description "$token" 2>&1`
         res=$?
@@ -43,7 +43,7 @@ function check_admin_pin()
 
 	if [[ $res -ne 0 ]]
         then
-                echorr "incorrect pin\n$out"
+                echoerr "incorrect pin\n$out"
         else
                 echolog "correct pin"
         fi
