@@ -314,11 +314,11 @@ function install_packages ()
 				return 1
 			fi
 		else
-			echolog "download rtengine\ndownload SDK"
-			wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/SDK/rutoken-sdk-latest.zip";
+			echolog "download rtengine"
+			wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/SDK/rutoken-sdk-latest.zip?action=get&path=sdk%2Fopenssl%2Frtengine%2Fbin%2Flinux_glibc-x86_64%2Flib%2F" -O rutoken-sdk-latest.zip
 			if [[ $? -ne 0 ]]
         		then
-                		echoerr "Не могу загрузить rutoken SDK"
+                		echoerr "Не могу загрузить rtengine из SDK"
                 		return 1
         		fi
 
