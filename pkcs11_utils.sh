@@ -175,9 +175,10 @@ function pkcs11_create_cert_req ()
 	
 	if [[ $selfsign -eq 1  ]]
         then
+		rm -f "$req_path"
                 out=`echo -e "$openssl_req -x509 -outform DER -out \"$req_path\"" | $OPENSSL 2>&1`;
-
-                if [[ $? -ne 0 ]]
+                
+		if [[ ! -f "$req_path" ]]
 		then
 			echoerr "Can't create self signed cert:\n$out"
 			return 1
@@ -190,10 +191,11 @@ function pkcs11_create_cert_req ()
                         return 1
                 fi
 	else
+		rm "$req_path"
                 out=`echo -e "$openssl_req -out \"$req_path\" -outform PEM" | $OPENSSL 2>&1`;
-                if [[ "`echo -e "$out" | grep "error"`" ]]
+                if [[ ! -f "$req_path" ]]
 		then
-			echoerr "can't create cert req:\n$out"
+			echoerr "Can't create cert req:\n$out"
 			return 1
 		fi
         fi
