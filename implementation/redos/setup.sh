@@ -52,7 +52,7 @@ function _setup_local_authentication ()
 	sudo mkdir "$DB" 2> /dev/null;
 	if ! [ "`ls -A "$DB"`" ]
 	then
-		sudo chmod 0644 "$DB"
+		sudo chmod 0755 "$DB"
 		echolog "init DB"
 		sudo certutil -d "$DB" -N --empty-password
 	fi
