@@ -85,6 +85,8 @@ function _setup_local_authentication ()
 
 	openssl dgst -sha1 "cert${cert_id}.crt" | cut -d" " -f2- | awk '{ print toupper($0) }' | sed 's/../&:/g;s/:$//' | sed "s/.*/\0 -> $user/" | sudo tee "$PAM_PKCS11_DIR/digest_mapping" -a  > /dev/null 
 	echolog "update digest map file $PAM_PKCS11_DIR/digest_mapping"
+	
+	sudo chmod 0644 "$DB"/*
 
 	pam_pkcs11_insert="/pam_unix/ && x==0 {print \"auth sufficient pam_pkcs11.so pkcs11_module=$LIBRTPKCS11ECP\"; x=1} 1"
 	
