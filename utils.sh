@@ -282,16 +282,16 @@ function install_packages ()
 {
 	check_updates=$1
 	light=$2
+	local rv=0
 	
 	echolog "install common packages for specific OS"
         _install_packages "$check_updates" "$light"
 
 	update_openssl_engines_path # Update engines path after installing new packages
-
 	if [[ $? -ne 0 ]]
 	then
 		echolog "updates of packages avaliable"
-		return 1
+		rv=1
 	fi
 
 	if [[ "$OS_NAME" == "OS X" ]]
@@ -316,7 +316,7 @@ function install_packages ()
 			if ! [[ -f "$RTENGINE" || "$OS_NAME" == "OS X" ]]
 			then
 				echolog "rtengine not found"
-				return 1
+				rv=1
 			fi
 		else
 			echolog "download rtengine"
@@ -324,7 +324,7 @@ function install_packages ()
 			if [[ $? -ne 0 ]]
         		then
                 		echoerr "Не могу загрузить rtengine из SDK"
-                		return 1
+                		rv=1
         		fi
 
 			echolog "unzip SDK"
@@ -347,7 +347,7 @@ function install_packages ()
                 if ! [[ -f $rtadmin_path ]]
 		then
 			echolog "rtadmin not found"
-			return 1
+			rv=1
         
 		fi
 	else
@@ -361,7 +361,7 @@ function install_packages ()
 		if [[ $? -ne 0 ]]
         	then
                 	echoerr "Не могу загрузить утилиту rtAdmin"
-                	return 1
+                	rv=1
         	fi
 		
 		mv rtAdmin $rtadmin_path
@@ -373,7 +373,7 @@ function install_packages ()
 		echolog "check updates for pkcs11 lib"
                 if ! [[ -f $LIBRTPKCS11ECP ]]
                 then
-                        return 1
+                        rv=1
                 fi
 	else
 		echolog "download pkcs11 lib"
@@ -387,13 +387,13 @@ function install_packages ()
                	if [[ $? -ne 0 ]]
                	then
                        	echoerr "Не могу загрузить пакет librtpkcs11ecp.so"
-                        return 1
+                        rv=1
                 fi
                 cp librtpkcs11ecp.so $LIBRTPKCS11ECP;
 		chmod 0444 $LIBRTPKCS11ECP 2> /dev/null ;
 	fi
 
-	return 0
+	return $rv
 }
 
 function setup_local_authentication ()
