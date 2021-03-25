@@ -29,8 +29,15 @@ function _install_packages ()
         fi
 
 	echolog "Rosa. install common packages"
-	INSTALLCMD="urpmi --force"
-	[ -f /usr/bin/urpmi ] || INSTALLCMD="dnf install -y"
+	# rosa2019.1+ uses dnf as the main package manager,
+	# but urpmi command may be available from dnf-URPM converter;
+	# dnf is never available on platforms where urpmi is the only package manager.
+	if command -v dnf >/dev/null 2>&1
+	then
+		INSTALLCMD="dnf install -y"
+	else
+		INSTALLCMD="urpmi --force"
+	fi
 	sudo $INSTALLCMD $pkgs
 	if [[ $? -ne 0 ]]
 	then
