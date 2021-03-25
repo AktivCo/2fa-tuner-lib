@@ -29,8 +29,9 @@ function _install_packages ()
         fi
 
 	echolog "Rosa. install common packages"
-
-	sudo urpmi --force $pkgs
+	INSTALLCMD="urpmi --force"
+	[ -f /usr/bin/urpmi ] || INSTALLCMD="dnf install -y"
+	sudo $INSTALLCMD $pkgs
 	if [[ $? -ne 0 ]]
 	then
 		echoerr "Не могу установить один из пакетов: $pkgs из репозитория"

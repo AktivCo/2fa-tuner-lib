@@ -148,6 +148,11 @@ function init()
 		SCREENSAVER_NAME="kde"
 		LOCK_SCREEN_CMD="qdbus org.freedesktop.ScreenSaver /ScreenSaver Lock"
 		;;
+	"XFCE*" | "xfce*")
+		echolog "set env for xfce"
+		SCREENSAVER_NAME="xfce4-screensaver"
+		LOCK_SCREEN_CMD="xfce4-command --lock"
+		;;
 	esac
 
 	echolog "init gui manager"
@@ -315,7 +320,7 @@ function install_packages ()
 			fi
 		else
 			echolog "download rtengine"
-			wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/SDK/rutoken-sdk-latest.zip?action=get&path=sdk%2Fopenssl%2Frtengine%2Fbin%2Flinux_glibc-x86_64%2Flib%2F" -O rutoken-sdk-latest.zip
+			wget  --no-check-certificate "https://download.rutoken.ru/Rutoken/SDK/rutoken-sdk-latest.zip?action=get&path=sdk%2Fopenssl%2Frtengine%2Fbin%2Flinux_glibc-x86_64%2Flib%2F" -O rutoken-sdk-latest.zip
 			if [[ $? -ne 0 ]]
         		then
                 		echoerr "Не могу загрузить rtengine из SDK"
@@ -349,9 +354,9 @@ function install_packages ()
 		echolog "download rtadmin"
 		if [[ "$OS_NAME" == "OS X" ]]
 		then
-			wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/Utilites/rtAdmin/1.3/macOS//rtAdmin";
+			wget  --no-check-certificate "https://download.rutoken.ru/Rutoken/Utilites/rtAdmin/1.3/macOS//rtAdmin";
 		else
-			wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/Utilites/rtAdmin/1.3/linux/x86_64/rtAdmin";
+			wget  --no-check-certificate "https://download.rutoken.ru/Rutoken/Utilites/rtAdmin/1.3/linux/x86_64/rtAdmin";
 		fi
 		if [[ $? -ne 0 ]]
         	then
@@ -374,10 +379,10 @@ function install_packages ()
 		echolog "download pkcs11 lib"
 		if [[ "$OS_NAME" == "OS X" ]]
 		then
-        		wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/PKCS11Lib/Current/Mac/x64/librtpkcs11ecp.dylib";
+        		wget  --no-check-certificate "https://download.rutoken.ru/Rutoken/PKCS11Lib/Current/Mac/x64/librtpkcs11ecp.dylib";
                 	mv librtpkcs11ecp.dylib librtpkcs11ecp.so
 		else
-        		wget -q --no-check-certificate "https://download.rutoken.ru/Rutoken/PKCS11Lib/Current/Linux/x64/librtpkcs11ecp.so";
+        		wget  --no-check-certificate "https://download.rutoken.ru/Rutoken/PKCS11Lib/Current/Linux/x64/librtpkcs11ecp.so";
                 fi
                	if [[ $? -ne 0 ]]
                	then
