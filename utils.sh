@@ -1370,17 +1370,23 @@ function show_token_object ()
         "Сертификат")
 		type=cert
                 ;;
+	"Секретный ключ")
+		type=secrkey
+		;;
         esac
 	echolog "Choosen object type: $type and id: $id"
 
 	if  [[ $type == "cert" ]]
 	then
 		actions=`echo -e "Удалить\nПросмотр\nСохранить на диске\nНастроить локальную аутентификацию по данному сертификату"`
-		act=`show_list "Выберите действие" "Действия" "$actions"`
+	elif [[ $type == "secrkey" ]]
+	then
+		actions=`echo -e "Удалить"`
+
 	else
 		actions=`echo -e "Удалить\nИмпорт сертификата ключа\nСоздать заявку на сертификат"`
-		act=`show_list "Выберите действие" "Действия" "$actions"`
 	fi
+	act=`show_list "Выберите действие" "Действия" "$actions"`
 	echolog "Choosen action under object is $act"
 
 	case "$act" in

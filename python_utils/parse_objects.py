@@ -13,6 +13,7 @@ if __name__ == "__main__":
     public_keys=[]
     private_keys=[]
     certificates=[]
+    secret_keys=[]
 
     current_list= None
     for line in argv[1].split("\n"):
@@ -25,6 +26,8 @@ if __name__ == "__main__":
                 current_list=private_keys
             elif line.startswith("Certificate"):
                 current_list = certificates
+            elif line.startswith("Secret"):
+                current_list = secret_keys
             current_list.append({})
             
             atr = "type"
@@ -42,7 +45,7 @@ if __name__ == "__main__":
         else:
             current_list[-1][atr] = current_list[-1][atr] + line.strip()
     all_attributes=set()
-    for object_list in [public_keys, private_keys, certificates]:
+    for object_list in [public_keys, private_keys, certificates, secret_keys]:
         attributes = reduce(lambda attrs, obj: attrs.union(obj.keys()), object_list, set())
         all_attributes.update(attributes)
 
@@ -81,7 +84,7 @@ if __name__ == "__main__":
     renamed_all_attributes=[ attr_name_map[x] for x in all_attributes ]
 
     print("Тип\t" + "\t".join(renamed_all_attributes))
-    for object_list, _type in [(public_keys, "Открытый ключ"), (private_keys, "Закрытый ключ"), (certificates, "Сертификат")]:
+    for object_list, _type in [(public_keys, "Открытый ключ"), (private_keys, "Закрытый ключ"), (certificates, "Сертификат"), (secret_keys, "Секретный ключ")]:
         for obj in object_list:
             yad_string = _type
             for attr in all_attributes:
