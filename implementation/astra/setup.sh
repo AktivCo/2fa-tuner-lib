@@ -40,7 +40,7 @@ function install_pkgs ()
 
 function _install_packages ()
 {
-	local pkgs="libengine-pkcs11-openssl* krb5-pkinit opensc libccid pcscd libp11-2 libpam-p11 libpam-pkcs11 pcsc-tools libnss3-tools dnsutils python3-tk"
+	local pkgs="libengine-pkcs11-openssl* krb5-pkinit opensc libccid pcscd libp11-* libpam-p11 libpam-pkcs11 pcsc-tools libnss3-tools dnsutils python3-tk"
         check_update="$1"
 
         if [[ "$check_updates" ]]
