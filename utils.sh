@@ -26,13 +26,11 @@ function init()
 	then 
 		source /etc/os-release
 		OS_NAME=$NAME
-		OS_ARCH="linux_glibc-x86_64"
 	else
 		OS="`uname -s`"
 		if [ "${OS}" = "Darwin" ]
 		then
 			OS_NAME="OS X"
-			OS_ARCH="macos-x86_64"
 		fi
 		
 		realpath() {
@@ -40,6 +38,9 @@ function init()
 		}
 	fi
 	echolog "OS: $OS_NAME"
+	
+	OS_ARCH=`uname -m`
+	echolog "ARCH: $OS_ARCH"
 
 	if [ -f "/etc/debian_version" ]; then
 		echolog "set env for debian impl"
@@ -199,7 +200,7 @@ function update_openssl_engines_path ()
 {
 	echolog "Start searching engine dir"
 	if [ -f "/etc/debian_version" ]; then
-                ENGINE_DIR=`ls -d /usr/lib/x86_64-linux-gnu/engines* 2> /dev/null`
+                ENGINE_DIR=`ls -d /usr/lib/$OS_ARCH-linux-gnu/engines* 2> /dev/null`
 	fi
 
 	if [ -f "/etc/redhat-release" ]; then
@@ -211,7 +212,7 @@ function update_openssl_engines_path ()
 		ENGINE_DIR="/usr/lib64/engines-1.1"
 		;;
         *"Astra Linux"*)
-		ENGINE_DIR="/usr/lib/x86_64-linux-gnu/engines-1.1"
+		ENGINE_DIR="/usr/lib/$OS_ARCH-linux-gnu/engines-1.1"
 		;;
 	*"ALT"*)
 		ENGINE_DIR=`ls -d /usr/lib64/openssl/engines*`
@@ -241,9 +242,9 @@ function update_openssl_engines_path ()
                 	ENGINE_DIR=`ls -d /usr/lib64/openssl*/engines*`
         	fi
 
-        	if [[ -d "`ls -d /usr/lib/x86_64-linux-gnu/engines*`" ]]
+        	if [[ -d "`ls -d /usr/lib/$OS_ARCH-linux-gnu/engines*`" ]]
         	then
-                	ENGINE_DIR=`ls -d /usr/lib/x86_64-linux-gnu/engines*`
+                	ENGINE_DIR=`ls -d /usr/lib/$OS_ARCH-linux-gnu/engines*`
         	fi
 	fi
 	
@@ -320,7 +321,7 @@ function install_packages ()
 			fi
 		else
 			echolog "download rtengine"
-			wget  --no-check-certificate "https://download.rutoken.ru/Rutoken/SDK/rutoken-sdk-latest.zip?action=get&path=sdk%2Fopenssl%2Frtengine%2Fbin%2Flinux_glibc-x86_64%2Flib%2F" -O rutoken-sdk-latest.zip
+			wget  --no-check-certificate "https://download.rutoken.ru/Rutoken/SDK/rutoken-sdk-latest.zip?action=get&path=sdk%2Fopenssl%2Frtengine%2Fbin%2Flinux_glibc-$OS_ARCH%2Flib%2F" -O rutoken-sdk-latest.zip
 			if [[ $? -ne 0 ]]
         		then
                 		echoerr "Не могу загрузить rtengine из SDK"
@@ -333,9 +334,9 @@ function install_packages ()
 			echolog "cp rtengine to $RTENGINE"
 			if [[ "$OS_NAME" == "OS X" ]]
 			then
-				cp sdk/openssl/rtengine/bin/macos-x86_64/rtengine.framework/rtengine "$RTENGINE"
+				cp sdk/openssl/rtengine/bin/macos-$OS_ARCH/rtengine.framework/rtengine "$RTENGINE"
 			else
-				cp sdk/openssl/rtengine/bin/linux_glibc-x86_64/lib/librtengine.so "$RTENGINE"
+				cp sdk/openssl/rtengine/bin/linux_glibc-$OS_ARCH/lib/librtengine.so "$RTENGINE"
 			fi
 		fi
 	fi
@@ -356,7 +357,7 @@ function install_packages ()
 		then
 			wget  --no-check-certificate "https://download.rutoken.ru/Rutoken/Utilites/rtAdmin/1.3/macOS//rtAdmin";
 		else
-			wget  --no-check-certificate "https://download.rutoken.ru/Rutoken/Utilites/rtAdmin/1.3/linux/x86_64/rtAdmin";
+			wget  --no-check-certificate "https://download.rutoken.ru/Rutoken/Utilites/rtAdmin/1.3/linux/$OS_ARCH/rtAdmin";
 		fi
 		if [[ $? -ne 0 ]]
         	then
@@ -377,12 +378,27 @@ function install_packages ()
                 fi
 	else
 		echolog "download pkcs11 lib"
+		
+		local arch=$OS_ARCH
+
+		case "$OS_ARCH" in
+			x86_64)
+				arch="x64"
+				;;
+			x86)
+				arch="x32"
+				;;
+			aarch64)
+				arch="ARM/aarch64"
+				;;
+		esac
+
 		if [[ "$OS_NAME" == "OS X" ]]
 		then
-        		wget  --no-check-certificate "https://download.rutoken.ru/Rutoken/PKCS11Lib/Current/Mac/x64/librtpkcs11ecp.dylib";
+        		wget  --no-check-certificate "https://download.rutoken.ru/Rutoken/PKCS11Lib/Current/Mac/$arch/librtpkcs11ecp.dylib";
                 	mv librtpkcs11ecp.dylib librtpkcs11ecp.so
 		else
-        		wget  --no-check-certificate "https://download.rutoken.ru/Rutoken/PKCS11Lib/Current/Linux/x64/librtpkcs11ecp.so";
+        		wget  --no-check-certificate "https://download.rutoken.ru/Rutoken/PKCS11Lib/Current/Linux/$arch/librtpkcs11ecp.so";
                 fi
                	if [[ $? -ne 0 ]]
                	then

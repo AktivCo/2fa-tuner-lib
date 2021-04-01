@@ -5,7 +5,7 @@ function check_pkgs ()
         pkgs=$@
         echolog "Red OS. check_pkgs pkgs: $pkgs"
 	out=`yum list available $pkgs`
-        if [[ -z "`echo -e "$out" | grep "x86_64"`" ]]
+        if [[ -z "`echo -e "$out" | grep "$OS_ARCH"`" ]]
         then
 		echolog "No new packages found"
                 return 0
