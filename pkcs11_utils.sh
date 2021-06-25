@@ -74,7 +74,7 @@ function get_key_list ()
 {
 	token="$1"
         echolog "get_key_list from token: $token"
-	out=`pkcs11-tool --module $LIBRTPKCS11ECP -O --type pubkey --slot-description "$token" 2>&1`
+	out=`pkcs11-tool --module "$LIBRTPKCS11ECP" -O --type pubkey --slot-description "$token" 2>&1`
 	if [[ $? -ne 0 ]]
         then
                 echoerr "Error occured while getting key list:\n$out"
@@ -90,7 +90,7 @@ function get_cert_list ()
 {
         token="$1"
         echolog "get_cert_list from token: $token"
-        out=`pkcs11-tool --module $LIBRTPKCS11ECP -O --type cert  --slot-description "$token" 2>&1`
+        out=`pkcs11-tool --module "$LIBRTPKCS11ECP" -O --type cert  --slot-description "$token" 2>&1`
         if [[ $? -ne 0 ]]
         then
                 echoerr "Error occured while getting cert list:\n$out"
@@ -166,7 +166,7 @@ function pkcs11_create_cert_req ()
 	
 	keyUsage="$key_usage" envsubst < "$TWO_FA_LIB_DIR/common_files/openssl_ext.cnf" | tee openssl_ext.cnf > /dev/null
 
-        openssl_req="engine dynamic -pre SO_PATH:"$engine_path" -pre ID:"$engine_id" -pre LIST_ADD:1  -pre LOAD -pre MODULE_PATH:$LIBRTPKCS11ECP \n req -engine $engine_id -new -utf8 -key \"pkcs11:serial=$serial;id=$key_id_ascii\" -keyform engine -passin \"pass:$PIN\" -subj $subj"
+        openssl_req="engine dynamic -pre SO_PATH:"$engine_path" -pre ID:"$engine_id" -pre LIST_ADD:1  -pre LOAD -pre \"MODULE_PATH:"$LIBRTPKCS11ECP"\" \n req -engine $engine_id -new -utf8 -key \"pkcs11:serial=$serial;id=$key_id_ascii\" -keyform engine -passin \"pass:$PIN\" -subj $subj"
 
 	if [[ "$key_usage" ]]
 	then
@@ -184,7 +184,7 @@ function pkcs11_create_cert_req ()
 			return 1
 		fi
 
-		out=`pkcs11-tool --module $LIBRTPKCS11ECP -l -p "$PIN" -y cert -w "$req_path" --id $key_id 2>&1`;
+		out=`pkcs11-tool --module "$LIBRTPKCS11ECP" -l -p "$PIN" -y cert -w "$req_path" --id $key_id 2>&1`;
 		if [[ $? -ne 0 ]]
                 then
                         echoerr "Can't move cert on token:\n$out"
@@ -206,7 +206,7 @@ function pkcs11_create_cert_req ()
 function get_token_list () 
 {
 	echolog "get_token_lsit"
-	out=`pkcs11-tool --module $LIBRTPKCS11ECP -T 2>&1`
+	out=`pkcs11-tool --module "$LIBRTPKCS11ECP" -T 2>&1`
 	if [[ $? -ne 0 ]]
 	then
 		echoerr "Can't get token list:\n$out"
@@ -226,7 +226,7 @@ function get_token_info ()
 	atr=$2
 	echolog "get_token_info token: $token atr: $atr"
 
-	out=`pkcs11-tool --module $LIBRTPKCS11ECP -T 2>&1`
+	out=`pkcs11-tool --module "$LIBRTPKCS11ECP" -T 2>&1`
 	if [[ $? -ne 0 ]]
         then
                 echoerr "Can't get token info:\n$out"
@@ -262,7 +262,7 @@ function get_token_objects ()
 		type_arg="--type $type"
 	fi
 
-	objs=`pkcs11-tool --module $LIBRTPKCS11ECP -O -l -p "$PIN" $type_arg --slot-description "$token"`
+	objs=`pkcs11-tool --module "$LIBRTPKCS11ECP" -O -l -p "$PIN" $type_arg --slot-description "$token"`
 	if [[ $? -ne 0 ]]
 	then
 		echoerr "Error while getting objects from token:\n$out"
