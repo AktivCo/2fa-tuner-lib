@@ -9,7 +9,7 @@ function check_pkgs ()
 
 function _install_packages ()
 {
-	local pkgs="python3 openssl libp11 opensc pcsc-lite wget pstree zenity"
+	local pkgs="python3 python-tk openssl libp11 opensc pcsc-lite wget pstree zenity"
 	check_update="$1"
 	export PATH=$PATH:/usr/local/sbin
 	

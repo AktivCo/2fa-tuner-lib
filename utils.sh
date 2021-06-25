@@ -96,8 +96,8 @@ function init()
                 ;;
 	"OS X")
 		echolog "set env for os x impl"
-                LIBRTPKCS11ECP=/usr/local/lib/librtpkcs11ecp.dylib
-                PAM_PKCS11_DIR=/etc/pam_pkcs11
+                LIBRTPKCS11ECP="/Library/Aktiv Co/Rutoken ECP/rtpkcs11ecp.framework/rtpkcs11ecp"
+		PAM_PKCS11_DIR=/etc/pam_pkcs11
                 IPA_NSSDB_DIR=/etc/pki/nssdb
                 IMPL_DIR="$TWO_FA_LIB_DIR/implementation/macos"
                 OPENSSL=`ls /usr/local/Cellar/openssl@*/*/bin/openssl`
@@ -372,7 +372,7 @@ function install_packages ()
         if [[ "$check_updates" ]]
         then
 		echolog "check updates for pkcs11 lib"
-                if ! [[ -f $LIBRTPKCS11ECP ]]
+                if ! [[ -f "$LIBRTPKCS11ECP" ]]
                 then
                         rv=1
                 fi
@@ -393,19 +393,25 @@ function install_packages ()
 				;;
 		esac
 
+		local res=
 		if [[ "$OS_NAME" == "OS X" ]]
 		then
-        		wget  --no-check-certificate "https://download.rutoken.ru/Rutoken/PKCS11Lib/Current/Mac/$arch/librtpkcs11ecp.dylib";
-                	mv librtpkcs11ecp.dylib librtpkcs11ecp.so
+			wget -q --no-check-certificate "http://download.rutoken.ru/Rutoken/PKCS11Lib/Current/Mac/x64+arm64/rtpkcs11ecp.framework.zip";
+			res=$?
+			unzip rtpkcs11ecp.framework.zip
+			res=$?
+			mkdir -p "$(dirname "$(dirname "$LIBRTPKCS11ECP")")"
+			mv rtpkcs11ecp.framework "$(dirname "$(dirname "$LIBRTPKCS11ECP")")"
 		else
         		wget  --no-check-certificate "https://download.rutoken.ru/Rutoken/PKCS11Lib/Current/Linux/$arch/librtpkcs11ecp.so";
+                	res=$?
+			cp librtpkcs11ecp.so "$LIBRTPKCS11ECP";
                 fi
-               	if [[ $? -ne 0 ]]
+               	if [[ $res -ne 0 ]]
                	then
                        	echoerr "Не могу загрузить пакет librtpkcs11ecp.so"
                         rv=1
                 fi
-                cp librtpkcs11ecp.so $LIBRTPKCS11ECP;
 		chmod 0444 $LIBRTPKCS11ECP 2> /dev/null ;
 	fi
 
