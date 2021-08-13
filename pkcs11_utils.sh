@@ -184,7 +184,7 @@ function pkcs11_create_cert_req ()
 			return 1
 		fi
 
-		out=`pkcs11-tool --module "$LIBRTPKCS11ECP" -l -p "$PIN" -y cert -w "$req_path" --id $key_id 2>&1`;
+		out=`pkcs11-tool --module "$LIBRTPKCS11ECP" -l -p "$PIN" -y cert -w "$req_path" --id $key_id --slot-description "$token" 2>&1`;
 		if [[ $? -ne 0 ]]
                 then
                         echoerr "Can't move cert on token:\n$out"
