@@ -129,6 +129,11 @@ function init()
 	fi
 
 	case $XDG_CURRENT_DESKTOP in
+	*"GNOME")
+                echolog "set env for gnome"
+                SCREENSAVER_NAME="xdg-screensaver"
+                LOCK_SCREEN_CMD="xdg-screensaver lock"
+                ;;
 	"MATE")
 		echolog "set env for mate"
 		SCREENSAVER_NAME="mate-screensaver"
