@@ -432,8 +432,11 @@ function setup_local_authentication ()
 	if [[ "$UID" -ne "0" ]]
         then
 		echolog "setup local auth run not under root"
-                sudo_cmd setup_local_authentication "$@"
-        fi
+		sudo_cmd setup_local_authentication "$@"
+        	res=$?
+		pkcs11_eventmgr &> /dev/null
+		return "$res"
+	fi
 	
 	if [[ "$OS_NAME" == "OS X" ]]
 	then
@@ -1426,7 +1429,7 @@ function show_token_object ()
 			create_cert_req "$token" "$id"
 		;;
 	"Настроить локальную аутентификацию по данному сертификату")
-			sudo_cmd setup_local_authentication "$token" "$id"
+			setup_local_authentication "$token" "$id"
 		;;
 	"Удалить")
 		yesno "Удаление объекта" "Уверены, что хотите удалить объект?"

@@ -78,7 +78,7 @@ function _setup_local_authentication ()
 function _setup_autolock ()
 {
 	echolog "Debain. setup_autolock"
-	sudo cp "$IMPL_DIR/smartcard-screensaver.desktop" /etc/xdg/autostart/smartcard-screensaver.desktop
+	cp "$IMPL_DIR/smartcard-screensaver.desktop" /etc/xdg/autostart/smartcard-screensaver.desktop
 	sudo systemctl daemon-reload
 }
 
