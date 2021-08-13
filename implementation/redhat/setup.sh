@@ -48,7 +48,7 @@ function _setup_local_authentication ()
 	token=$1
 	cert_id=$2
 	user=$3
-	echolog "Debain. setup local authentication for user: $user by cert: $cert on token: $token"
+	echolog "Red Hat. setup local authentication for user: $user by cert: $cert on token: $token"
 
 	DB=$PAM_PKCS11_DIR/nssdb
 	echolog "DB path is $DB"
@@ -111,20 +111,20 @@ function _setup_local_authentication ()
 
 function _setup_autolock ()
 {
-	echolog "Debain. setup_autolock"
+	echolog "Red Hat. setup_autolock"
 	sudo cp "$IMPL_DIR/smartcard-screensaver.desktop" /etc/xdg/autostart/smartcard-screensaver.desktop
 	return 0
 }
 
 function _setup_freeipa_domain_authentication ()
 {
-	echolog  "Debain. There is no additional action required to setup freeipa domain auth"
+	echolog  "Red Hat. There is no additional action required to setup freeipa domain auth"
 	return 0
 }
 
 function _setup_ad_domain_authentication ()
 {
-	echolog  "Debian. There is no additional action required to setup AD domain auth"
+	echolog  "Red Hat. There is no additional action required to setup AD domain auth"
         return 0
 }
 
