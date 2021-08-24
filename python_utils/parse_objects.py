@@ -81,7 +81,7 @@ if __name__ == "__main__":
             "value": "Значение",
             "params oid": "OID параметров"}
 
-    renamed_all_attributes=[ attr_name_map[x] for x in all_attributes ]
+    renamed_all_attributes=[ attr_name_map[x] if x in attr_name_map else x for x in all_attributes ]
 
     print("Тип\t" + "\t".join(renamed_all_attributes))
     for object_list, _type in [(public_keys, "Открытый ключ"), (private_keys, "Закрытый ключ"), (certificates, "Сертификат"), (secret_keys, "Секретный ключ")]:
