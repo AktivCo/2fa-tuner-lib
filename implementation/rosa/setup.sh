@@ -18,7 +18,7 @@ function check_pkgs ()
 
 function _install_packages ()
 {
-        local pkgs="ccid opensc p11-kit rpmdevtools dialog lib64p11-devel engine_pkcs11 pam_pkcs11 pam_pkcs11-tools tkinter3 pcsc_tools gettext"
+        local pkgs="ccid opensc p11-kit dialog engine_pkcs11 pam_pkcs11 pam_pkcs11-tools tkinter3 pcsc-tools gettext"
         check_update="$1"
 
         if [[ "$check_updates" ]]
