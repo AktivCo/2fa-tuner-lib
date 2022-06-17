@@ -132,73 +132,52 @@ function pkcs11_gen_key ()
 
 function pkcs11_create_cert_req ()
 {
-	token="$1"
-	key_id="$2"
-	subj="$3"
-	req_path="$4"
-	selfsign="$5"
-	key_usage="$6"
+	local token="$1"
+	local key_id="$2"
+	local subj="$3"
+	local req_path="$4"
+	local selfsign="$5"
+	local key_usage="$6"
 
 	echolog "pkcs11_create_cert_req for key_id: $key_id with subj: $subj by path: $req_path on token: $token. Cert is self_signed: $selfsign. keyUsage: $key_usage"
 
-	key_id_ascii="`echo -e "$key_id" | sed 's/../%&/g'`"
+	local key_id_ascii="`echo -e "$key_id" | sed 's/../%&/g'`"
 	echolog "key_id in ascii encoding is $key_id_ascii"
 	
-	obj=`get_token_objects "$token" "privkey" "id" "$key_id"
+	local obj=`get_token_objects "$token" "privkey" "id" "$key_id" 
 	echolog "privkey for cert: $obj"`
 
-	type=`get_object_attribute_value "$obj" "type"`
+	local type=`get_object_attribute_value "$obj" "type"`
 	echolog "privatekey type is $type"
 	
 	echolog "init pkcs11 engine for work"
 	if [[ "$type" == "RSA"* || "$type" == "ECDSA"* ]]
 	then
-		engine_path="$PKCS11_ENGINE"
-		engine_id=pkcs11
+		local engine_path="$PKCS11_ENGINE"
+		local engine_id=pkcs11
 	else
-		engine_path="$RTENGINE"
-		engine_id=rtengine
+		local engine_path="$RTENGINE"
+		local engine_id=rtengine
 	fi
 	echolog "engine_path is $engine_path and engine_id is $engine_id"
 
-	serial=`get_token_info "$token" "serial"`
+	local serial=`get_token_info "$token" "serial"`
 	echolog "Token serial is $serial"
 	
 	keyUsage="$key_usage" envsubst < "$TWO_FA_LIB_DIR/common_files/openssl_ext.cnf" | tee openssl_ext.cnf > /dev/null
-
-        openssl_req="engine dynamic -pre SO_PATH:"$engine_path" -pre ID:"$engine_id" -pre LIST_ADD:1  -pre LOAD -pre \"MODULE_PATH:"$LIBRTPKCS11ECP"\" \n req -engine $engine_id -new -utf8 -key \"pkcs11:serial=$serial;id=$key_id_ascii\" -keyform engine -passin \"pass:$PIN\" -subj $subj"
-
-	if [[ "$key_usage" ]]
-	then
-		openssl_req="`echo -e "$openssl_req -config openssl_ext.cnf"`"
-	fi
-	
-	if [[ $selfsign -eq 1  ]]
-        then
-		rm -f "$req_path"
-                out=`echo -e "$openssl_req -x509 -outform DER -out \"$req_path\"" | $OPENSSL 2>&1`;
-                
-		if [[ ! -f "$req_path" ]]
-		then
-			echoerr "Can't create self signed cert:\n$out"
-			return 1
-		fi
-
+		
+	rm -f "$req_path"
+		
+	local extra_args="-outform PEM"
+	[[ $selfsign -eq 1  ]] && extra_args="-outform DER -x509"
+	local out=`OPENSSL_CONF="$OPENSSL_CONF" "$OPENSSL" req -engine $engine_id -new -utf8 -key "pkcs11:serial=$serial;id=$key_id_ascii" -keyform engine -passin "pass:$PIN" -subj "$subj" ${key_usage+-config openssl_ext.cnf} -out "$req_path" ${extra_args}`;
+		  	
+	[[ ! -f "$req_path" ]] && { echoerr "Can't create self signed cert or req:\n$out"; return 1; }
+		
+	if [[ $selfsign -eq 1  ]]; then
 		out=`pkcs11-tool --module "$LIBRTPKCS11ECP" -l -p "$PIN" -y cert -w "$req_path" --id $key_id --slot-description "$token" 2>&1`;
-		if [[ $? -ne 0 ]]
-                then
-                        echoerr "Can't move cert on token:\n$out"
-                        return 1
-                fi
-	else
-		rm "$req_path"
-                out=`echo -e "$openssl_req -out \"$req_path\" -outform PEM" | $OPENSSL 2>&1`;
-                if [[ ! -f "$req_path" ]]
-		then
-			echoerr "Can't create cert req:\n$out"
-			return 1
-		fi
-        fi
+		[[ $? -ne 0 ]] && { echoerr "Can't move cert on token:\n$out"; return 1; }
+	fi
 
 	return 0
 }

@@ -265,7 +265,16 @@ function update_openssl_engines_path ()
                 RTENGINE=`echo "${ENGINE_DIR}/librtengine.so"`
         fi
 
-	
+	OPENSSL_TEMPLATE_CONF="$TWO_FA_LIB_DIR/common_files/openssl_template.cnf"
+	OPENSSL_CONF="$TWO_FA_LIB_DIR/common_files/openssl.cnf"
+        if ! [[ -f "$OPENSSL_CONF" ]]
+        then
+            export PKCS11_ENGINE="$PKCS11_ENGINE"
+            export LIBRTPKCS11ECP="$LIBRTPKCS11ECP"
+            export RTENGINE="$RTENGINE"
+            envsubst < "$OPENSSL_TEMPLATE_CONF" > "$OPENSSL_CONF"
+        fi		
+
 	echolog "found engine dir: $ENGINE_DIR"
 }
 
@@ -292,7 +301,8 @@ function install_packages ()
 	
 	echolog "install common packages for specific OS"
         _install_packages "$check_updates" "$light"
-
+        
+        local ossl_ver=`openssl version | cut -d" " -f2`
 	update_openssl_engines_path # Update engines path after installing new packages
 	if [[ $? -ne 0 ]]
 	then
@@ -326,7 +336,7 @@ function install_packages ()
 			fi
 		else
 			echolog "download rtengine"
-			wget  --no-check-certificate "https://download.rutoken.ru/Rutoken/SDK/rutoken-sdk-latest.zip?action=get&path=sdk%2Fopenssl%2Frtengine%2Fbin%2Flinux_glibc-$OS_ARCH%2Flib%2F" -O rutoken-sdk-latest.zip
+			wget  --no-check-certificate "https://download.rutoken.ru/Rutoken/SDK/rutoken-sdk-latest.zip?action=get&path=sdk%2Fopenssl%2Fbin%2F${ossl_ver:0:3}%2Frtengine-${ossl_ver:0:3}%2Flinux_glibc-$OS_ARCH%2Flib%2F" -O rutoken-sdk-latest.zip
 			if [[ $? -ne 0 ]]
         		then
                 		echoerr "Не могу загрузить rtengine из SDK"
@@ -339,9 +349,9 @@ function install_packages ()
 			echolog "cp rtengine to $RTENGINE"
 			if [[ "$OS_NAME" == "OS X" ]]
 			then
-				cp sdk/openssl/rtengine/bin/macos-$OS_ARCH/rtengine.framework/rtengine "$RTENGINE"
+				cp sdk/openssl/bin/${ossl_ver:0:3}/rtengine-${ossl_ver:0:3}/macos-$OS_ARCH/rtengine.framework/rtengine "$RTENGINE"
 			else
-				cp sdk/openssl/rtengine/bin/linux_glibc-$OS_ARCH/lib/librtengine.so "$RTENGINE"
+				cp sdk/openssl/bin/${ossl_ver:0:3}/rtengine-${ossl_ver:0:3}/linux_glibc-$OS_ARCH/lib/librtengine.so "$RTENGINE"
 			fi
 		fi
 	fi
@@ -1025,7 +1035,7 @@ function get_cert_data ()
 	email="`echo -e "$res" | sed '6q;d'`"
 	if [[ -n "$email" ]]; then email="/emailAddress=$email"; else email=""; fi
 
-	local subj="\"$C$ST$L$O$OU$CN$email\""
+	local subj="$C$ST$L$O$OU$CN$email"
 	
 	echolog "Cert subj is $subj"
 	echo "$subj"
