@@ -267,7 +267,7 @@ function update_openssl_engines_path ()
 
 	OPENSSL_TEMPLATE_CONF="$TWO_FA_LIB_DIR/common_files/openssl_template.cnf"
 	OPENSSL_CONF="$TWO_FA_LIB_DIR/common_files/openssl.cnf"
-        if ! [[ -f "$OPENSSL_CONF" ]]
+        if ! [[ -f "$OPENSSL_CONF" ]] && [[ "$PKCS11_ENGINE" ]] && [[ "$RTENGINE" ]] && [[ "$LIBRTPKCS11ECP" ]]
         then
             export PKCS11_ENGINE="$PKCS11_ENGINE"
             export LIBRTPKCS11ECP="$LIBRTPKCS11ECP"

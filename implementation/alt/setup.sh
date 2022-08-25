@@ -26,7 +26,7 @@ function check_pkgs ()
 function _install_packages ()
 {
         check_update="$1"
-        local pkgs="librtpkcs11ecp opensc pcsc-lite-ccid pcsc-lite libp11 pcsc-tools openssl-engine_pkcs11 python3-modules-tkinter dialog pam_pkcs11 pam_p11 nss-utils"
+        local pkgs="librtpkcs11ecp opensc pcsc-lite-ccid pcsc-lite libp11 pcsc-tools python3-modules-tkinter dialog pam_pkcs11 nss-utils"
 
         if [[ "$check_updates" ]]
         then
