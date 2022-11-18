@@ -106,6 +106,13 @@ function _setup_local_authentication ()
 		awk "$pam_pkcs11_insert" $sys_auth | sudo tee $sys_auth  > /dev/null
 	fi
 
+	pass_auth="/etc/pam.d/password-auth"
+	if ! [ "$(sudo cat $pass_auth | grep 'pam_pkcs11.so')" ]
+	then
+		echolog "Update pam.d file $pass_auth"
+		awk "$pam_pkcs11_insert" $pass_auth | sudo tee $pass_auth  > /dev/null
+	fi
+
 	return 0
 }
 
