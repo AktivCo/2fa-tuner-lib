@@ -223,7 +223,7 @@ function update_openssl_engines_path ()
 		ENGINE_DIR=`ls -d /usr/lib64/openssl/engines*`
 		;;
 	*"ROSA"*)
-		ENGINE_DIR="/usr/lib64/openssl-1.0.0/engines"
+		ENGINE_DIR="/usr/lib64/engines-1.1"
 		;;
 	*"MagOS"*)
                 ENGINE_DIR="/usr/lib64/openssl-1.0.0/engines"
